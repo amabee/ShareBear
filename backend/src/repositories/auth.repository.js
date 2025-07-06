@@ -4,6 +4,21 @@ export const findUserByEmail = async (prisma, email) => {
   });
 };
 
+export const findUserByEmailOrUsername = async (prisma, creds) => {
+  return prisma.user.findFirst({
+    where: {
+      OR: [
+        {
+          email: creds,
+        },
+        {
+          username: creds,
+        },
+      ],
+    },
+  });
+};
+
 export const createUser = async (prisma, userData) => {
   const { userInfo, ...rest } = userData;
 

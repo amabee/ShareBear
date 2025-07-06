@@ -4,7 +4,11 @@ import jwtPlugin from "./plugins/jwtPlugin.js";
 import { config } from "./config/index.js";
 import helloRoutes from "./routes/hello.routes.js";
 import authRoutes from "./routes/auth.routes.js";
-
+import helmetPlugin from "./plugins/helmetPlugin.js";
+import rateLimitPlugin from "./plugins/ratelimitPlugin.js";
+import corsPlugin from "./plugins/corsPlugin.js";
+import antiBotPlugin from "./plugins/antiBotPlugin.js";
+import requestPatternPlugin from "./plugins/requestPatternPlugin.js";
 
 const app = Fastify({
   logger: {
@@ -16,6 +20,11 @@ const app = Fastify({
 // PLUGINS
 app.register(prismaPlugin);
 app.register(jwtPlugin);
+app.register(helmetPlugin);
+app.register(rateLimitPlugin);
+app.register(corsPlugin);
+app.register(antiBotPlugin);
+app.register(requestPatternPlugin);
 
 // ROUTES
 app.register(helloRoutes, { prefix: "/api" });

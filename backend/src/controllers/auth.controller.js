@@ -1,5 +1,8 @@
 import bcrypt from "bcrypt";
-import { findUserByEmail } from "../repositories/auth.repository.js";
+import {
+  findUserByEmail,
+  findUserByEmailOrUsername,
+} from "../repositories/auth.repository.js";
 import { numericString } from "../utils/username-generator.js";
 
 export const register = async (req, reply) => {
@@ -45,9 +48,9 @@ export const register = async (req, reply) => {
 };
 
 export const login = async (req, reply) => {
-  const { email, password } = req.body;
+  const { usercred, password } = req.body;
 
-  const user = await findUserByEmail(req.server.prisma, email);
+  const user = await findUserByEmailOrUsername(req.server.prisma, usercred);
 
   if (!user) {
     return reply.status(401).send({ error: "Invalid credentials" });
@@ -68,7 +71,6 @@ export const login = async (req, reply) => {
     message: "Login successful",
     token,
     user: {
-      id: user.id,
       email: user.email,
       username: user.username,
     },
