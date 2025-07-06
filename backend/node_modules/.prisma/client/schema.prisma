@@ -1,0 +1,228 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+
+enum Gender {
+  MALE
+  FEMALE
+  OTHER
+  UNSPECIFIED
+}
+
+enum AccountType {
+  PERSONAL
+  BUSINESS
+  CREATOR
+}
+
+enum PrivacySetting {
+  PUBLIC
+  PRIVATE
+  FRIENDS
+}
+
+enum ContentType {
+  TEXT
+  IMAGE
+  VIDEO
+}
+
+enum MessageType {
+  TEXT
+  IMAGE
+  VIDEO
+  FILE
+}
+
+model User {
+  id           Int     @id @default(autoincrement())
+  username     String  @unique
+  email        String  @unique
+  passwordHash String
+  phone        String?
+
+  accountType        AccountType    @default(PERSONAL)
+  privacySettings    PrivacySetting @default(PUBLIC)
+  verificationStatus Boolean        @default(false)
+
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
+  lastActiveAt DateTime?
+  isActive     Boolean   @default(true)
+  isDeleted    Boolean   @default(false)
+
+  // 🔗 Relations
+  userInfo      UserInfo?
+  posts         Post[]
+  comments      Comment[]
+  likes         Like[]
+  followers     Follow[]                  @relation("followers")
+  following     Follow[]                  @relation("following")
+  sentMessages  Message[]                 @relation("sentMessages")
+  conversations ConversationParticipant[]
+  sessions      UserSession[]
+  stories       Story[]
+}
+
+model UserInfo {
+  id          Int     @id @default(autoincrement())
+  userId      Int     @unique
+  firstName   String?
+  lastName    String?
+  displayName String?
+  bio         String?
+
+  profilePictureUrl String?
+  coverPhotoUrl     String?
+
+  birthDate DateTime?
+  gender    Gender?
+  location  String?
+
+  // 🔗 Relation
+  user User @relation(fields: [userId], references: [id])
+}
+
+model UserSession {
+  id         Int      @id @default(autoincrement())
+  userId     Int
+  token      String   @unique
+  deviceInfo String?
+  ipAddress  String?
+  expiresAt  DateTime
+  createdAt  DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id])
+}
+
+model Post {
+  id             Int            @id @default(autoincrement())
+  userId         Int
+  contentType    ContentType
+  caption        String?
+  contentUrl     String?
+  thumbnailUrl   String?
+  location       String?
+  taggedUsers    String? // Comma-separated list of user IDs or JSON (flexible for now)
+  privacyLevel   PrivacySetting @default(PUBLIC)
+  allowsComments Boolean        @default(true)
+  allowsShares   Boolean        @default(true)
+
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  expiresAt DateTime? // For story-like posts
+  isDeleted Boolean   @default(false)
+
+  user     User      @relation(fields: [userId], references: [id])
+  comments Comment[]
+  likes    Like[]
+}
+
+model Comment {
+  id              Int  @id @default(autoincrement())
+  postId          Int
+  userId          Int
+  parentCommentId Int?
+
+  content   String
+  isDeleted Boolean  @default(false)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  post          Post      @relation(fields: [postId], references: [id])
+  user          User      @relation(fields: [userId], references: [id])
+  parentComment Comment?  @relation("CommentReplies", fields: [parentCommentId], references: [id])
+  replies       Comment[] @relation("CommentReplies")
+}
+
+model Like {
+  id        Int      @id @default(autoincrement())
+  userId    Int
+  postId    Int
+  createdAt DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id])
+  post Post @relation(fields: [postId], references: [id])
+
+  @@unique([userId, postId])
+}
+
+model Follow {
+  id          Int      @id @default(autoincrement())
+  followerId  Int
+  followingId Int
+  status      String   @default("accepted") // pending / accepted / blocked
+  createdAt   DateTime @default(now())
+
+  follower  User @relation("followers", fields: [followerId], references: [id])
+  following User @relation("following", fields: [followingId], references: [id])
+
+  @@unique([followerId, followingId])
+}
+
+model Conversation {
+  id            Int       @id @default(autoincrement())
+  type          String    @default("direct") // or group later
+  name          String?
+  createdBy     Int
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+  lastMessageAt DateTime?
+  isArchived    Boolean   @default(false)
+
+  participants ConversationParticipant[]
+  messages     Message[]
+}
+
+model ConversationParticipant {
+  id             Int       @id @default(autoincrement())
+  conversationId Int
+  userId         Int
+  joinedAt       DateTime  @default(now())
+  lastReadAt     DateTime?
+  role           String    @default("member")
+
+  conversation Conversation @relation(fields: [conversationId], references: [id])
+  user         User         @relation(fields: [userId], references: [id])
+
+  @@unique([conversationId, userId])
+}
+
+model Message {
+  id                 Int         @id @default(autoincrement())
+  conversationId     Int
+  senderId           Int
+  content            String
+  messageType        MessageType @default(TEXT)
+  mediaUrl           String?
+  repliedToMessageId Int?
+  deliveryStatus     String      @default("delivered")
+  createdAt          DateTime    @default(now())
+  updatedAt          DateTime    @updatedAt
+  isDeleted          Boolean     @default(false)
+
+  conversation Conversation @relation(fields: [conversationId], references: [id])
+  sender       User         @relation("sentMessages", fields: [senderId], references: [id])
+  replyTo      Message?     @relation("Replies", fields: [repliedToMessageId], references: [id])
+  replies      Message[]    @relation("Replies")
+}
+
+model Story {
+  id              Int      @id @default(autoincrement())
+  userId          Int
+  mediaUrl        String
+  caption         String?
+  location        String?
+  backgroundColor String?
+  createdAt       DateTime @default(now())
+  expiresAt       DateTime
+  viewCount       Int      @default(0)
+  allowsReplies   Boolean  @default(true)
+
+  user User @relation(fields: [userId], references: [id])
+}
