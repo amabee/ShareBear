@@ -73,6 +73,7 @@ model UserInfo {
   id          Int     @id @default(autoincrement())
   userId      Int     @unique
   firstName   String?
+  middleName  String?
   lastName    String?
   displayName String?
   bio         String?

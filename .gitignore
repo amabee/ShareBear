@@ -3,3 +3,5 @@
 .env.development
 .env.production
 .env.test
+prisma_commands.txt
+Notes.txt
