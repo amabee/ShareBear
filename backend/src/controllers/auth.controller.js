@@ -1,8 +1,6 @@
 import bcrypt from "bcrypt";
 import { findUserByEmail } from "../repositories/auth.repository.js";
 import { numericString } from "../utils/username-generator.js";
-import { config } from "../config/index.js";
-import jwt from "jsonwebtoken";
 
 export const register = async (req, reply) => {
   const { email, password, userInfo } = req.body;

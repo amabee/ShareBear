@@ -1,7 +1,8 @@
 import fastifyJwt from "fastify-jwt";
-import { config } from "../config";
+import fp from "fastify-plugin";
+import { config } from "../config/index.js";
 
-export default async function jwtPlugin(app) {
+async function jwtPlugin(app) {
   app.register(fastifyJwt, {
     secret: config.jwt.secret,
   });
@@ -14,3 +15,5 @@ export default async function jwtPlugin(app) {
     }
   });
 }
+
+export default fp(jwtPlugin);

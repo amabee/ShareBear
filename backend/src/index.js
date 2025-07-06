@@ -1,9 +1,10 @@
 import Fastify from "fastify";
 import prismaPlugin from "./plugins/prisma.js";
+import jwtPlugin from "./plugins/jwtPlugin.js";
 import { config } from "./config/index.js";
 import helloRoutes from "./routes/hello.routes.js";
 import authRoutes from "./routes/auth.routes.js";
-import jwtPlugin from "./plugins/jwtPlugin.js";
+
 
 const app = Fastify({
   logger: {
