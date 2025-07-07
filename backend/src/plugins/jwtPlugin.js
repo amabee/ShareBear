@@ -1,4 +1,4 @@
-import fastifyJwt from "fastify-jwt";
+import fastifyJwt from "@fastify/jwt";
 import fp from "fastify-plugin";
 import { config } from "../config/index.js";
 

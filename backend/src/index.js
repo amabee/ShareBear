@@ -10,6 +10,7 @@ import corsPlugin from "./plugins/corsPlugin.js";
 import antiBotPlugin from "./plugins/antiBotPlugin.js";
 import requestPatternPlugin from "./plugins/requestPatternPlugin.js";
 import requestIdPlugin from "./plugins/requestIdPlugin.js";
+import ajvValidatorPlugin from "./plugins/ajvValidatorPlugin.js";
 
 const app = Fastify({
   trustProxy: true,
@@ -29,6 +30,17 @@ app.register(corsPlugin);
 app.register(antiBotPlugin);
 app.register(requestPatternPlugin);
 app.register(requestIdPlugin);
+app.register(ajvValidatorPlugin);
+
+// Custom Error Message Handler. fucking fastify and AJV! 😡😡😡😡
+
+app.setErrorHandler((error, request, reply) => {
+  if (error.validation && error.validation[0] && error.validation[0].message) {
+    return reply.status(400).send({ error: error.validation[0].message });
+  }
+
+  reply.send(error);
+});
 
 // ROUTES
 app.register(helloRoutes, { prefix: "/api" });
