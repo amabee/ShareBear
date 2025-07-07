@@ -1,7 +1,14 @@
 import bcrypt from "bcrypt";
 import {
+  createUser,
+  deleteUserSession,
+  findSessionByToken,
   findUserByEmail,
   findUserByEmailOrUsername,
+  logoutDeleteSession,
+  rotateRefreshToken,
+  storeRefreshToken,
+  updateLastUpdatedTimeStamp,
 } from "../repositories/auth.repository.js";
 import { numericString } from "../utils/username-generator.js";
 import {
@@ -23,26 +30,13 @@ export const register = async (req, reply) => {
   const hashedPassword = await bcrypt.hash(password, 12);
 
   try {
-    const user = await req.server.prisma.user.create({
-      data: {
-        email,
-        username: numericString,
-        passwordHash: hashedPassword,
-        userInfo: {
-          create: {
-            firstName: userInfo?.firstName,
-            middleName: userInfo.middleName,
-            lastName: userInfo?.lastName,
-            gender: userInfo?.gender,
-            birthDate: userInfo?.birthDate,
-            location: userInfo?.location,
-          },
-        },
-      },
-      include: {
-        userInfo: true,
-      },
-    });
+    const user = await createUser(
+      req.server.prisma,
+      email,
+      numericString,
+      hashedPassword,
+      userInfo
+    );
 
     return reply.status(201).send({
       message: "User registered",
@@ -139,15 +133,13 @@ export const login = async (req, reply) => {
     const refreshTokenExpiry = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000); // 7 days
 
     // Store refresh token in UserSession
-    await req.server.prisma.userSession.create({
-      data: {
-        userId: user.id,
-        refreshToken,
-        deviceInfo: req.headers["user-agent"] || null,
-        ipAddress: req.ip || null,
-        expiresAt: refreshTokenExpiry,
-      },
-    });
+    await storeRefreshToken(
+      req.server.prisma,
+      user.id,
+      req,
+      refreshToken,
+      refreshTokenExpiry
+    );
 
     // Log successful login
     await logUserAction(req.server.prisma, user.id, "login", req, {
@@ -157,14 +149,12 @@ export const login = async (req, reply) => {
     });
 
     // Update last active timestamp
-    await req.server.prisma.user.update({
-      where: { id: user.id },
-      data: { lastActiveAt: new Date() },
-    });
+
+    await updateLastUpdatedTimeStamp(req.server.prisma, user.id);
 
     return reply.send({
       message: "Login successful",
-      token, // JWT access token
+      token,
       refreshToken,
       user: {
         id: user.id,
@@ -173,7 +163,6 @@ export const login = async (req, reply) => {
       },
     });
   } catch (error) {
-    // Log the error
     await logError(req.server.prisma, error, "auth-service", req, {
       operation: "login",
       duration: Date.now() - startTime,
@@ -187,22 +176,19 @@ export const login = async (req, reply) => {
 export const refreshToken = async (req, reply) => {
   try {
     const { refreshToken } = req.body;
+
     if (!refreshToken) {
       return reply.status(400).send({ error: "Refresh token is required" });
     }
 
-    const session = await req.server.prisma.userSession.findUnique({
-      where: { refreshToken },
-      include: { user: true },
-    });
+    const session = await findSessionByToken(req.server.prisma, refreshToken);
 
     if (!session || !session.user) {
       return reply.status(401).send({ error: "Invalid refresh token" });
     }
 
-   
     if (session.expiresAt < new Date()) {
-      await req.server.prisma.userSession.delete({ where: { id: session.id } });
+      await deleteUserSession(req.server.prisma, session.id);
       return reply.status(401).send({ error: "Refresh token expired" });
     }
 
@@ -213,15 +199,13 @@ export const refreshToken = async (req, reply) => {
 
     const newRefreshToken = crypto.randomBytes(48).toString("hex");
     const newExpiry = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000);
-    await req.server.prisma.userSession.update({
-      where: { id: session.id },
-      data: {
-        refreshToken: newRefreshToken,
-        expiresAt: newExpiry,
-        deviceInfo: req.headers["user-agent"] || null,
-        ipAddress: req.ip || null,
-      },
-    });
+    await rotateRefreshToken(
+      req.server.prisma,
+      session,
+      newRefreshToken,
+      newExpiry,
+      req
+    );
 
     return reply.send({
       token,
@@ -239,9 +223,7 @@ export const logout = async (req, reply) => {
       return reply.status(400).send({ error: "Refresh token is required" });
     }
 
-    const deleted = await req.server.prisma.userSession.deleteMany({
-      where: { refreshToken },
-    });
+    const deleted = await logoutDeleteSession(req.server.prisma, refreshToken);
 
     if (deleted.count === 0) {
       return reply.status(401).send({ error: "Invalid refresh token" });
