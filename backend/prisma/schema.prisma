@@ -39,6 +39,14 @@ enum MessageType {
   FILE
 }
 
+enum LogLevel {
+  DEBUG
+  INFO
+  WARN
+  ERROR
+  FATAL
+}
+
 model User {
   id           Int     @id @default(autoincrement())
   username     String  @unique
@@ -67,6 +75,7 @@ model User {
   conversations ConversationParticipant[]
   sessions      UserSession[]
   stories       Story[]
+  systemLogs    SystemLogs[]
 }
 
 model UserInfo {
@@ -92,7 +101,7 @@ model UserInfo {
 model UserSession {
   id         Int      @id @default(autoincrement())
   userId     Int
-  token      String   @unique
+  token      String   @unique @db.VarChar(255)
   deviceInfo String?
   ipAddress  String?
   expiresAt  DateTime
@@ -226,4 +235,31 @@ model Story {
   allowsReplies   Boolean  @default(true)
 
   user User @relation(fields: [userId], references: [id])
+}
+
+// System Logs
+
+model SystemLogs {
+  id         String   @id @default(cuid())
+  timestamp  DateTime @default(now())
+  level      LogLevel
+  source     String   @db.VarChar(100)
+  message    String   @db.Text
+  context    Json?
+  userId     Int?
+  sessionId  String?  @db.VarChar(255)
+  requestId  String?  @db.VarChar(64)
+  ipAddress  String?  @db.VarChar(45)
+  userAgent  String?  @db.Text
+  stackTrace String?  @db.Text
+
+  // 🔗 Relations
+  user User? @relation(fields: [userId], references: [id])
+
+  @@index([timestamp])
+  @@index([level])
+  @@index([source])
+  @@index([userId])
+  @@index([sessionId])
+  @@index([requestId])
 }

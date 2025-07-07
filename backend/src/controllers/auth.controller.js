@@ -4,6 +4,7 @@ import {
   findUserByEmailOrUsername,
 } from "../repositories/auth.repository.js";
 import { numericString } from "../utils/username-generator.js";
+import { logEvent } from "../utils/system-logger.js";
 
 export const register = async (req, reply) => {
   const { email, password, userInfo } = req.body;
@@ -53,12 +54,29 @@ export const login = async (req, reply) => {
   const user = await findUserByEmailOrUsername(req.server.prisma, usercred);
 
   if (!user) {
+    await logEvent(
+      req.server.prisma,
+      "INFO",
+      "auth-service",
+      "Failed Login Attempt. username or email not found on database.",
+      req.ip,
+      req.headers["user-agent"]
+    );
+
     return reply.status(401).send({ error: "Invalid credentials" });
   }
 
   const isValidPassword = await bcrypt.compare(password, user.passwordHash);
 
   if (!isValidPassword) {
+    await logEvent(
+      req.server.prisma,
+      "INFO",
+      "auth-service",
+      "Failed Login Attempt. Invalid password.",
+      req.ip,
+      req.headers["user-agent"]
+    );
     return reply.status(401).send({ error: "Invalid credentials" });
   }
 
@@ -66,6 +84,15 @@ export const login = async (req, reply) => {
     userId: user.id,
     username: user.username,
   });
+
+  await logEvent(
+    req.server.prisma,
+    "INFO",
+    "auth-service",
+    `Successful Login Attempt for user ${user.username}`,
+    req.ip,
+    req.headers["user-agent"]
+  );
 
   return reply.send({
     message: "Login successful",

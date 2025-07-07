@@ -11,6 +11,7 @@ import antiBotPlugin from "./plugins/antiBotPlugin.js";
 import requestPatternPlugin from "./plugins/requestPatternPlugin.js";
 
 const app = Fastify({
+  trustProxy: true,
   logger: {
     level: "warn",
     prettyPrint: false,
@@ -18,6 +19,7 @@ const app = Fastify({
 });
 
 // PLUGINS
+
 app.register(prismaPlugin);
 app.register(jwtPlugin);
 app.register(helmetPlugin);
@@ -30,7 +32,7 @@ app.register(requestPatternPlugin);
 app.register(helloRoutes, { prefix: "/api" });
 app.register(authRoutes, { prefix: "/api/auth" });
 
-app.listen({ port: config.port }, (err, address) => {
+app.listen({ port: config.port, host: config.host }, (err, address) => {
   if (err) {
     app.log.error(err);
     process.exit(1);
