@@ -33,7 +33,6 @@ export const logEvent = async (
       },
     });
   } catch (error) {
-    // Fallback logging to console if DB fails
     console.error("Failed to write to system logs:", error);
     console.log("Original log:", { level, source, message, options });
   }

@@ -4,7 +4,12 @@ import {
   findUserByEmailOrUsername,
 } from "../repositories/auth.repository.js";
 import { numericString } from "../utils/username-generator.js";
-import { logEvent } from "../utils/system-logger.js";
+import {
+  logAuthEvent,
+  logError,
+  logSecurityEvent,
+  logUserAction,
+} from "../utils/system-logger.js";
 
 export const register = async (req, reply) => {
   const { email, password, userInfo } = req.body;
@@ -49,57 +54,115 @@ export const register = async (req, reply) => {
 };
 
 export const login = async (req, reply) => {
-  const { usercred, password } = req.body;
+  const startTime = Date.now();
 
-  const user = await findUserByEmailOrUsername(req.server.prisma, usercred);
+  try {
+    const { usercred, password } = req.body;
 
-  if (!user) {
-    await logEvent(
-      req.server.prisma,
-      "INFO",
-      "auth-service",
-      "Failed Login Attempt. username or email not found on database.",
-      req.ip,
-      req.headers["user-agent"]
-    );
+    // Input validation
+    if (!usercred || !password) {
+      await logSecurityEvent(
+        req.server.prisma,
+        "Login attempt with missing credentials",
+        req,
+        "WARN",
+        {
+          usercred: usercred ? "provided" : "missing",
+          password: password ? "provided" : "missing",
+        }
+      );
+      return reply
+        .status(400)
+        .send({ error: "Username/email and password are required" });
+    }
 
-    return reply.status(401).send({ error: "Invalid credentials" });
-  }
+    // Find user
+    const user = await findUserByEmailOrUsername(req.server.prisma, usercred);
 
-  const isValidPassword = await bcrypt.compare(password, user.passwordHash);
+    if (!user) {
+      await logSecurityEvent(
+        req.server.prisma,
+        "Failed login attempt - user not found",
+        req,
+        "WARN",
+        {
+          attemptedCredential: usercred.substring(0, 3) + "***", // Partial masking
+          reason: "user_not_found",
+        }
+      );
+      return reply.status(401).send({ error: "Invalid credentials" });
+    }
 
-  if (!isValidPassword) {
-    await logEvent(
-      req.server.prisma,
-      "INFO",
-      "auth-service",
-      "Failed Login Attempt. Invalid password.",
-      req.ip,
-      req.headers["user-agent"]
-    );
-    return reply.status(401).send({ error: "Invalid credentials" });
-  }
+    // Check if user is active
+    if (!user.isActive) {
+      await logSecurityEvent(
+        req.server.prisma,
+        "Login attempt on inactive account",
+        req,
+        "WARN",
+        {
+          userId: user.id,
+          username: user.username,
+          reason: "account_inactive",
+        }
+      );
+      return reply.status(401).send({ error: "Account is inactive" });
+    }
 
-  const token = await reply.jwtSign({
-    userId: user.id,
-    username: user.username,
-  });
+    // Validate password
+    const isValidPassword = await bcrypt.compare(password, user.passwordHash);
 
-  await logEvent(
-    req.server.prisma,
-    "INFO",
-    "auth-service",
-    `Successful Login Attempt for user ${user.username}`,
-    req.ip,
-    req.headers["user-agent"]
-  );
+    if (!isValidPassword) {
+      await logSecurityEvent(
+        req.server.prisma,
+        "Failed login attempt - invalid password",
+        req,
+        "WARN",
+        {
+          userId: user.id,
+          username: user.username,
+          reason: "invalid_password",
+        }
+      );
+      return reply.status(401).send({ error: "Invalid credentials" });
+    }
 
-  return reply.send({
-    message: "Login successful",
-    token,
-    user: {
-      email: user.email,
+    // Generate token
+    const token = await reply.jwtSign({
+      userId: user.id,
       username: user.username,
-    },
-  });
+    });
+
+    // Log successful login
+    await logUserAction(req.server.prisma, user.id, "login", req, {
+      username: user.username,
+      loginMethod: "password",
+      duration: Date.now() - startTime,
+    });
+
+    // Update last active timestamp
+    await req.server.prisma.user.update({
+      where: { id: user.id },
+      data: { lastActiveAt: new Date() },
+    });
+
+    return reply.send({
+      message: "Login successful",
+      token,
+      user: {
+        id: user.id,
+        email: user.email,
+        username: user.username,
+      },
+    });
+  } catch (error) {
+    // Log the error
+    await logError(req.server.prisma, error, "auth-service", req, {
+      operation: "login",
+      duration: Date.now() - startTime,
+      context: { usercred: req.body?.usercred?.substring(0, 3) + "***" },
+    });
+
+    return reply.status(500).send({ error: "Internal server error" });
+  }
 };

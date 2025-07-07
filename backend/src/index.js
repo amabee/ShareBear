@@ -9,6 +9,7 @@ import rateLimitPlugin from "./plugins/ratelimitPlugin.js";
 import corsPlugin from "./plugins/corsPlugin.js";
 import antiBotPlugin from "./plugins/antiBotPlugin.js";
 import requestPatternPlugin from "./plugins/requestPatternPlugin.js";
+import requestIdPlugin from "./plugins/requestIdPlugin.js";
 
 const app = Fastify({
   trustProxy: true,
@@ -27,6 +28,7 @@ app.register(rateLimitPlugin);
 app.register(corsPlugin);
 app.register(antiBotPlugin);
 app.register(requestPatternPlugin);
+app.register(requestIdPlugin);
 
 // ROUTES
 app.register(helloRoutes, { prefix: "/api" });

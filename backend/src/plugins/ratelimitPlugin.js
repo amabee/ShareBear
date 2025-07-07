@@ -3,10 +3,15 @@ import fp from "fastify-plugin";
 
 async function rateLimitPlugin(app) {
   app.register(rateLimit, {
-    max: 100,
+    max: 20,
     timeWindow: "1 minute",
     keyGenerator: (req) => {
-      return req.headers['x-forwarded-for'] || req.headers['x-real-ip'] || req.ip || req.connection.remoteAddress;
+      return (
+        req.headers["x-forwarded-for"] ||
+        req.headers["x-real-ip"] ||
+        req.ip ||
+        req.connection.remoteAddress
+      );
     },
     addHeaders: {
       "x-ratelimit-limit": true,
