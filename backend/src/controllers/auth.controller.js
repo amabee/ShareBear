@@ -239,7 +239,6 @@ export const logout = async (req, reply) => {
       return reply.status(400).send({ error: "Refresh token is required" });
     }
 
-    // Delete the session with the given refresh token
     const deleted = await req.server.prisma.userSession.deleteMany({
       where: { refreshToken },
     });
