@@ -85,3 +85,21 @@ export const refreshSchema = {
     },
   },
 };
+
+export const logoutSchema = {
+  body: {
+    type: "object",
+    required: ["refreshToken"],
+    properties: {
+      refreshToken: { type: "string" },
+    },
+    errorMessage: {
+      required: {
+        refreshToken: "Refresh token is required",
+      },
+      properties: {
+        refreshToken: "Refresh token must be a string",
+      },
+    },
+  },
+};

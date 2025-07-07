@@ -191,7 +191,6 @@ export const refreshToken = async (req, reply) => {
       return reply.status(400).send({ error: "Refresh token is required" });
     }
 
-    // Find session by refresh token
     const session = await req.server.prisma.userSession.findUnique({
       where: { refreshToken },
       include: { user: true },
@@ -201,22 +200,19 @@ export const refreshToken = async (req, reply) => {
       return reply.status(401).send({ error: "Invalid refresh token" });
     }
 
-    // Check expiry
+   
     if (session.expiresAt < new Date()) {
-      // Optionally, delete expired session
       await req.server.prisma.userSession.delete({ where: { id: session.id } });
       return reply.status(401).send({ error: "Refresh token expired" });
     }
 
-    // Issue new JWT access token
     const token = await reply.jwtSign({
       userId: session.user.id,
       username: session.user.username,
     });
 
-    // Optionally, rotate refresh token (generate new one and update session)
     const newRefreshToken = crypto.randomBytes(48).toString("hex");
-    const newExpiry = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000); // 7 days
+    const newExpiry = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000);
     await req.server.prisma.userSession.update({
       where: { id: session.id },
       data: {
@@ -228,9 +224,31 @@ export const refreshToken = async (req, reply) => {
     });
 
     return reply.send({
-      token, // new JWT access token
+      token,
       refreshToken: newRefreshToken,
     });
+  } catch (error) {
+    return reply.status(500).send({ error: "Internal server error" });
+  }
+};
+
+export const logout = async (req, reply) => {
+  try {
+    const { refreshToken } = req.body;
+    if (!refreshToken) {
+      return reply.status(400).send({ error: "Refresh token is required" });
+    }
+
+    // Delete the session with the given refresh token
+    const deleted = await req.server.prisma.userSession.deleteMany({
+      where: { refreshToken },
+    });
+
+    if (deleted.count === 0) {
+      return reply.status(401).send({ error: "Invalid refresh token" });
+    }
+
+    return reply.send({ message: "Logged out successfully" });
   } catch (error) {
     return reply.status(500).send({ error: "Internal server error" });
   }
