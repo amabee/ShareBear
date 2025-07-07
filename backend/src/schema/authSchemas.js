@@ -4,7 +4,16 @@ export const registerSchema = {
     required: ["email", "password", "userInfo"],
     properties: {
       email: { type: "string", format: "email" },
-      password: { type: "string", minLength: 8 },
+      password: {
+        type: "string",
+        minLength: 8,
+        maxLength: 24,
+        pattern: "^(?=.*[a-z])(?=.*[A-Z])(?=.*\\d)(?=.*[^A-Za-z\\d]).{8,24}$",
+        errorMessage: {
+          pattern:
+            "Password must be 8-18 characters and include an uppercase letter, a lowercase letter, a number, and a special character",
+        },
+      },
       userInfo: {
         type: "object",
         required: ["firstName", "lastName", "birthDate", "location"],
@@ -54,6 +63,24 @@ export const loginSchema = {
       properties: {
         usercred: "Usercred can be the email or the username of the user",
         password: "Password must be at least 8 characters",
+      },
+    },
+  },
+};
+
+export const refreshSchema = {
+  body: {
+    type: "object",
+    required: ["refreshToken"],
+    properties: {
+      refreshToken: { type: "string" },
+    },
+    errorMessage: {
+      required: {
+        refreshToken: "Refresh token is required",
+      },
+      properties: {
+        refreshToken: "Refresh token must be a string",
       },
     },
   },

@@ -17,12 +17,11 @@ async function helmetPlugin(app) {
       action: "deny",
     },
     // 🔐 Enforce HTTPS with HSTS
-    // hsts: {
-    //   maxAge: 60 * 60 * 24 * 365, // 1 year in seconds
-    //   includeSubDomains: true,
-    //   preload: true,
-    // },
-    // Optional: hide `X-Powered-By: Fastify` header
+    hsts: {
+      maxAge: 60 * 60 * 24 * 365, // 1 year in seconds
+      includeSubDomains: true,
+      preload: true,
+    },
     hidePoweredBy: true,
   });
 }
