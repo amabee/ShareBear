@@ -3,7 +3,7 @@ export const logEvent = async (
   prisma,
   level,
   source,
-  message,
+  message = null,
   options = {}
 ) => {
   const {
@@ -42,7 +42,7 @@ export const logEvent = async (
 export const logAuthEvent = async (prisma, message, req, options = {}) => {
   return logEvent(prisma, "INFO", "auth-service", message, {
     ipAddress: req.ip,
-    userAgent: req.header["user-agent"],
+    userAgent: req.headers["user-agent"],
     requestId: req.id,
     ...options,
   });

@@ -20,6 +20,13 @@ export const registerSchema = {
         properties: {
           firstName: { type: "string" },
           lastName: { type: "string" },
+          gender: {
+            type: "string",
+            enum: ["MALE", "FEMALE", "OTHER", "UNSPECIFIED"],
+            errorMessage: {
+              enum: "Gender must be one of: MALE, FEMALE, OTHER, UNSPECIFIED",
+            },
+          },
           birthDate: { type: "string", format: "date-time" },
           location: { type: "string" },
         },

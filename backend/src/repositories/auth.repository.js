@@ -5,6 +5,12 @@ export const findUserByEmail = async (prisma, email) => {
   });
 };
 
+export const findUserByUsername = async (prisma, username) => {
+  return prisma.user.findUnique({
+    where: { username },
+  });
+};
+
 export const findUserByEmailOrUsername = async (prisma, creds) => {
   return prisma.user.findFirst({
     where: {
@@ -23,23 +29,23 @@ export const findUserByEmailOrUsername = async (prisma, creds) => {
 export const createUser = async (
   prisma,
   email,
-  numericString,
+  username,
   hashedPassword,
   userInfo
 ) => {
   return prisma.user.create({
     data: {
       email,
-      username: numericString,
+      username,
       passwordHash: hashedPassword,
       userInfo: {
         create: {
-          firstName: userInfo?.firstName,
-          middleName: userInfo.middleName,
-          lastName: userInfo?.lastName,
-          gender: userInfo?.gender,
-          birthDate: userInfo?.birthDate,
-          location: userInfo?.location,
+          firstName: userInfo.firstName,
+          middleName: userInfo?.middleName,
+          lastName: userInfo.lastName,
+          gender: userInfo.gender,
+          birthDate: userInfo.birthDate,
+          location: userInfo.location,
         },
       },
     },

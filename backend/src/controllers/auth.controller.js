@@ -1,16 +1,13 @@
 import bcrypt from "bcrypt";
 import {
-  createUser,
   deleteUserSession,
   findSessionByToken,
-  findUserByEmail,
   findUserByEmailOrUsername,
   logoutDeleteSession,
   rotateRefreshToken,
   storeRefreshToken,
   updateLastUpdatedTimeStamp,
 } from "../repositories/auth.repository.js";
-import { numericString } from "../utils/username-generator.js";
 import {
   logAuthEvent,
   logError,
@@ -18,32 +15,59 @@ import {
   logUserAction,
 } from "../utils/system-logger.js";
 import crypto from "crypto";
+import { registerUser } from "../services/auth.services.js";
 
 export const register = async (req, reply) => {
   const { email, password, userInfo } = req.body;
 
-  const existingUser = await findUserByEmail(req.server.prisma, email);
-  if (existingUser) {
-    return reply.status(409).send({ error: "Email already in use" });
-  }
-
-  const hashedPassword = await bcrypt.hash(password, 12);
-
   try {
-    const user = await createUser(
+    const user = await registerUser(
       req.server.prisma,
       email,
-      numericString,
-      hashedPassword,
+      password,
       userInfo
     );
 
-    return reply.status(201).send({
-      message: "User registered",
-      user,
-    });
+    await logAuthEvent(
+      req.server.prisma,
+      `User ${email} successfully registered`,
+      req
+    );
+
+    return reply.status(201).send({ message: "User registered", user });
   } catch (error) {
-    console.error("Registration failed:", error);
+    if (error.code === "EMAIL_IN_USE") {
+      return reply.status(409).send({ error: "Email already in use" });
+    }
+
+    if (
+      error.message ===
+      "Unable to generate unique username after multiple attempts"
+    ) {
+      return reply
+        .status(500)
+        .send({ error: "Unable to create account. Please try again." });
+    }
+
+    // if (error.code === "P2002") {
+    //   const field = error.meta?.target?.[0];
+    //   if (field === "username") {
+    //     return reply
+    //       .status(409)
+    //       .send({ error: "Username already taken. Please try again." });
+    //   }
+    //   if (field === "email") {
+    //     return reply.status(409).send({ error: "Email already in use" });
+    //   }
+    // }
+
+    await logError(req.server.prisma, error, "auth-service", req, {
+      operation: "register",
+      context: { email: req.body?.email?.substring(0, 3) + "***" },
+    });
+
+    console.log(`Error Message: ${error}`);
+
     return reply.status(500).send({ error: "Registration failed" });
   }
 };
