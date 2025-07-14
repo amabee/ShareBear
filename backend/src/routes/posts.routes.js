@@ -1,5 +1,7 @@
-import { addFriend } from "../controllers/posts.controller";
+import { createPost } from "../controllers/posts.controller.js";
 
 export default async function postRoutes(fastify, opts) {
-  fastify.get("/friends", addFriend);
+  fastify.addHook("preHandler", fastify.authenticate);
+
+  fastify.post("/create", createPost);
 }

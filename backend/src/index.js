@@ -12,6 +12,7 @@ import antiBotPlugin from "./plugins/antiBotPlugin.js";
 import requestPatternPlugin from "./plugins/requestPatternPlugin.js";
 import requestIdPlugin from "./plugins/requestIdPlugin.js";
 import ajvValidatorPlugin from "./plugins/ajvValidatorPlugin.js";
+import postRoutes from "./routes/posts.routes.js";
 
 const app = Fastify({
   trustProxy: true,
@@ -47,6 +48,7 @@ app.setErrorHandler((error, request, reply) => {
 app.register(helloRoutes, { prefix: "/api" });
 app.register(authRoutes, { prefix: "/api/auth" });
 app.register(followRoutes, { prefix: "/api/follow" });
+app.register(postRoutes, {prefix: "/api/posts"})
 
 app.listen({ port: config.port, host: config.host }, (err, address) => {
   if (err) {
