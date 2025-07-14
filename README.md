@@ -1,6 +1,6 @@
 # 🐻 ShareBear Backend
 
-<p align="left">
+<p align="center">
   <img src="https://img.shields.io/badge/Fastify-5.x-green?logo=fastify" alt="Fastify" />
   <img src="https://img.shields.io/badge/Node.js-20.x-brightgreen?logo=node.js" alt="Node.js" />
   <img src="https://img.shields.io/badge/Prisma-ORM-blueviolet?logo=prisma" alt="Prisma" />
