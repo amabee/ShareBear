@@ -9,7 +9,7 @@ import {
   generateTokens,
   refreshUserToken,
   logoutUser,
-} from "../services/auth.services.js";
+} from "../services/auth.service.js";
 
 export const register = async (req, reply) => {
   const { email, password, userInfo } = req.body;
@@ -148,7 +148,6 @@ export const refreshToken = async (req, reply) => {
       refreshToken: newRefreshToken,
     });
   } catch (error) {
-    // Handle specific error codes
     if (error.code === "MISSING_REFRESH_TOKEN") {
       return reply.status(400).send({ error: error.message });
     }
@@ -173,12 +172,10 @@ export const logout = async (req, reply) => {
   try {
     const { refreshToken } = req.body;
 
-    // Logout user
     await logoutUser(req.server.prisma, refreshToken);
 
     return reply.send({ message: "Logged out successfully" });
   } catch (error) {
-    // Handle specific error codes
     if (error.code === "MISSING_REFRESH_TOKEN") {
       return reply.status(400).send({ error: error.message });
     }

@@ -163,14 +163,8 @@ export async function refreshUserToken(prisma, refreshToken, req) {
   // Generate new refresh token
   const newRefreshToken = crypto.randomBytes(48).toString("hex");
   const newExpiry = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000);
-  
-  await rotateRefreshToken(
-    prisma,
-    session,
-    newRefreshToken,
-    newExpiry,
-    req
-  );
+
+  await rotateRefreshToken(prisma, session, newRefreshToken, newExpiry, req);
 
   return {
     user: session.user,
