@@ -10,16 +10,26 @@ import {
   refreshUserToken,
   logoutUser,
 } from "../services/auth.service.js";
+import { sanitizeInput, encodeOutput } from "../utils/sanitize.js";
 
 export const register = async (req, reply) => {
+  // Sanitize userInfo fields
   const { email, password, userInfo } = req.body;
+  const sanitizedUserInfo = userInfo ? {
+    ...userInfo,
+    firstName: sanitizeInput(userInfo.firstName),
+    lastName: sanitizeInput(userInfo.lastName),
+    location: sanitizeInput(userInfo.location),
+    gender: sanitizeInput(userInfo.gender),
+    // Add more fields as needed
+  } : userInfo;
 
   try {
     const user = await registerUser(
       req.server.prisma,
       email,
       password,
-      userInfo
+      sanitizedUserInfo
     );
 
     await logAuthEvent(
@@ -27,6 +37,14 @@ export const register = async (req, reply) => {
       `User ${email} successfully registered`,
       req
     );
+
+    // Encode output fields before sending
+    if (user && user.userInfo) {
+      user.userInfo.firstName = encodeOutput(user.userInfo.firstName);
+      user.userInfo.lastName = encodeOutput(user.userInfo.lastName);
+      user.userInfo.location = encodeOutput(user.userInfo.location);
+      user.userInfo.gender = encodeOutput(user.userInfo.gender);
+    }
 
     return reply.status(201).send({ message: "User registered", user });
   } catch (error) {
