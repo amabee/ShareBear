@@ -36,7 +36,7 @@ export function ShareBearPost({ post }) {
       {/* Header */}
       <div className="flex items-center justify-between p-4">
         <div className="flex items-center space-x-3">
-          <Avatar className="h-15 w-15">
+          <Avatar className="h-12 w-12">
             <AvatarImage
               src={post.user.avatar || "/placeholder.svg"}
               alt={post.user.displayName}
