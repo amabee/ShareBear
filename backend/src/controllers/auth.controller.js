@@ -11,18 +11,21 @@ import {
   logoutUser,
 } from "../services/auth.service.js";
 import { sanitizeInput, encodeOutput } from "../utils/sanitize.js";
+import { v4 as uuidv4 } from "uuid";
+import redis from "../plugins/redisClient.js";
 
 export const register = async (req, reply) => {
   // Sanitize userInfo fields
   const { email, password, userInfo } = req.body;
-  const sanitizedUserInfo = userInfo ? {
-    ...userInfo,
-    firstName: sanitizeInput(userInfo.firstName),
-    lastName: sanitizeInput(userInfo.lastName),
-    location: sanitizeInput(userInfo.location),
-    gender: sanitizeInput(userInfo.gender),
-    // Add more fields as needed
-  } : userInfo;
+  const sanitizedUserInfo = userInfo
+    ? {
+        ...userInfo,
+        firstName: sanitizeInput(userInfo.firstName),
+        lastName: sanitizeInput(userInfo.lastName),
+        location: sanitizeInput(userInfo.location),
+        gender: sanitizeInput(userInfo.gender),
+      }
+    : userInfo;
 
   try {
     const user = await registerUser(
@@ -98,6 +101,7 @@ export const login = async (req, reply) => {
     const token = await reply.jwtSign({
       userId: user.id,
       username: user.username,
+      jti: uuidv4(),
     });
 
     // Generate refresh token and store session
@@ -159,6 +163,7 @@ export const refreshToken = async (req, reply) => {
     const token = await reply.jwtSign({
       userId: user.id,
       username: user.username,
+      jti: uuidv4(),
     });
 
     return reply.send({
@@ -189,6 +194,16 @@ export const refreshToken = async (req, reply) => {
 export const logout = async (req, reply) => {
   try {
     const { refreshToken } = req.body;
+
+    // Blacklist the current JWT's jti
+    const jti = req.user?.jti;
+    if (jti) {
+      // Get token expiry in seconds
+      const exp = req.user?.exp;
+      const now = Math.floor(Date.now() / 1000);
+      const ttl = exp && exp > now ? exp - now : 900; // fallback 15m
+      await redis.set(`blacklist:jti:${jti}`, "1", "EX", ttl);
+    }
 
     await logoutUser(req.server.prisma, refreshToken);
 

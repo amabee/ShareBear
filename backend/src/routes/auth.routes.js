@@ -5,5 +5,5 @@ export default async function authRoutes(fastify, opts) {
   fastify.post("/register", { schema: registerSchema }, register);
   fastify.post("/login", { schema: loginSchema }, login);
   fastify.post("/refresh", { schema: refreshSchema }, refreshToken);
-  fastify.post("/logout", { schema: logoutSchema }, logout);
+  fastify.post("/logout", { preHandler: fastify.authenticate, schema: logoutSchema }, logout);
 }
