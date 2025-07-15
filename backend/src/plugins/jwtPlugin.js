@@ -1,7 +1,6 @@
 import fastifyJwt from "@fastify/jwt";
 import fp from "fastify-plugin";
 import { config } from "../config/index.js";
-import redis from './redisClient.js';
 
 async function jwtPlugin(app) {
   app.register(fastifyJwt, {
