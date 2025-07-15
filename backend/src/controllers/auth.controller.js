@@ -12,7 +12,6 @@ import {
 } from "../services/auth.service.js";
 import { sanitizeInput, encodeOutput } from "../utils/sanitize.js";
 import { v4 as uuidv4 } from "uuid";
-import redis from "../plugins/redisClient.js";
 
 export const register = async (req, reply) => {
   // Sanitize userInfo fields
@@ -194,33 +193,18 @@ export const refreshToken = async (req, reply) => {
 export const logout = async (req, reply) => {
   try {
     const { refreshToken } = req.body;
-
-    // Blacklist the current JWT's jti
-    const jti = req.user?.jti;
-    if (jti) {
-      // Get token expiry in seconds
-      const exp = req.user?.exp;
-      const now = Math.floor(Date.now() / 1000);
-      const ttl = exp && exp > now ? exp - now : 900; // fallback 15m
-      await redis.set(`blacklist:jti:${jti}`, "1", "EX", ttl);
-    }
-
     await logoutUser(req.server.prisma, refreshToken);
-
     return reply.send({ message: "Logged out successfully" });
   } catch (error) {
     if (error.code === "MISSING_REFRESH_TOKEN") {
       return reply.status(400).send({ error: error.message });
     }
-
     if (error.code === "INVALID_REFRESH_TOKEN") {
       return reply.status(401).send({ error: error.message });
     }
-
     await logError(req.server.prisma, error, "auth-service", req, {
       operation: "logout",
     });
-
     return reply.status(500).send({ error: "Internal server error" });
   }
 };
