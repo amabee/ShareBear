@@ -20,7 +20,7 @@ export default function RootLayout({ children }) {
         className={`${poppins.variable} antialiased`}
         suppressHydrationWarning
       >
-        <ClientThemeProvider
+        {/* <ClientThemeProvider
           attribute="class"
           defaultTheme="light"
           enableSystem
@@ -40,8 +40,9 @@ export default function RootLayout({ children }) {
           ]}
           disableTransitionOnChange
         >
-          {children}
-        </ClientThemeProvider>
+         
+        </ClientThemeProvider> */}
+         {children}
       </body>
     </html>
   );
