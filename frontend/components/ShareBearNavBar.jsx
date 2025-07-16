@@ -16,13 +16,6 @@ import {
   User,
   LogOut,
   Palette,
-  Sun,
-  Moon,
-  Laptop,
-  Sparkles,
-  Zap,
-  Leaf,
-  Heart,
 } from "lucide-react";
 import { useTheme } from "next-themes";
 import { themes } from "./CustomThemes";
