@@ -7,7 +7,15 @@ import { Badge } from "@/components/ui/badge";
 
 import { cn } from "@/lib/utils";
 import { navItems } from "@/constants/NavItems";
-import { MoreHorizontal, Play, MessageCircle, Settings, LogOut, Palette, User } from "lucide-react";
+import {
+  MoreHorizontal,
+  Play,
+  MessageCircle,
+  Settings,
+  LogOut,
+  Palette,
+  User,
+} from "lucide-react";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -26,15 +34,15 @@ export function MobileBottomNav() {
   const { theme, setTheme } = useTheme();
 
   return (
-    <nav className="fixed bottom-0 left-0 right-0 z-50 bg-background border-t border-t-background">
-      <div className="flex items-center justify-around h-16 px-4">
+    <nav className="fixed bottom-0 left-0 right-0 z-50 bg-background border-t ">
+      <div className="flex items-center justify-around h-16 px-4 ">
         {navItems.map((item) => (
           <Link key={item.href} href={item.href}>
             <Button
               variant="ghost"
               size="icon"
               className={cn(
-                "relative h-12 w-12",
+                "relative h-12 w-12 hover:cursor-pointer",
                 pathname === item.href && "text-primary"
               )}
             >
@@ -88,10 +96,14 @@ export function MobileBottomNav() {
                       onClick={() => setTheme(themeOption.name)}
                       className="flex items-center gap-3 cursor-pointer"
                     >
-                      <div className={`w-4 h-4 rounded-full ${themeOption.color}`} />
+                      <div
+                        className={`w-4 h-4 rounded-full ${themeOption.color}`}
+                      />
                       <Icon className="h-4 w-4" />
                       <span>{themeOption.label}</span>
-                      {theme === themeOption.name && <span className="ml-auto">✓</span>}
+                      {theme === themeOption.name && (
+                        <span className="ml-auto">✓</span>
+                      )}
                     </DropdownMenuItem>
                   );
                 })}

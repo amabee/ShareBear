@@ -12,7 +12,7 @@ export function Suggestions() {
       <Card>
         <CardContent className="p-4">
           <div className="flex items-center space-x-3">
-            <Avatar className="h-12 w-12">
+            <Avatar className="h-12 w-12 border-t-2 border-b-2 font-medium ">
               <AvatarImage
                 src="/placeholder.svg?height=48&width=48"
                 alt="Your profile"
@@ -20,8 +20,8 @@ export function Suggestions() {
               <AvatarFallback>JD</AvatarFallback>
             </Avatar>
             <div className="flex-1">
-              <p className="font-semibold text-sm">johndoe</p>
-              <p className="text-xs text-muted-foreground">John Doe</p>
+              <p className=" font-semibold text-sm">John Doe</p>
+              <p className="text-xs text-muted-foreground">@johndoe</p>
             </div>
             <Button variant="ghost" size="sm" className="text-primary">
               Switch

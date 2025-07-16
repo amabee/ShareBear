@@ -6,9 +6,7 @@ import { Button } from "@/components/ui/button";
 
 export function ProfileCard() {
   return (
-    <Card
-      className="w-full max-w-sm mx-auto overflow-hidden rounded-2xl bg-white dark:bg-[#1E1E2F] text-gray-900 dark:text-white p-0"
-    >
+    <Card className="w-full max-w-sm mx-auto overflow-hidden rounded-2xl bg-white dark:bg-[#1E1E2F] text-gray-900 dark:text-white p-0">
       {/* Cover Photo */}
       <div className="relative w-full h-36">
         <img
@@ -35,7 +33,8 @@ export function ProfileCard() {
           <Button
             variant="ghost"
             size="sm"
-            className="rounded-full border border-gray-300 dark:border-gray-500/50 text-sm text-gray-900 dark:text-white hover:bg-gray-100 dark:hover:bg-white/10 transition"
+            className="rounded-full border border-gray-300 dark:border-gray-500/50 text-sm text-gray-900
+             dark:text-white hover:bg-gray-100 dark:hover:bg-white/10 transition"
           >
             View Profile
           </Button>
@@ -51,17 +50,23 @@ export function ProfileCard() {
         <div className="flex items-center justify-between text-sm mt-6 px-2">
           <div className="text-center">
             <div className="font-bold text-base">15.6K</div>
-            <div className="text-gray-500 dark:text-gray-400 text-xs">Followers</div>
+            <div className="text-gray-500 dark:text-gray-400 text-xs">
+              Followers
+            </div>
           </div>
           <div className="h-6 w-px bg-gray-200 dark:bg-gray-700" />
           <div className="text-center">
             <div className="font-bold text-base">892</div>
-            <div className="text-gray-500 dark:text-gray-400 text-xs">Following</div>
+            <div className="text-gray-500 dark:text-gray-400 text-xs">
+              Following
+            </div>
           </div>
           <div className="h-6 w-px bg-gray-200 dark:bg-gray-700" />
           <div className="text-center">
             <div className="font-bold text-base">24.1K</div>
-            <div className="text-gray-500 dark:text-gray-400 text-xs">Likes</div>
+            <div className="text-gray-500 dark:text-gray-400 text-xs">
+              Likes
+            </div>
           </div>
         </div>
       </CardContent>

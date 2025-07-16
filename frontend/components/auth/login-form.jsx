@@ -29,8 +29,10 @@ export function LoginForm() {
   };
 
   return (
-    <div className="min-h-screen min-w-full bg-gradient-to-br from-blue-50 via-white to-purple-50 flex items-center justify-center p-0">
-      <div className="w-full max-w-6xl h-screen grid lg:grid-cols-2 shadow-2xl rounded-3xl overflow-hidden bg-white">
+    <div className="min-h-screen min-w-full bg-gradient-to-br from-blue-50 via-white
+     to-purple-50 flex items-center justify-center p-0">
+      <div className="w-full max-w-6xl h-screen grid lg:grid-cols-2 shadow-2xl rounded-3xl overflow-hidden
+       bg-white">
         {/* Left Side - Image */}
         <div className="hidden lg:block relative overflow-hidden h-full">
           <div className="absolute inset-0 bg-gradient-to-br from-blue-600/20 via-transparent to-purple-800/20 z-10"></div>
