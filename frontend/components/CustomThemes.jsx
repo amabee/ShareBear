@@ -1,4 +1,19 @@
-import { Sun, Moon, Laptop, Sparkles, Zap, Leaf, Heart } from "lucide-react";
+import {
+  Sun,
+  Moon,
+  Laptop,
+  Sparkles,
+  Zap,
+  Leaf,
+  Heart,
+  Flame,
+  Waves,
+  Fish,
+  Gem,
+  Square,
+  TreePine,
+} from "lucide-react";
+
 export const themes = [
   { name: "light", label: "Light", icon: Sun, color: "bg-white" },
   { name: "dark", label: "Dark", icon: Moon, color: "bg-gray-900" },
@@ -31,5 +46,41 @@ export const themes = [
     label: "Rose",
     icon: Heart,
     color: "bg-gradient-to-r from-rose-500 to-pink-500",
+  },
+  {
+    name: "amber",
+    label: "Amber",
+    icon: Flame,
+    color: "bg-gradient-to-r from-amber-500 to-orange-500",
+  },
+  {
+    name: "teal",
+    label: "Teal",
+    icon: Waves,
+    color: "bg-gradient-to-r from-teal-500 to-cyan-500",
+  },
+  {
+    name: "coral",
+    label: "Coral",
+    icon: Fish,
+    color: "bg-gradient-to-r from-coral-500 to-pink-500",
+  },
+  {
+    name: "violet",
+    label: "Violet",
+    icon: Gem,
+    color: "bg-gradient-to-r from-violet-500 to-purple-500",
+  },
+  {
+    name: "slate",
+    label: "Slate",
+    icon: Square,
+    color: "bg-gradient-to-r from-slate-500 to-gray-500",
+  },
+  {
+    name: "emerald",
+    label: "Emerald",
+    icon: TreePine,
+    color: "bg-gradient-to-r from-emerald-500 to-green-500",
   },
 ];

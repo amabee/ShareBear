@@ -1,10 +1,8 @@
 import { Stories } from "@/components/Stories";
-
 import { HomePageLayout } from "@/components/HomePageLayout";
 import { ShareBearFeed } from "@/components/ShareBearFeed";
 import { ProfileCard } from "@/components/ProfileCard";
 import { Suggestions } from "@/components/Suggestions";
-
 
 export default function HomePage() {
   return (
@@ -13,7 +11,9 @@ export default function HomePage() {
         <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
           {/* Left Sidebar */}
           <div className="hidden lg:block">
-            <ProfileCard />
+            <div className="sticky top-6">
+              <ProfileCard />
+            </div>
           </div>
 
           {/* Main Feed */}
@@ -24,7 +24,9 @@ export default function HomePage() {
 
           {/* Right Sidebar */}
           <div className="hidden lg:block">
-            <Suggestions />
+            <div className="sticky top-6">
+              <Suggestions />
+            </div>
           </div>
         </div>
       </div>
