@@ -7,7 +7,7 @@ import {
   PlaySquare,
 } from "lucide-react";
 const notificationCount = 3;
-export const navItems = [
+export const getNavItems = (userId) => [
   { href: "/", icon: Home, label: "Home" },
   { href: "/search", icon: Search, label: "Search" },
   { href: "/reels", icon: PlaySquare, label: "Reels" },
@@ -18,5 +18,5 @@ export const navItems = [
     label: "Notifications",
     badge: notificationCount,
   },
-  { href: "/profile", icon: User, label: "Profile" },
+  { href: `/profile/${userId}`, icon: User, label: "Profile" },
 ];

@@ -1,6 +1,7 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { useRouter } from "next/navigation";
 import Image from "next/image";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
@@ -14,26 +15,92 @@ import {
   Heart,
   MessageCircle,
   Camera,
-  Star,
   Award,
   Zap,
   Target,
-  Users,
   MoreHorizontal,
   UserPlus,
   FileText,
   Video,
   PlaySquare,
   ImageIcon,
+  Users,
+  UserCheck,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { userPosts, userStats } from "@/data/userProfile";
+import {
+  mockFollowers,
+  mockFollowing,
+  userPosts,
+  userStats,
+} from "@/data/userProfile";
 import { AspectRatio } from "./ui/aspect-ratio";
 import { formatCount } from "@/utils/formatCount";
 
-export function ShareBearProfile() {
+export function ShareBearProfile({ userId, activePage = "posts" }) {
+  const router = useRouter();
   const [isFollowing, setIsFollowing] = useState(false);
-  const [activeTab, setActiveTab] = useState("posts");
+  const [activeTab, setActiveTab] = useState(activePage);
+
+  userId = "angelzm_";
+
+  useEffect(() => {
+    setActiveTab(activePage);
+  }, [activePage]);
+
+  const handleTabChange = (value) => {
+    setActiveTab(value);
+    if (value === "posts") {
+      router.push(`/profile/${userId}`);
+    } else {
+      router.push(`/profile/${userId}?page=${value}`);
+    }
+  };
+
+  const handleFollowersClick = () => {
+    router.push(`/profile/${userId}?page=followers`);
+  };
+
+  const handleFollowingClick = () => {
+    router.push(`/profile/${userId}?page=following`);
+  };
+
+  const renderFollowList = (users, title) => (
+    <div className="space-y-4">
+      <h2 className="text-xl font-semibold">{title}</h2>
+      <div className="space-y-3">
+        {users.map((user) => (
+          <div
+            key={user.id}
+            className="flex items-center justify-between p-3 rounded-lg border"
+          >
+            <div className="flex items-center gap-3">
+              <Avatar className="h-12 w-12">
+                <AvatarImage src={user.avatar} alt={user.name} />
+                <AvatarFallback>{user.name.charAt(0)}</AvatarFallback>
+              </Avatar>
+              <div>
+                <p className="font-medium">{user.name}</p>
+                <p className="text-sm text-muted-foreground">
+                  @{user.username}
+                </p>
+              </div>
+            </div>
+            <Button
+              variant={user.isFollowing ? "outline" : "default"}
+              size="sm"
+              onClick={() => {
+                // Handle follow/unfollow logic here
+                console.log(`Toggle follow for ${user.username}`);
+              }}
+            >
+              {user.isFollowing ? "Following" : "Follow"}
+            </Button>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
 
   return (
     <div className="max-w-5xl mx-auto space-y-6">
@@ -104,11 +171,23 @@ export function ShareBearProfile() {
                       Verified
                     </Badge>
                   </div>
-                  <p className="text-muted-foreground text-lg mb-2">@johndoe</p>
-                  <p className="text-sm text-muted-foreground">
-                    <strong>12.5K</strong> followers • <strong>892</strong>{" "}
-                    following
+                  <p className="text-muted-foreground text-lg mb-2">
+                    @{userId}
                   </p>
+                  <div className="flex items-center gap-4 text-sm text-muted-foreground">
+                    <button
+                      onClick={handleFollowersClick}
+                      className="hover:text-primary cursor-pointer"
+                    >
+                      <strong>12.5K</strong> followers
+                    </button>
+                    <button
+                      onClick={handleFollowingClick}
+                      className="hover:text-primary cursor-pointer"
+                    >
+                      <strong>892</strong> following
+                    </button>
+                  </div>
                 </div>
 
                 {/* Action Buttons */}
@@ -203,7 +282,11 @@ export function ShareBearProfile() {
 
       {/* Content Tabs */}
       <Card className="pt-2 border-l-0 border-r-0 rounded-none shadow-none">
-        <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
+        <Tabs
+          value={activeTab}
+          onValueChange={handleTabChange}
+          className="w-full"
+        >
           <div className="px-6">
             <TabsList className="h-12 bg-transparent flex w-full border-0 p-0">
               <TabsTrigger
@@ -250,9 +333,32 @@ export function ShareBearProfile() {
                 <Zap className="h-4 w-4" />
                 Videos
               </TabsTrigger>
+              <TabsTrigger
+                value="followers"
+                className="flex-1 flex items-center justify-center gap-2 text-base 
+                py-2 rounded-none bg-transparent border-0 shadow-none
+                data-[state=active]:bg-transparent data-[state=active]:border-b-2 
+                data-[state=active]:border-primary data-[state=active]:shadow-none
+                hover:bg-transparent focus:bg-transparent"
+              >
+                <Users className="h-4 w-4" />
+                Followers
+              </TabsTrigger>
+              <TabsTrigger
+                value="following"
+                className="flex-1 flex items-center justify-center gap-2 text-base 
+                py-2 rounded-none bg-transparent border-0 shadow-none
+                data-[state=active]:bg-transparent data-[state=active]:border-b-2 
+                data-[state=active]:border-primary data-[state=active]:shadow-none
+                hover:bg-transparent focus:bg-transparent"
+              >
+                <UserCheck className="h-4 w-4" />
+                Following
+              </TabsTrigger>
             </TabsList>
           </div>
 
+          {/* Existing TabsContent sections remain the same */}
           {/* POST SECTION */}
           <TabsContent value="posts" className="p-8">
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
@@ -457,6 +563,16 @@ export function ShareBearProfile() {
                   </Card>
                 ))}
             </div>
+          </TabsContent>
+
+          {/* NEW FOLLOWERS SECTION */}
+          <TabsContent value="followers" className="p-6">
+            {renderFollowList(mockFollowers, "Followers")}
+          </TabsContent>
+
+          {/* NEW FOLLOWING SECTION */}
+          <TabsContent value="following" className="p-6">
+            {renderFollowList(mockFollowing, "Following")}
           </TabsContent>
         </Tabs>
       </Card>

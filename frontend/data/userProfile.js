@@ -227,3 +227,53 @@ And far beyond the farm, stories were told — not just of the lazy dog who once
     type: "video",
   },
 ];
+
+export const mockFollowers = [
+  {
+    id: 1,
+    name: "Alice Johnson",
+    username: "alice_j",
+    avatar: "/placeholder.svg",
+    isFollowing: true,
+  },
+  {
+    id: 2,
+    name: "Bob Smith",
+    username: "bob_smith",
+    avatar: "/placeholder.svg",
+    isFollowing: false,
+  },
+  {
+    id: 3,
+    name: "Carol Davis",
+    username: "carol_d",
+    avatar: "/placeholder.svg",
+    isFollowing: true,
+  },
+  // Add more mock data as needed
+];
+
+export const mockFollowing = [
+  {
+    id: 1,
+    name: "David Wilson",
+    username: "david_w",
+    avatar: "/placeholder.svg",
+    isFollowing: true,
+  },
+  {
+    id: 2,
+    name: "Emma Brown",
+    username: "emma_b",
+    avatar: "/placeholder.svg",
+    isFollowing: true,
+  },
+  {
+    id: 3,
+    name: "Frank Miller",
+    username: "frank_m",
+    avatar: "/placeholder.svg",
+    isFollowing: true,
+  },
+  // Add more mock data as needed
+];

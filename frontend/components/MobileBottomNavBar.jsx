@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 
 import { cn } from "@/lib/utils";
-import { navItems } from "@/constants/NavItems";
+import { getNavItems, navItems } from "@/constants/NavItems";
 import {
   MoreHorizontal,
   Play,
@@ -32,6 +32,7 @@ import { themes } from "./CustomThemes";
 export function MobileBottomNav() {
   const pathname = usePathname();
   const { theme, setTheme } = useTheme();
+  const navItems = getNavItems("angelzm");
 
   return (
     <nav className="fixed bottom-0 left-0 right-0 z-50 bg-background border-t ">
