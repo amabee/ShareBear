@@ -1,5 +1,21 @@
 import { Camera, Users, Heart, Star } from "lucide-react";
 
+export const user = {
+  id: "angelzm_",
+  name: "John Doe",
+  username: "angelzm_",
+  bio: "✨ Digital creator sharing life's moments • 📸 Photography enthusiast • 🌍 Exploring the world one post at a time • 💭 Spreading positivity through memes and memories",
+  avatar: "https://avatarfiles.alphacoders.com/346/thumb-1920-346042.png",
+  coverImage:
+    "https://images.hdqwalls.com/wallpapers/elizabeth-olsen-as-scarlet-witch-in-wanda-vision-4k-of.jpg",
+  location: "San Francisco, CA",
+  website: "johndoe.com",
+  joinDate: "March 2023",
+  followersCount: "12.5K",
+  followingCount: "892",
+  isVerified: true,
+};
+
 export const userStats = [
   { label: "Posts", value: "127", icon: Camera, color: "text-blue-500" },
   { label: "Followers", value: "12.5K", icon: Users, color: "text-green-500" },
