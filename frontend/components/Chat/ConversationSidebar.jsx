@@ -165,10 +165,10 @@ export function ConversationSidebar({
         <div className="flex items-center justify-between p-2 rounded-xl bg-muted/40 hover:bg-muted/60 cursor-pointer transition-all duration-200 hover:scale-[1.02]">
           <div className="flex items-center gap-2">
             <div className="w-8 h-8 bg-gradient-to-br from-primary to-primary/80 rounded-lg flex items-center justify-center text-primary-foreground font-bold text-xs shadow-md">
-              U
+              JD
             </div>
             <div className="flex flex-col">
-              <div className="text-xs font-semibold">Username</div>
+              <div className="text-xs font-semibold">John Doe</div>
               <div className="text-xs text-green-600 font-medium flex items-center gap-1">
                 <div className="w-1.5 h-1.5 bg-green-500 rounded-full animate-pulse" />
                 Online
