@@ -1,0 +1,87 @@
+export const messages = [
+  {
+    id: 1,
+    text: "Hey! How are you doing?",
+    timestamp: "10:30 AM",
+    isSent: false,
+  },
+  {
+    id: 2,
+    text: "I'm doing great! Thanks for asking. How about you?",
+    timestamp: "10:32 AM",
+    isSent: true,
+    isRead: true,
+  },
+  {
+    id: 3,
+    text: "Pretty good! Just working on some new projects. Want to grab coffee later?",
+    timestamp: "10:35 AM",
+    isSent: false,
+  },
+  {
+    id: 4,
+    text: "That sounds perfect! What time works for you?",
+    timestamp: "10:36 AM",
+    isSent: true,
+    isRead: true,
+  },
+  {
+    id: 5,
+    text: "How about 3 PM at the usual place?",
+    timestamp: "10:38 AM",
+    isSent: false,
+  },
+  {
+    id: 6,
+    text: "Perfect! See you there 😊",
+    timestamp: "10:39 AM",
+    isSent: true,
+    isRead: false,
+  },
+];
+
+export const contacts = [
+  {
+    id: 1,
+    name: "Alice Johnson",
+    avatar: "/placeholder.svg?height=40&width=40&text=AJ",
+    lastMessage: "Hey! How are you doing?",
+    timestamp: "2m",
+    unreadCount: 2,
+    status: "online",
+  },
+  {
+    id: 2,
+    name: "Bob Smith",
+    avatar: "/placeholder.svg?height=40&width=40&text=BS",
+    lastMessage: "Thanks for the help yesterday!",
+    timestamp: "1h",
+    status: "away",
+  },
+  {
+    id: 3,
+    name: "Carol Davis",
+    avatar: "/placeholder.svg?height=40&width=40&text=CD",
+    lastMessage: "See you at the meeting tomorrow",
+    timestamp: "3h",
+    unreadCount: 1,
+    status: "online",
+  },
+  {
+    id: 4,
+    name: "David Wilson",
+    avatar: "/placeholder.svg?height=40&width=40&text=DW",
+    lastMessage: "Perfect! Let's do it.",
+    timestamp: "1d",
+    status: "offline",
+  },
+  {
+    id: 5,
+    name: "Emma Brown",
+    avatar: "/placeholder.svg?height=40&width=40&text=EB",
+    lastMessage: "Can you send me the files?",
+    timestamp: "2d",
+    unreadCount: 5,
+    status: "online",
+  },
+];
