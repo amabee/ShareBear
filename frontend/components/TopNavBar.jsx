@@ -5,7 +5,7 @@ export default function TopNavBar() {
   return (
     <nav
       className="w-full shadow-sm px-4 py-2 flex 
-    items-center justify-center sticky top-0 z-50 bg-background border-gray-600 dark:border-b dark:bg-background "
+    items-center justify-center fixed top-0 left-0 right-0 z-50 bg-background/95 backdrop-blur-sm border-b border-gray-200 dark:border-gray-700"
     >
       <span
         className="text-3xl flex items-center gap-2 text-gray-800 tracking-wide

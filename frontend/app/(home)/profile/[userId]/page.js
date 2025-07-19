@@ -7,7 +7,7 @@ export default function ProfilePage({ params, searchParams }) {
 
   return (
     <HomePageLayout>
-      <div className="px-4 py-6 mb-5">
+      <div className="px-4 py-0 mb-5">
         <ShareBearProfile userId={userId} activePage={page} />
       </div>
     </HomePageLayout>

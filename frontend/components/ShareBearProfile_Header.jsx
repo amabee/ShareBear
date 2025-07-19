@@ -17,7 +17,6 @@ import {
   Plus,
   PlayIcon,
 } from "lucide-react";
-import { cn } from "@/lib/utils";
 
 export function ProfileHeader({
   user,
@@ -27,7 +26,10 @@ export function ProfileHeader({
   onFollowingClick,
 }) {
   return (
-    <Card className="overflow-hidden p-0 border-b-1 border-l-0 border-t-0 border-r-0 rounded-t-lg rounded-b-none shadow-none">
+    <Card
+      className="overflow-hidden p-0 border-b-1 border-l-0 border-t-0 
+    border-r-0 rounded-t-lg rounded-b-none shadow-none"
+    >
       {/* Cover Photo */}
       <div className="relative h-80 bg-gradient-to-br from-primary/20 via-purple-500/20 to-pink-500/20">
         <Image
