@@ -8,6 +8,8 @@ export const user = {
   avatar: "https://avatarfiles.alphacoders.com/346/thumb-1920-346042.png",
   coverImage:
     "https://images.hdqwalls.com/wallpapers/elizabeth-olsen-as-scarlet-witch-in-wanda-vision-4k-of.jpg",
+  // borderImage:
+  //   "https://pokemonrevolution.net/forum/uploads/monthly_2018_10/charmender.png.89a199d1ae42e19359cd873083da465a.png",
   location: "San Francisco, CA",
   website: "johndoe.com",
   joinDate: "March 2023",

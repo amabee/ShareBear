@@ -25,6 +25,7 @@ export function ProfileHeader({
   onFollowersClick,
   onFollowingClick,
 }) {
+  console.log(user);
   return (
     <Card
       className="overflow-hidden p-0 border-b-1 border-l-0 border-t-0 
@@ -54,16 +55,29 @@ export function ProfileHeader({
         <div className="flex flex-col sm:flex-row items-start sm:items-end gap-6 -mt-20 relative z-10">
           {/* Profile Picture */}
           <div className="relative group">
-            <div className="absolute -inset-1 rounded-full blur" />
-            <Avatar className="relative h-40 w-40 border-transparent">
+            {user.borderImage ? (
+              <div
+                className="absolute inset-0 rounded-full bg-no-repeat bg-contain bg-center pointer-events-none z-20"
+                style={{
+                  backgroundImage: `url(${user.borderImage})`,
+                }}
+              />
+            ) : (
+              <div className="absolute -inset-1 rounded-full blur" />
+            )}
+
+            {/* Avatar */}
+            <Avatar className="relative h-40 w-40 border-transparent z-10">
               <AvatarImage src={user.avatar} alt={user.name} />
               <AvatarFallback className="text-4xl">
                 {user.name.charAt(0)}
               </AvatarFallback>
             </Avatar>
+
+            {/* Edit Icon */}
             <Button
               size="icon"
-              className="absolute bottom-2 right-2 h-10 w-10 border-2 rounded-full bg-muted hover:bg-muted/80 hover:cursor-pointer"
+              className="absolute bottom-2 right-2 h-10 w-10 border-2 rounded-full bg-muted hover:bg-muted/80 hover:cursor-pointer z-20"
             >
               <Camera className="h-5 w-5 dark:text-gray-400 text-gray-500" />
             </Button>
