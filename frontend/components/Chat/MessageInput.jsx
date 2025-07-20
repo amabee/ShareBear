@@ -25,7 +25,7 @@ export function MessageInput({ channelName }) {
   };
 
   return (
-    <div className="p-4 border-t border-border/50 bg-background/80 backdrop-blur-sm flex-shrink-0">
+    <div className="p-4 border-border/50 bg-background/80 backdrop-blur-sm flex-shrink-0">
       <div className="flex items-end gap-2">
         <div className="flex-1 relative">
           <Input
@@ -33,7 +33,7 @@ export function MessageInput({ channelName }) {
             onChange={(e) => setMessage(e.target.value)}
             onKeyPress={handleKeyPress}
             placeholder={`Message ${channelName}...`}
-            className="pl-3 pr-12 h-10 rounded-lg border-border/50 bg-muted/30 focus:bg-background transition-all duration-200 text-sm resize-none"
+            className="pl-3 pr-12 h-12 rounded-lg border-border/60 bg-muted/30 focus:bg-background transition-all duration-200 text-sm resize-none"
           />
 
           <div className="absolute right-1 top-1/2 -translate-y-1/2">
@@ -52,8 +52,8 @@ export function MessageInput({ channelName }) {
           disabled={!message.trim()}
           className={cn(
             "w-10 h-10 rounded-lg flex-shrink-0 transition-all duration-200",
-            message.trim() 
-              ? "bg-primary hover:bg-primary/90 shadow-lg hover:shadow-xl hover:scale-105" 
+            message.trim()
+              ? "bg-primary hover:bg-primary/90 shadow-lg hover:shadow-xl hover:scale-105"
               : "bg-muted/50 text-muted-foreground"
           )}
           size="icon"

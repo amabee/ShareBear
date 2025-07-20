@@ -1,9 +1,9 @@
 import { HomePageLayout } from "@/components/HomePageLayout";
 import { ShareBearProfile } from "@/components/ShareBearProfile";
 
-export default function ProfilePage({ params, searchParams }) {
+export default async function ProfilePage({ params, searchParams }) {
   const { userId } = params;
-  const page = searchParams?.page || "posts";
+  const page = (await searchParams)?.page || "posts";
 
   return (
     <HomePageLayout>

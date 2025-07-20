@@ -4,38 +4,13 @@ import { Button } from "@/components/ui/button";
 import { Hash, Users, Search, Inbox, HelpCircle } from "lucide-react";
 import { MessageList } from "./MessageList";
 import { MessageInput } from "./MessageInput";
+import { conversationData } from "@/data/message";
 
-const conversationData = {
-  "alice-johnson": {
-    name: "Alice Johnson",
-    type: "dm",
-    description: "Chat with Alice Johnson"
-  },
-  "bob-smith": {
-    name: "Bob Smith", 
-    type: "dm",
-    description: "Chat with Bob Smith"
-  },
-  "carol-davis": {
-    name: "Carol Davis",
-    type: "dm", 
-    description: "Chat with Carol Davis"
-  },
-  "david-wilson": {
-    name: "David Wilson",
-    type: "dm",
-    description: "Chat with David Wilson"
-  }
-};
-
-export function DirectChatArea({
-  conversationId,
-  showMobileHeader = true,
-}) {
+export function DirectChatArea({ conversationId, showMobileHeader = true }) {
   const conversation = conversationData[conversationId] || {
     name: "Unknown",
     type: "dm",
-    description: "Chat"
+    description: "Chat",
   };
 
   return (
@@ -48,9 +23,7 @@ export function DirectChatArea({
               <Hash className="w-4 h-4" />
             </div>
             <div className="flex flex-col">
-              <span className="font-semibold text-sm">
-                {conversation.name}
-              </span>
+              <span className="font-semibold text-sm">{conversation.name}</span>
               <span className="text-xs text-muted-foreground">
                 {conversation.description}
               </span>

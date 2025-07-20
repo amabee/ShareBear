@@ -1,3 +1,4 @@
+import NextTopLoader from "nextjs-toploader";
 import "../globals.css";
 import ClientThemeProvider from "@/providers/ThemeProvider";
 
@@ -23,6 +24,7 @@ export default function HomeLayout({ children }) {
       ]}
       disableTransitionOnChange
     >
+      <NextTopLoader />
       {children}
     </ClientThemeProvider>
   );
