@@ -54,7 +54,8 @@ export default function MediaCard({ media, gridSize = "normal" }) {
 
   return (
     <Card
-      className={`group relative overflow-hidden border-0 bg-gradient-to-br from-gray-50 to-gray-100 hover:shadow-xl hover:shadow-black/10 transition-all duration-300 cursor-pointer ${getGridClass()}`}
+      className={`group relative overflow-hidden border-0 bg-gradient-to-br from-gray-50 to-gray-100 
+        hover:shadow-xl hover:shadow-black/10 transition-all duration-300 cursor-pointer p-0 ${getGridClass()}`}
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
     >
