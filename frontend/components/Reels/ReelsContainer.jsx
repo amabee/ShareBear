@@ -190,11 +190,7 @@ export default function ReelsContainer() {
 
   return (
     <div className="relative h-screen w-full bg-black flex justify-center">
-      {/* Main reel container - 9:16 aspect ratio */}
       <div className="relative w-full max-w-md h-screen bg-black">
-
-
-        {/* Main scroll container */}
         <div
           ref={containerRef}
           className="h-full w-full overflow-y-auto snap-y snap-mandatory scrollbar-hide overscroll-none"

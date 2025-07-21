@@ -12,13 +12,13 @@ export default function ReelsHeader() {
   };
 
   return (
-    <div className="absolute top-0 left-0 right-0 z-50 p-4 pointer-events-none">
+    <div className="absolute top-0 left-0 right-0  p-4 pointer-events-none">
       <div className="flex justify-between items-center pointer-events-auto">
         <Button
           variant="ghost"
           size="icon"
           className="bg-black/40 hover:cursor-pointer text-white rounded-full h-12 w-12
-           backdrop-blur-md transition-all hover:scale-110"
+           backdrop-blur-md transition-all hover:scale-110 z-50"
           onClick={handleClose}
         >
           <X className="h-6 w-6" />
