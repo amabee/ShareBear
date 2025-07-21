@@ -11,7 +11,7 @@ export default function SearchHeader({
 }) {
   return (
     <div className="sticky top-0 z-40 border-b bg-background/80 backdrop-blur-md">
-      <div className="max-w-7xl mx-auto px-3 sm:px-4 py-3 sm:py-4">
+      <div className="max-w-2xl mx-auto px-3 sm:px-4 py-3 sm:py-4">
         <div className="flex items-center gap-3">
           <div className="relative flex-1 max-w-2xl">
             <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />

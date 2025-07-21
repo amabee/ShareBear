@@ -155,11 +155,6 @@ export default function MediaGrid() {
             </button>
           ))}
         </div>
-
-        {/* Debug Info - Remove in production */}
-        <div className="mt-4 text-xs text-muted-foreground text-center">
-          <p>Grid intelligently adapts to content dimensions</p>
-        </div>
       </div>
     </div>
   );
