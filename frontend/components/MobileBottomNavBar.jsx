@@ -1,5 +1,4 @@
 "use client";
-
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { Button } from "@/components/ui/button";
@@ -10,17 +9,14 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
-
 import { cn } from "@/lib/utils";
-import { getNavItems, navItems } from "@/constants/NavItems";
+import { getNavItems } from "@/constants/NavItems";
 import {
   MoreHorizontal,
-  Play,
   MessageCircle,
   Settings,
   LogOut,
   Palette,
-  User,
 } from "lucide-react";
 import {
   DropdownMenu,
@@ -34,45 +30,96 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { useTheme } from "next-themes";
 import { themes } from "./CustomThemes";
+import { useRouter } from "next/navigation";
+import { useState, useCallback } from "react";
+import { CreatePostModal } from "./Posts/CreatePostModal";
 
 export function MobileBottomNav() {
   const pathname = usePathname();
   const { theme, setTheme } = useTheme();
   const navItems = getNavItems("angelzm");
+  const router = useRouter();
+  const [modalOpen, setModalOpen] = useState(false);
+  const [lastPath, setLastPath] = useState(null);
+
+  const handleCreateClick = useCallback(
+    (e) => {
+      e.preventDefault();
+      setLastPath(pathname);
+      setModalOpen(true);
+      router.push(`${pathname}?modal=create`, { scroll: false });
+    },
+    [pathname, router]
+  );
+
+  const handleModalChange = useCallback(
+    (open) => {
+      setModalOpen(open);
+      if (!open && lastPath) {
+        router.push(lastPath, { scroll: false });
+      }
+    },
+    [lastPath, router]
+  );
 
   return (
     <TooltipProvider>
+      <CreatePostModal open={modalOpen} onOpenChange={handleModalChange} />
       <nav className="fixed bottom-0 left-0 right-0  bg-background border-t z-20">
         <div className="flex items-center justify-around h-16 px-4 ">
-          {navItems.map((item) => (
-            <Tooltip key={item.href}>
-              <TooltipTrigger asChild>
-                <Link href={item.href}>
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    className={cn(
-                      "relative h-12 w-12 hover:cursor-pointer",
-                      pathname === item.href && "text-primary"
-                    )}
-                  >
-                    <item.icon className="h-6 w-6" />
-                    {item.badge && item.badge > 0 && (
-                      <Badge
-                        variant="destructive"
-                        className="absolute -top-1 -right-1 h-5 w-5 rounded-full p-0 flex items-center justify-center text-xs"
-                      >
-                        {item.badge}
-                      </Badge>
-                    )}
-                  </Button>
-                </Link>
-              </TooltipTrigger>
-              <TooltipContent side="top">
-                <p>{item.label || item.href.replace("/", "")}</p>
-              </TooltipContent>
-            </Tooltip>
-          ))}
+          {navItems.map((item) => {
+            if (item.href === "/create") {
+              return (
+                <Tooltip key={item.href}>
+                  <TooltipTrigger asChild>
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className={cn(
+                        "relative h-12 w-12 hover:cursor-pointer",
+                        pathname === item.href && "text-primary"
+                      )}
+                      onClick={handleCreateClick}
+                    >
+                      <item.icon className="h-6 w-6" />
+                    </Button>
+                  </TooltipTrigger>
+                  <TooltipContent side="top">
+                    <p>{item.label || item.href.replace("/", "")}</p>
+                  </TooltipContent>
+                </Tooltip>
+              );
+            }
+            return (
+              <Tooltip key={item.href}>
+                <TooltipTrigger asChild>
+                  <Link href={item.href}>
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className={cn(
+                        "relative h-12 w-12 hover:cursor-pointer",
+                        pathname === item.href && "text-primary"
+                      )}
+                    >
+                      <item.icon className="h-6 w-6" />
+                      {item.badge && item.badge > 0 && (
+                        <Badge
+                          variant="destructive"
+                          className="absolute -top-1 -right-1 h-5 w-5 rounded-full p-0 flex items-center justify-center text-xs"
+                        >
+                          {item.badge}
+                        </Badge>
+                      )}
+                    </Button>
+                  </Link>
+                </TooltipTrigger>
+                <TooltipContent side="top">
+                  <p>{item.label || item.href.replace("/", "")}</p>
+                </TooltipContent>
+              </Tooltip>
+            );
+          })}
           {/* More Dropdown */}
           <Tooltip>
             <DropdownMenu>
