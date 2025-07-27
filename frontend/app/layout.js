@@ -1,6 +1,8 @@
 import { Poppins } from "next/font/google";
 import "./globals.css";
-import ClientThemeProvider from "@/providers/ThemeProvider";
+import SessionProvider from "@/providers/SessionProvider";
+import QueryProvider from "@/providers/QueryProvider";
+import { getServerSession } from "next-auth";
 
 const poppins = Poppins({
   variable: "--font-poppins",
@@ -13,14 +15,20 @@ export const metadata = {
   description: "Share memes, memories, and moments with friends",
 };
 
-export default function RootLayout({ children }) {
+export default async function RootLayout({ children }) {
+  const session = await getServerSession();
+
   return (
     <html lang="en">
       <body
         className={`${poppins.variable} antialiased`}
         suppressHydrationWarning
       >
-         {children}
+        <QueryProvider>
+          <SessionProvider session={session}>
+            {children}
+          </SessionProvider>
+        </QueryProvider>
       </body>
     </html>
   );

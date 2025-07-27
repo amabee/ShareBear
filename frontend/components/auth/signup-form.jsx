@@ -1,5 +1,6 @@
 "use client";
 import { useState } from "react";
+import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -11,6 +12,8 @@ import {
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Separator } from "@/components/ui/separator";
+import { useRegister, useLogin } from "@/hooks/useNextAuth";
+import { toast } from "sonner";
 
 export function SignupForm() {
   const [form, setForm] = useState({
@@ -23,7 +26,9 @@ export function SignupForm() {
     password: "",
     birthdate: "",
   });
-  const [isLoading, setIsLoading] = useState(false);
+  const router = useRouter();
+  const registerMutation = useRegister();
+  const loginMutation = useLogin();
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -32,11 +37,44 @@ export function SignupForm() {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    setIsLoading(true);
-    // Simulate API call
-    await new Promise((resolve) => setTimeout(resolve, 1500));
-    console.log("Signup:", form);
-    setIsLoading(false);
+    
+    // Validate required fields
+    if (!form.firstname || !form.lastname || !form.email || !form.password || !form.birthdate || !form.gender || !form.location) {
+      toast.error("Please fill in all required fields");
+      return;
+    }
+
+    try {
+      const userData = {
+        email: form.email,
+        password: form.password,
+        userInfo: {
+          firstName: form.firstname,
+          middleName: form.middlename || undefined,
+          lastName: form.lastname,
+          gender: form.gender,
+          birthDate: new Date(form.birthdate).toISOString(),
+          location: form.location,
+        },
+      };
+
+      await registerMutation.mutateAsync(userData);
+      
+      // Auto-login after successful registration
+      try {
+        await loginMutation.mutateAsync({
+          usercred: form.email,
+          password: form.password,
+        });
+        toast.success("Account created and logged in successfully!");
+        router.push("/");
+      } catch (loginError) {
+        toast.success("Account created successfully! Please sign in.");
+        router.push("/login");
+      }
+    } catch (error) {
+      toast.error(error.message || "Registration failed");
+    }
   };
 
   return (
@@ -228,11 +266,11 @@ export function SignupForm() {
                   </div>
                   <Button
                     type="submit"
-                    disabled={isLoading}
+                    disabled={registerMutation.isPending}
                     className="w-full h-12 bg-blue-500 hover:bg-blue-700 hover:cursor-pointer text-white font-medium 
                     rounded-lg transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
                   >
-                    {isLoading ? "Signing up..." : "Sign Up"}
+                    {registerMutation.isPending ? "Signing up..." : "Sign Up"}
                   </Button>
                 </form>
                 <div className="relative">

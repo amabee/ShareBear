@@ -1,6 +1,7 @@
 import NextTopLoader from "nextjs-toploader";
 import "../globals.css";
 import ClientThemeProvider from "@/providers/ThemeProvider";
+import AuthGuard from "@/components/auth/AuthGuard";
 
 export default function HomeLayout({ children }) {
   return (
@@ -25,7 +26,9 @@ export default function HomeLayout({ children }) {
       disableTransitionOnChange
     >
       <NextTopLoader />
-      {children}
+      <AuthGuard>
+        {children}
+      </AuthGuard>
     </ClientThemeProvider>
   );
 }

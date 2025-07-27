@@ -1,5 +1,6 @@
 "use client";
 import { useState } from "react";
+import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -11,28 +12,43 @@ import {
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Separator } from "@/components/ui/separator";
-import { Eye, EyeOff, Mail, Lock, ArrowRight } from "lucide-react";
+import { Eye, EyeOff, Mail, Lock } from "lucide-react";
+import { useLogin } from "@/hooks/useNextAuth";
+import { toast } from "sonner";
 
 export function LoginForm() {
   const [showPassword, setShowPassword] = useState(false);
   const [creds, setCreds] = useState("");
   const [password, setPassword] = useState("");
-  const [isLoading, setIsLoading] = useState(false);
+  const router = useRouter();
+  const loginMutation = useLogin();
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    setIsLoading(true);
-    // Simulate API call
-    await new Promise((resolve) => setTimeout(resolve, 1500));
-    console.log("Login:", { creds, password });
-    setIsLoading(false);
+    
+    if (!creds || !password) {
+      toast.error("Please fill in all fields");
+      return;
+    }
+
+    try {
+      await loginMutation.mutateAsync({ usercred: creds, password });
+      toast.success("Login successful!");
+      router.push("/");
+    } catch (error) {
+      toast.error(error.message || "Login failed");
+    }
   };
 
   return (
-    <div className="min-h-screen min-w-full bg-gradient-to-br from-blue-50 via-white
-     to-purple-50 flex items-center justify-center p-0">
-      <div className="w-full max-w-6xl h-screen grid lg:grid-cols-2 shadow-2xl rounded-3xl overflow-hidden
-       bg-white">
+    <div
+      className="min-h-screen min-w-full bg-gradient-to-br from-blue-50 via-white
+     to-purple-50 flex items-center justify-center p-0"
+    >
+      <div
+        className="w-full max-w-6xl h-screen grid lg:grid-cols-2 shadow-2xl rounded-3xl overflow-hidden
+       bg-white"
+      >
         {/* Left Side - Image */}
         <div className="hidden lg:block relative overflow-hidden h-full">
           <div className="absolute inset-0 bg-gradient-to-br from-blue-600/20 via-transparent to-purple-800/20 z-10"></div>
@@ -126,15 +142,17 @@ export function LoginForm() {
 
                   <Button
                     onClick={handleSubmit}
-                    disabled={isLoading}
+                    disabled={loginMutation.isPending}
                     className="w-full h-12 bg-blue-500 hover:bg-blue-700 hover:cursor-pointer 
                     text-white font-medium rounded-lg transition-all 
                     duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
                   >
-                    {isLoading ? (
+                    {loginMutation.isPending ? (
                       <div className="flex items-center space-x-2">
-                        <div className="w-4 h-4 border-2 border-white border-t-transparent 
-                        rounded-full animate-spin"></div>
+                        <div
+                          className="w-4 h-4 border-2 border-white border-t-transparent 
+                        rounded-full animate-spin"
+                        ></div>
                         <span>Signing in...</span>
                       </div>
                     ) : (
