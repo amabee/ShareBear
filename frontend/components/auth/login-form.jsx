@@ -14,7 +14,7 @@ import { Label } from "@/components/ui/label";
 import { Separator } from "@/components/ui/separator";
 import { Eye, EyeOff, Mail, Lock } from "lucide-react";
 import { useLogin } from "@/hooks/useNextAuth";
-import { toast } from "sonner";
+import toast from "react-hot-toast";
 
 export function LoginForm() {
   const [showPassword, setShowPassword] = useState(false);
@@ -25,7 +25,7 @@ export function LoginForm() {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    
+
     if (!creds || !password) {
       toast.error("Please fill in all fields");
       return;
@@ -37,6 +37,7 @@ export function LoginForm() {
       router.push("/");
     } catch (error) {
       toast.error(error.message || "Login failed");
+      console.log(error);
     }
   };
 
@@ -235,7 +236,11 @@ export function LoginForm() {
 
                 <div className="text-center text-sm">
                   <span className="text-gray-600">Don't have an account? </span>
-                  <button className="text-blue-600 hover:cursor-pointer hover:text-blue-800 hover:underline font-medium transition-colors">
+                  <button
+                    onClick={() => (window.location.href = "/signup")}
+                    className="text-blue-600 hover:cursor-pointer
+                   hover:text-blue-800 hover:underline font-medium transition-colors"
+                  >
                     Sign up
                   </button>
                 </div>

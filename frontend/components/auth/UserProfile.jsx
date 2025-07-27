@@ -3,7 +3,7 @@
 import { useAuth, useLogout } from "@/hooks/useNextAuth";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { toast } from "sonner";
+import toast from "react-hot-toast";
 
 export function UserProfile() {
   const { user, isAuthenticated, isLoading } = useAuth();

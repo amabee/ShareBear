@@ -34,10 +34,16 @@ const handler = NextAuth({
             };
           }
 
-          return null;
+          // If login failed, throw error with the specific message from API
+          // Log the actual response for debugging
+          // console.log("Login failed - Status:", response.status);
+          // console.log("Login failed - Data:", data);
+          
+          throw new Error(data.error || "Login failed");
         } catch (error) {
-          console.error("Auth error:", error);
-          return null;
+          // console.error("Auth error:", error);
+          
+          throw error;
         }
       },
     }),

@@ -2,6 +2,7 @@ import { Poppins } from "next/font/google";
 import "./globals.css";
 import SessionProvider from "@/providers/SessionProvider";
 import QueryProvider from "@/providers/QueryProvider";
+import { Toaster } from "react-hot-toast";
 import { getServerSession } from "next-auth";
 
 const poppins = Poppins({
@@ -27,6 +28,7 @@ export default async function RootLayout({ children }) {
         <QueryProvider>
           <SessionProvider session={session}>
             {children}
+            <Toaster />
           </SessionProvider>
         </QueryProvider>
       </body>

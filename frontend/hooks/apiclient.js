@@ -1,5 +1,6 @@
 import axios from "axios";
 import { getSession } from "next-auth/react";
+import toast from "react-hot-toast";
 
 const apiClient = axios.create({
   baseURL: process.env.NEXT_PUBLIC_API_URL || "http://localhost:9001",
@@ -31,6 +32,7 @@ apiClient.interceptors.response.use(
   async (error) => {
     // for handling 401 error A.K.A Token Expired
     if (error.response?.status === 401) {
+      toast.error("Session expired. Please login again.");
       // NextAuth will handle token refresh automatically
       // Just redirect to login if refresh fails
       window.location.href = "/login";
@@ -41,7 +43,12 @@ apiClient.interceptors.response.use(
       error.response?.data?.message ||
       error.response?.statusText ||
       error.message ||
-      "An error occured";
+      "An error occurred";
+
+    // Show toast for non-401 errors
+    if (error.response?.status !== 401) {
+      toast.error(errorMessage);
+    }
 
     return Promise.reject(new Error(errorMessage));
   }

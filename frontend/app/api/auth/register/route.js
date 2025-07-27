@@ -3,15 +3,20 @@ import { NextResponse } from "next/server";
 export async function POST(request) {
   try {
     const body = await request.json();
-    
+
     // Call your backend register endpoint
-    const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL || "http://localhost:9001"}/api/auth/register`, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify(body),
-    });
+    const response = await fetch(
+      `${
+        process.env.NEXT_PUBLIC_API_URL || "http://localhost:9001"
+      }/api/auth/register`,
+      {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(body),
+      }
+    );
 
     const data = await response.json();
 
@@ -28,12 +33,12 @@ export async function POST(request) {
       message: "Registration successful",
       user: data.user,
     });
-
   } catch (error) {
     console.error("Registration error:", error);
+    alert("Error nigga");
     return NextResponse.json(
       { error: "Internal server error" },
       { status: 500 }
     );
   }
-} 
+}

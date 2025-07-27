@@ -6,7 +6,7 @@ import useUserStore from "@/stores/userStore";
 // NextAuth session hook
 export const useAuth = () => {
   const { data: session, status, update } = useSession();
-  
+
   return {
     user: session?.user,
     isAuthenticated: !!session?.user,
@@ -37,6 +37,7 @@ export const useLogin = () => {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["user"] });
     },
+    // Error handling is done in the component
   });
 };
 
@@ -87,4 +88,4 @@ export const useLogout = () => {
       clearUserData();
     },
   });
-}; 
+};

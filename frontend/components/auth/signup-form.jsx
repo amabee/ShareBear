@@ -13,7 +13,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Separator } from "@/components/ui/separator";
 import { useRegister, useLogin } from "@/hooks/useNextAuth";
-import { toast } from "sonner";
+import toast from "react-hot-toast";
 
 export function SignupForm() {
   const [form, setForm] = useState({
@@ -37,9 +37,17 @@ export function SignupForm() {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    
+
     // Validate required fields
-    if (!form.firstname || !form.lastname || !form.email || !form.password || !form.birthdate || !form.gender || !form.location) {
+    if (
+      !form.firstname ||
+      !form.lastname ||
+      !form.email ||
+      !form.password ||
+      !form.birthdate ||
+      !form.gender ||
+      !form.location
+    ) {
       toast.error("Please fill in all required fields");
       return;
     }
@@ -59,7 +67,7 @@ export function SignupForm() {
       };
 
       await registerMutation.mutateAsync(userData);
-      
+
       // Auto-login after successful registration
       try {
         await loginMutation.mutateAsync({
@@ -338,7 +346,10 @@ export function SignupForm() {
                   <span className="text-gray-600">
                     Already have an account?{" "}
                   </span>
-                  <button className="text-blue-600 hover:cursor-pointer hover:text-blue-800 hover:underline font-medium transition-colors">
+                  <button
+                    onClick={() => (window.location.href = "/login")}
+                    className="text-blue-600 hover:cursor-pointer hover:text-blue-800 hover:underline font-medium transition-colors"
+                  >
                     Sign in
                   </button>
                 </div>
