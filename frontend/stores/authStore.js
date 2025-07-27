@@ -6,7 +6,7 @@ const useAuthStore = create(
     (set, get) => ({
       user: null,
       token: null,
-      refreshToken: null, // Initialize as null
+      refreshToken: null,
       isAuthenticated: false,
 
       setAuth: (user, token, refreshToken = null) => {
