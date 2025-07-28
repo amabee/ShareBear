@@ -6,13 +6,29 @@ import { ShareBearFeed } from "@/components/ShareBearFeed";
 import TopNavBar from "@/components/TopNavBar";
 
 // Lazy load non-critical components
-const ProfileCard = dynamic(() => import("@/components/ProfileCard").then(mod => ({ default: mod.ProfileCard })), {
-  loading: () => <div className="h-64 bg-gray-100 animate-pulse rounded-lg" />,
-});
+const ProfileCard = dynamic(
+  () =>
+    import("@/components/ProfileCard").then((mod) => ({
+      default: mod.ProfileCard,
+    })),
+  {
+    loading: () => (
+      <div className="h-64 bg-gray-100 animate-pulse rounded-lg" />
+    ),
+  }
+);
 
-const Suggestions = dynamic(() => import("@/components/Suggestions").then(mod => ({ default: mod.Suggestions })), {
-  loading: () => <div className="h-96 bg-gray-100 animate-pulse rounded-lg" />,
-});
+const Suggestions = dynamic(
+  () =>
+    import("@/components/Suggestions").then((mod) => ({
+      default: mod.Suggestions,
+    })),
+  {
+    loading: () => (
+      <div className="h-96 bg-gray-100 animate-pulse rounded-lg" />
+    ),
+  }
+);
 
 // Loading components
 const StoriesSkeleton = () => (
@@ -20,7 +36,10 @@ const StoriesSkeleton = () => (
     <div className="h-8 bg-gray-100 animate-pulse rounded w-24" />
     <div className="flex space-x-4 overflow-x-auto">
       {[...Array(5)].map((_, i) => (
-        <div key={i} className="flex-shrink-0 w-16 h-16 bg-gray-100 animate-pulse rounded-full" />
+        <div
+          key={i}
+          className="flex-shrink-0 w-16 h-16 bg-gray-100 animate-pulse rounded-full"
+        />
       ))}
     </div>
   </div>
@@ -52,7 +71,11 @@ export default function HomePage() {
         <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
           <div className="hidden lg:block">
             <div className="sticky top-24">
-              <Suspense fallback={<div className="h-64 bg-gray-100 animate-pulse rounded-lg" />}>
+              <Suspense
+                fallback={
+                  <div className="h-64 bg-gray-100 animate-pulse rounded-lg" />
+                }
+              >
                 <ProfileCard />
               </Suspense>
             </div>
@@ -67,7 +90,11 @@ export default function HomePage() {
           </div>
           <div className="hidden lg:block">
             <div className="sticky top-20">
-              <Suspense fallback={<div className="h-96 bg-gray-100 animate-pulse rounded-lg" />}>
+              <Suspense
+                fallback={
+                  <div className="h-96 bg-gray-100 animate-pulse rounded-lg" />
+                }
+              >
                 <Suggestions />
               </Suspense>
             </div>
