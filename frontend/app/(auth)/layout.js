@@ -5,21 +5,21 @@ import { useRouter } from "next/navigation";
 import { useEffect } from "react";
 import LoadingScreen from "@/components/LoadingScreen";
 
-export default function AuthGuard({ children }) {
+export default function AuthLayout({ children }) {
   const { isAuthenticated, isLoading } = useAuth();
   const router = useRouter();
 
   useEffect(() => {
-    if (!isLoading && !isAuthenticated) {
-      router.push("/login");
+    if (!isLoading && isAuthenticated) {
+      router.push("/");
     }
   }, [isAuthenticated, isLoading, router]);
 
   if (isLoading) {
-    return <LoadingScreen message="Loading..." showQuotes={false} />;
+    return <LoadingScreen message="Checking authentication..." showQuotes={false} />;
   }
 
-  if (!isAuthenticated) {
+  if (isAuthenticated) {
     return null;
   }
 

@@ -121,7 +121,7 @@ export function SignupForm() {
                 </CardDescription>
               </CardHeader>
               <CardContent className="space-y-6">
-                <form className="space-y-5" onSubmit={handleSubmit}>
+                <form onSubmit={handleSubmit} className="space-y-5">
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <div className="space-y-2">
                       <Label
@@ -139,6 +139,7 @@ export function SignupForm() {
                         onChange={handleChange}
                         className="h-12 border-gray-400 focus:border-blue-500 focus:ring-blue-500 transition-all duration-200"
                         required
+                        autoComplete="given-name"
                       />
                     </div>
                     <div className="space-y-2">
@@ -156,6 +157,7 @@ export function SignupForm() {
                         value={form.middlename}
                         onChange={handleChange}
                         className="h-12 border-gray-400 focus:border-blue-500 focus:ring-blue-500 transition-all duration-200"
+                        autoComplete="additional-name"
                       />
                     </div>
                   </div>
@@ -176,6 +178,7 @@ export function SignupForm() {
                         onChange={handleChange}
                         className="h-12 border-gray-400 focus:border-blue-500 focus:ring-blue-500 transition-all duration-200"
                         required
+                        autoComplete="family-name"
                       />
                     </div>
                     <div className="space-y-2">
@@ -190,8 +193,9 @@ export function SignupForm() {
                         name="gender"
                         value={form.gender}
                         onChange={handleChange}
-                        className="h-12 border-gray-400 focus:border-blue-500 focus:ring-blue-500 transition-all duration-200 rounded-md w-full px-3"
+                        className="h-12 border border-gray-400 focus:border-blue-500 focus:ring-blue-500 focus:ring-1 focus:outline-none transition-all duration-200 rounded-md w-full px-3 bg-white text-gray-900"
                         required
+                        aria-label="Select your gender"
                       >
                         <option value="">Select gender</option>
                         <option value="MALE">Male</option>
@@ -217,6 +221,7 @@ export function SignupForm() {
                       onChange={handleChange}
                       className="h-12 border-gray-400 focus:border-blue-500 focus:ring-blue-500 transition-all duration-200"
                       required
+                      autoComplete="address-level2"
                     />
                   </div>
                   <div className="space-y-2">
@@ -235,6 +240,7 @@ export function SignupForm() {
                       onChange={handleChange}
                       className="h-12 border-gray-400 focus:border-blue-500 focus:ring-blue-500 transition-all duration-200"
                       required
+                      autoComplete="email"
                     />
                   </div>
                   <div className="space-y-2">
@@ -253,6 +259,7 @@ export function SignupForm() {
                       onChange={handleChange}
                       className="h-12 border-gray-400 focus:border-blue-500 focus:ring-blue-500 transition-all duration-200"
                       required
+                      autoComplete="new-password"
                     />
                   </div>
                   <div className="space-y-2">
@@ -270,6 +277,7 @@ export function SignupForm() {
                       onChange={handleChange}
                       className="h-12 border-gray-400 focus:border-blue-500 focus:ring-blue-500 transition-all duration-200"
                       required
+                      autoComplete="bday"
                     />
                   </div>
                   <Button

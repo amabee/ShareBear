@@ -33,7 +33,6 @@ export function LoginForm() {
 
     try {
       await loginMutation.mutateAsync({ usercred: creds, password });
-      toast.success("Login successful!");
       router.push("/");
     } catch (error) {
       toast.error(error.message || "Login failed");
@@ -84,7 +83,7 @@ export function LoginForm() {
               </CardHeader>
 
               <CardContent className="space-y-6">
-                <div className="space-y-5">
+                <form onSubmit={handleSubmit} className="space-y-5">
                   <div className="space-y-2">
                     <Label
                       htmlFor="creds"
@@ -96,12 +95,14 @@ export function LoginForm() {
                       <Mail className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
                       <Input
                         id="creds"
+                        name="creds"
                         type="text"
                         placeholder="Enter your username or email"
                         value={creds}
                         onChange={(e) => setCreds(e.target.value)}
                         className="pl-10 h-12  border-gray-400 focus:border-blue-500 focus:ring-blue-500 transition-all duration-200"
                         required
+                        autoComplete="username"
                       />
                     </div>
                   </div>
@@ -117,12 +118,14 @@ export function LoginForm() {
                       <Lock className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
                       <Input
                         id="password"
+                        name="password"
                         type={showPassword ? "text" : "password"}
                         placeholder="Enter your password"
                         value={password}
                         onChange={(e) => setPassword(e.target.value)}
                         className="pl-10 pr-12 h-12 border-gray-400 focus:border-blue-500 focus:ring-blue-500 transition-all duration-200"
                         required
+                        autoComplete="current-password"
                       />
                       <Button
                         type="button"
@@ -131,6 +134,9 @@ export function LoginForm() {
                         className="absolute right-2 top-1/2 transform -translate-y-1/2 h-8 w-8
                          hover:bg-gray-100 transition-colors"
                         onClick={() => setShowPassword(!showPassword)}
+                        aria-label={
+                          showPassword ? "Hide password" : "Show password"
+                        }
                       >
                         {showPassword ? (
                           <EyeOff className="h-4 w-4 text-gray-400" />
@@ -142,7 +148,7 @@ export function LoginForm() {
                   </div>
 
                   <Button
-                    onClick={handleSubmit}
+                    type="submit"
                     disabled={loginMutation.isPending}
                     className="w-full h-12 bg-blue-500 hover:bg-blue-700 hover:cursor-pointer 
                     text-white font-medium rounded-lg transition-all 
@@ -162,7 +168,7 @@ export function LoginForm() {
                       </div>
                     )}
                   </Button>
-                </div>
+                </form>
 
                 <div className="text-center">
                   <button className="text-sm text-blue-600 hover:text-blue-800 hover:underline transition-colors">
