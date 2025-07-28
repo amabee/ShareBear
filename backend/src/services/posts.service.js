@@ -3,6 +3,8 @@ import {
   updatePost as updatePostRepo,
   softDeletePost as softDeletePostRepo,
   restorePost as restorePostRepo,
+  getPosts as getPostsRepo,
+  getPost as getPostRepo,
 } from "../repositories/posts.repository.js";
 
 export const createPost = async (prisma, userId, postData) => {
@@ -31,5 +33,17 @@ export const restorePost = async (prisma, postId, userId) => {
     const result = await restorePostRepo(tx, postId, userId);
     if (result.count === 0) return null;
     return await tx.post.findUnique({ where: { id: postId } });
+  });
+};
+
+export const getPosts = async (prisma, userId) => {
+  return await prisma.$transaction(async (tx) => {
+    return await getPostsRepo(tx, userId);
+  });
+};
+
+export const getPost = async (prisma, postId) => {
+  return await prisma.$transaction(async (tx) => {
+    return await getPostRepo(tx, postId);
   });
 };

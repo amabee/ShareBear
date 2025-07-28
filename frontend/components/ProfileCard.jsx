@@ -4,7 +4,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 
-export function ProfileCard() {
+export default function ProfileCard() {
   return (
     <Card className="w-full max-w-sm mx-auto overflow-hidden rounded-2xl bg-white dark:bg-[#1E1E2F] text-gray-900 dark:text-white p-0">
       {/* Cover Photo */}

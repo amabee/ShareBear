@@ -1,6 +1,57 @@
 import { uploadFile } from "../services/fileStorage/index.js";
-import { createPost as createPostService, updatePost as updatePostService, softDeletePost as softDeletePostService, restorePost as restorePostService } from "../services/posts.service.js";
+import {
+  createPost as createPostService,
+  updatePost as updatePostService,
+  softDeletePost as softDeletePostService,
+  restorePost as restorePostService,
+  getPosts as getPostsService,
+  getPost as getPostService,
+} from "../services/posts.service.js";
 import { sanitizeInput, encodeOutput } from "../utils/sanitize.js";
+
+export const getPosts = async (req, rep) => {
+  const currentUserId = req.user.userId;
+
+  try {
+    const posts = await getPostsService(req.server.prisma, currentUserId);
+
+    const encodedPosts = posts.map((post) => ({
+      ...post,
+      caption: encodeOutput(post.caption),
+      location: encodeOutput(post.location),
+      taggedUsers: encodeOutput(post.taggedUsers),
+    }));
+
+    return rep.send({ posts: encodedPosts });
+  } catch (error) {
+    req.log.error(error);
+    return rep.status(500).send({ error: "Failed to fetch posts" });
+  }
+};
+
+export const getPost = async (req, rep) => {
+  const { postId } = req.params;
+
+  try {
+    const post = await getPostService(req.server.prisma, parseInt(postId, 10));
+
+    if (!post) {
+      return rep.status(404).send({ error: "Post not found" });
+    }
+
+    const encodedPost = {
+      ...post,
+      caption: encodeOutput(post.caption),
+      location: encodeOutput(post.location),
+      taggedUsers: encodeOutput(post.taggedUsers),
+    };
+
+    return rep.send({ post: encodedPost });
+  } catch (error) {
+    req.log.error(error);
+    return rep.status(500).send({ error: "Failed to fetch post" });
+  }
+};
 
 export const createPost = async (req, reply) => {
   let fileUrl = undefined;
@@ -39,11 +90,21 @@ export const updatePost = async (req, reply) => {
   const updateData = { ...req.body };
 
   // Sanitize fields except caption (which may contain HTML for WYSIWYG)
-  if (updateData.location) updateData.location = sanitizeInput(updateData.location);
-  if (updateData.taggedUsers) updateData.taggedUsers = sanitizeInput(updateData.taggedUsers);
+  if (updateData.location)
+    updateData.location = sanitizeInput(updateData.location);
+  if (updateData.taggedUsers)
+    updateData.taggedUsers = sanitizeInput(updateData.taggedUsers);
 
-  const post = await updatePostService(req.server.prisma, postId, userId, updateData);
-  if (!post) return reply.status(404).send({ error: "Post not found or not owned by user" });
+  const post = await updatePostService(
+    req.server.prisma,
+    postId,
+    userId,
+    updateData
+  );
+  if (!post)
+    return reply
+      .status(404)
+      .send({ error: "Post not found or not owned by user" });
 
   // Encode output fields before sending
   post.caption = encodeOutput(post.caption);
@@ -56,8 +117,15 @@ export const updatePost = async (req, reply) => {
 export const softDeletePost = async (req, reply) => {
   const userId = req.user.userId;
   const postId = parseInt(req.params.postId, 10);
-  const success = await softDeletePostService(req.server.prisma, postId, userId);
-  if (!success) return reply.status(404).send({ error: "Post not found or not owned by user" });
+  const success = await softDeletePostService(
+    req.server.prisma,
+    postId,
+    userId
+  );
+  if (!success)
+    return reply
+      .status(404)
+      .send({ error: "Post not found or not owned by user" });
   return reply.send({ message: "Post deleted (soft)" });
 };
 
@@ -65,14 +133,13 @@ export const restorePost = async (req, reply) => {
   const userId = req.user.userId;
   const postId = parseInt(req.params.postId, 10);
   const post = await restorePostService(req.server.prisma, postId, userId);
-  if (!post) return reply.status(404).send({ error: "Post not found or not owned by user or not deleted" });
+  if (!post)
+    return reply
+      .status(404)
+      .send({ error: "Post not found or not owned by user or not deleted" });
   // Encode output fields before sending
   post.caption = encodeOutput(post.caption);
   post.location = encodeOutput(post.location);
   post.taggedUsers = encodeOutput(post.taggedUsers);
   return reply.send({ message: "Post restored", post });
-};
-
-export const addFriend = async (req, reply) => {
-  return reply.status(501).send({ error: "Route not implemented yet." });
 };
