@@ -14,6 +14,8 @@ import requestIdPlugin from "./plugins/requestIdPlugin.js";
 import ajvValidatorPlugin from "./plugins/ajvValidatorPlugin.js";
 import postRoutes from "./routes/posts.routes.js";
 import fastifyMultipart from "@fastify/multipart";
+import fastifyStatic from '@fastify/static';
+import path from 'path';
 
 const app = Fastify({
   trustProxy: true,
@@ -34,6 +36,12 @@ app.register(antiBotPlugin);
 app.register(requestPatternPlugin);
 app.register(requestIdPlugin);
 app.register(ajvValidatorPlugin);
+
+// Serve static files from uploads directory
+app.register(fastifyStatic, {
+  root: path.join(process.cwd(), 'uploads'),
+  prefix: '/media/',
+});
 
 app.register(fastifyMultipart, {
   addToBody: true,

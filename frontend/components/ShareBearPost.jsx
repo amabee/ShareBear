@@ -24,6 +24,7 @@ import {
   Share,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { AspectRatio } from "./ui/aspect-ratio";
 
 export function ShareBearPost({ post }) {
   const [liked, setLiked] = useState(post.liked);
@@ -32,6 +33,20 @@ export function ShareBearPost({ post }) {
   const [shareCount, setShareCount] = useState(post.shares || 0);
   const [api, setApi] = useState(null);
   const [current, setCurrent] = useState(0);
+  const [count, setCount] = useState(0);
+
+  useEffect(() => {
+    if (!api) {
+      return;
+    }
+
+    setCount(api.scrollSnapList().length);
+    setCurrent(api.selectedScrollSnap());
+
+    api.on("select", () => {
+      setCurrent(api.selectedScrollSnap());
+    });
+  }, [api]);
 
   const handleLike = () => {
     setLiked(!liked);
@@ -141,15 +156,19 @@ export function ShareBearPost({ post }) {
             <CarouselContent>
               {post.images.map((image, index) => (
                 <CarouselItem key={index}>
-                  <div className="aspect-square overflow-hidden">
+                  <AspectRatio
+                    ratio={4 / 5}
+                    className="overflow-hidden shadow-md bg-black"
+                  >
                     <Image
-                      src={image || "/placeholder.svg"}
+                      src={`${
+                        process.env.NEXT_PUBLIC_IMAGE_HOSTING_URL
+                      }/${image.imageUrl.split("/").pop()}`}
                       alt={`Post content ${index + 1}`}
-                      width={600}
-                      height={600}
-                      className="w-full h-full object-cover"
+                      fill
+                      className="object-cover transition-transform duration-300 ease-in-out"
                     />
-                  </div>
+                  </AspectRatio>
                 </CarouselItem>
               ))}
             </CarouselContent>
