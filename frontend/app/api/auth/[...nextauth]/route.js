@@ -11,16 +11,21 @@ const handler = NextAuth({
       },
       async authorize(credentials) {
         try {
-          const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL || "http://localhost:9001"}/api/auth/login`, {
-            method: "POST",
-            headers: {
-              "Content-Type": "application/json",
-            },
-            body: JSON.stringify({
-              usercred: credentials.usercred,
-              password: credentials.password,
-            }),
-          });
+          const response = await fetch(
+            `${
+              process.env.NEXT_PUBLIC_API_URL || "http://localhost:9001"
+            }/api/auth/login`,
+            {
+              method: "POST",
+              headers: {
+                "Content-Type": "application/json",
+              },
+              body: JSON.stringify({
+                usercred: credentials.usercred,
+                password: credentials.password,
+              }),
+            }
+          );
 
           const data = await response.json();
 
@@ -34,15 +39,8 @@ const handler = NextAuth({
             };
           }
 
-          // If login failed, throw error with the specific message from API
-          // Log the actual response for debugging
-          // console.log("Login failed - Status:", response.status);
-          // console.log("Login failed - Data:", data);
-          
           throw new Error(data.error || "Login failed");
         } catch (error) {
-          // console.error("Auth error:", error);
-          
           throw error;
         }
       },
@@ -95,15 +93,20 @@ const handler = NextAuth({
 
 async function refreshAccessToken(token) {
   try {
-    const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL || "http://localhost:9001"}/api/auth/refresh`, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        refreshToken: token.refreshToken,
-      }),
-    });
+    const response = await fetch(
+      `${
+        process.env.NEXT_PUBLIC_API_URL || "http://localhost:9001"
+      }/api/auth/refresh`,
+      {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          refreshToken: token.refreshToken,
+        }),
+      }
+    );
 
     const refreshedTokens = await response.json();
 
@@ -127,4 +130,4 @@ async function refreshAccessToken(token) {
   }
 }
 
-export { handler as GET, handler as POST }; 
+export { handler as GET, handler as POST };

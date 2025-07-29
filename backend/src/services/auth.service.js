@@ -150,6 +150,19 @@ export async function refreshUserToken(prisma, refreshToken, req) {
   if (!session || !session.user) {
     const error = new Error("Invalid refresh token");
     error.code = "INVALID_REFRESH_TOKEN";
+
+    await logSecurityEvent(
+      prisma,
+      `Failed to refresh token - Token sent: ${session}`,
+      req,
+      "ERROR",
+      {
+        userId: user.id,
+        username: user.username,
+        reason: "invalid_refresh_token",
+      }
+    );
+
     throw error;
   }
 
