@@ -115,11 +115,11 @@ model Post {
   id             Int            @id @default(autoincrement())
   userId         Int
   contentType    ContentType
-  caption        String?
-  contentUrl     String?
-  thumbnailUrl   String?
-  location       String?
-  taggedUsers    String? // Comma-separated list of user IDs or JSON (flexible for now)
+  caption        String? @db.VarChar(2000)
+  contentUrl     String? @db.VarChar(500)
+  thumbnailUrl   String? @db.VarChar(500)
+  location       String? @db.VarChar(100)
+  taggedUsers    String?
   privacyLevel   PrivacySetting @default(PUBLIC)
   allowsComments Boolean        @default(true)
   allowsShares   Boolean        @default(true)
