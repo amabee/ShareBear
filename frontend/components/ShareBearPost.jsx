@@ -82,7 +82,7 @@ export function ShareBearPost({ post }) {
   };
 
   return (
-    <Card className="max-w-lg mx-auto shadow-md">
+    <Card className="max-w-lg mx-auto shadow-md border-none">
       {/* Header */}
       <div className="flex items-center justify-between p-4 pb-3">
         <div className="flex items-center space-x-3">
