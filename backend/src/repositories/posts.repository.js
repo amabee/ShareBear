@@ -42,6 +42,11 @@ export const getPosts = async (prisma, userId) => {
           },
         },
       },
+      images: {
+        orderBy: {
+          displayOrder: "asc",
+        },
+      },
       _count: {
         select: {
           likes: true,
@@ -86,6 +91,11 @@ export const getPost = async (prisma, postId) => {
               profilePictureUrl: true,
             },
           },
+        },
+      },
+      images: {
+        orderBy: {
+          displayOrder: "asc",
         },
       },
       likes: {
@@ -144,23 +154,7 @@ export const getPost = async (prisma, postId) => {
 
 
 
-export const createPost = async (prisma, userId, postData) => {
-  return await prisma.post.create({
-    data: {
-      userId,
-      contentType: postData.contentType,
-      caption: postData.caption,
-      contentUrl: postData.contentUrl,
-      thumbnailUrl: postData.thumbnailUrl,
-      location: postData.location,
-      taggedUsers: postData.taggedUsers,
-      privacyLevel: postData.privacyLevel,
-      allowsComments: postData.allowsComments,
-      allowsShares: postData.allowsShares,
-      expiresAt: postData.expiresAt,
-    },
-  });
-};
+
 
 export const updatePost = async (prisma, postId, userId, updateData) => {
   return await prisma.post.updateMany({
@@ -215,6 +209,11 @@ export const getPostsByHashtag = async (prisma, hashtagName, userId) => {
               location: true,
             },
           },
+        },
+      },
+      images: {
+        orderBy: {
+          displayOrder: "asc",
         },
       },
       _count: {

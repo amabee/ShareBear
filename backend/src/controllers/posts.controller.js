@@ -60,41 +60,74 @@ export const getPost = async (req, rep) => {
 };
 
 export const createPost = async (req, reply) => {
-  let fileUrl = undefined;
+  console.log("=== CREATE POST START ===");
+  console.log("Content-Type:", req.headers["content-type"]);
+  console.log("Request body keys:", Object.keys(req.body || {}));
+  console.log("Files:", req.files?.length || 0);
+
   const MAX_CAPTION_LENGTH = 2000;
-  if (req.file) {
-    fileUrl = await uploadFile(req.file, "posts");
-  }
 
-  const userId = req.user.userId;
-  const postData = {
-    contentType: req.body.contentType,
-    // Do NOT sanitize caption, just store as-is
-    caption: req.body.caption,
-    contentUrl: fileUrl,
-    thumbnailUrl: req.body.thumbnailUrl,
-    location: sanitizeInput(req.body.location),
-    taggedUsers: sanitizeInput(req.body.taggedUsers),
-    privacyLevel: req.body.privacyLevel,
-    allowsComments: req.body.allowsComments,
-    allowsShares: req.body.allowsShares,
-    expiresAt: req.body.expiresAt,
-  };
+  try {
+    const userId = req.user.userId;
+    const images = [];
 
-  if (postData.caption && postData.caption.length > MAX_CAPTION_LENGTH) {
-    return reply.status(400).send({
-      error: `Caption too long. Maximum ${MAX_CAPTION_LENGTH} characters allowed.`,
-    });
-  }
+    // Handle multiple file uploads from Fastify multipart
+    if (req.files && req.files.length > 0) {
+      console.log(`Processing ${req.files.length} file uploads`);
+      
+      for (let i = 0; i < req.files.length; i++) {
+        const file = req.files[i];
+        console.log(`Processing file ${i + 1}:`, file.filename);
+        
+        const fileUrl = await uploadFile(file, "posts");
+        console.log(`File ${i + 1} uploaded successfully:`, fileUrl);
+        
+        images.push({
+          url: fileUrl,
+          altText: req.body[`altText_${i}`] || null,
+          width: req.body[`width_${i}`] ? parseInt(req.body[`width_${i}`]) : null,
+          height: req.body[`height_${i}`] ? parseInt(req.body[`height_${i}`]) : null,
+          fileSize: req.body[`fileSize_${i}`] ? parseInt(req.body[`fileSize_${i}`]) : null,
+        });
+      }
+    }
 
-  const post = await createPostService(req.server.prisma, userId, postData);
-  // Encode output fields before sending
-  if (post) {
-    post.caption = encodeOutput(safeDecodeOutput(post.caption)); // Safely decode first, then encode for output
-    post.location = encodeOutput(safeDecodeOutput(post.location));
-    post.taggedUsers = encodeOutput(safeDecodeOutput(post.taggedUsers));
+    const postData = {
+      contentType: req.body.contentType,
+      // Do NOT sanitize caption, just store as-is
+      caption: req.body.caption,
+      images: images,
+      thumbnailUrl: req.body.thumbnailUrl,
+      location: sanitizeInput(req.body.location),
+      taggedUsers: sanitizeInput(req.body.taggedUsers),
+      privacyLevel: req.body.privacyLevel,
+      allowsComments:
+        req.body.allowsComments === "true" || req.body.allowsComments === true,
+      allowsShares:
+        req.body.allowsShares === "true" || req.body.allowsShares === true,
+      expiresAt: req.body.expiresAt || null,
+    };
+
+    if (postData.caption && postData.caption.length > MAX_CAPTION_LENGTH) {
+      return reply.status(400).send({
+        error: `Caption too long. Maximum ${MAX_CAPTION_LENGTH} characters allowed.`,
+      });
+    }
+
+    const post = await createPostService(req.server.prisma, userId, postData);
+    // Encode output fields before sending
+    if (post) {
+      post.caption = encodeOutput(safeDecodeOutput(post.caption)); // Safely decode first, then encode for output
+      post.location = encodeOutput(safeDecodeOutput(post.location));
+      post.taggedUsers = encodeOutput(safeDecodeOutput(post.taggedUsers));
+    }
+    return reply.status(201).send({ message: "Post created", post });
+  } catch (error) {
+    console.error("Create post error:", error);
+    return reply
+      .status(500)
+      .send({ error: "Failed to create post: " + error.message });
   }
-  return reply.status(201).send({ message: "Post created", post });
 };
 
 export const updatePost = async (req, reply) => {
@@ -102,11 +135,42 @@ export const updatePost = async (req, reply) => {
   const postId = parseInt(req.params.postId, 10);
   const updateData = { ...req.body };
 
+  // Convert string boolean values to actual booleans
+  if (updateData.allowsComments !== undefined) {
+    updateData.allowsComments =
+      updateData.allowsComments === "true" ||
+      updateData.allowsComments === true;
+  }
+  if (updateData.allowsShares !== undefined) {
+    updateData.allowsShares =
+      updateData.allowsShares === "true" || updateData.allowsShares === true;
+  }
+
   // Sanitize fields except caption (which may contain HTML for WYSIWYG)
   if (updateData.location)
     updateData.location = sanitizeInput(updateData.location);
   if (updateData.taggedUsers)
     updateData.taggedUsers = sanitizeInput(updateData.taggedUsers);
+
+  // Handle image updates if files are provided
+  if (req.files && req.files.length > 0) {
+    const images = [];
+    
+    for (let i = 0; i < req.files.length; i++) {
+      const file = req.files[i];
+      const fileUrl = await uploadFile(file, "posts");
+      
+      images.push({
+        url: fileUrl,
+        altText: req.body[`altText_${i}`] || null,
+        width: req.body[`width_${i}`] ? parseInt(req.body[`width_${i}`]) : null,
+        height: req.body[`height_${i}`] ? parseInt(req.body[`height_${i}`]) : null,
+        fileSize: req.body[`fileSize_${i}`] ? parseInt(req.body[`fileSize_${i}`]) : null,
+      });
+    }
+    
+    updateData.images = images;
+  }
 
   const post = await updatePostService(
     req.server.prisma,

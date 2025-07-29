@@ -13,6 +13,7 @@ import requestPatternPlugin from "./plugins/requestPatternPlugin.js";
 import requestIdPlugin from "./plugins/requestIdPlugin.js";
 import ajvValidatorPlugin from "./plugins/ajvValidatorPlugin.js";
 import postRoutes from "./routes/posts.routes.js";
+import fastifyMultipart from "@fastify/multipart";
 
 const app = Fastify({
   trustProxy: true,
@@ -34,19 +35,28 @@ app.register(requestPatternPlugin);
 app.register(requestIdPlugin);
 app.register(ajvValidatorPlugin);
 
-// Register multipart plugin for file uploads
-app.register(import('@fastify/multipart'), {
+app.register(fastifyMultipart, {
+  addToBody: true,
   limits: {
-    fileSize: 10 * 1024 * 1024, // 10MB limit
-    files: 1 // Only allow 1 file per request
-  }
+    fileSize: 100 * 1024 * 1024,
+    files: 10,
+  },
 });
 
 // Custom Error Message Handler. fucking fastify and AJV! 😡😡😡😡
 
 app.setErrorHandler((error, request, reply) => {
+  console.log("Error details:", JSON.stringify(error, null, 2));
+
   if (error.validation && error.validation[0] && error.validation[0].message) {
     return reply.status(400).send({ error: error.validation[0].message });
+  }
+
+  if (error.validation) {
+    return reply.status(400).send({
+      error: "Validation error",
+      details: error.validation,
+    });
   }
 
   reply.send(error);
@@ -56,7 +66,7 @@ app.setErrorHandler((error, request, reply) => {
 app.register(helloRoutes, { prefix: "/api" });
 app.register(authRoutes, { prefix: "/api/auth" });
 app.register(followRoutes, { prefix: "/api/follow" });
-app.register(postRoutes, {prefix: "/api/posts"})
+app.register(postRoutes, { prefix: "/api/posts" });
 
 app.listen({ port: config.port, host: config.host }, (err, address) => {
   if (err) {

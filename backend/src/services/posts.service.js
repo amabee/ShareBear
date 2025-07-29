@@ -1,5 +1,4 @@
 import {
-  createPost as createPostRepo,
   updatePost as updatePostRepo,
   softDeletePost as softDeletePostRepo,
   restorePost as restorePostRepo,
@@ -17,7 +16,6 @@ export const createPost = async (prisma, userId, postData) => {
         userId,
         contentType: postData.contentType,
         caption: postData.caption,
-        contentUrl: postData.contentUrl,
         thumbnailUrl: postData.thumbnailUrl,
         location: postData.location,
         taggedUsers: postData.taggedUsers,
@@ -27,6 +25,23 @@ export const createPost = async (prisma, userId, postData) => {
         expiresAt: postData.expiresAt,
       },
     });
+
+    // Handle image uploads if present
+    if (postData.images && postData.images.length > 0) {
+      const imageData = postData.images.map((image, index) => ({
+        postId: post.id,
+        imageUrl: image.url,
+        altText: image.altText || null,
+        displayOrder: index,
+        width: image.width || null,
+        height: image.height || null,
+        fileSize: image.fileSize || null,
+      }));
+
+      await tx.postImage.createMany({
+        data: imageData,
+      });
+    }
 
     // Extract and process hashtags from caption
     if (postData.caption) {
@@ -50,6 +65,31 @@ export const updatePost = async (prisma, postId, userId, updateData) => {
     });
 
     if (result.count === 0) return null;
+
+    // Handle image updates if present
+    if (updateData.images !== undefined) {
+      // Delete existing images
+      await tx.postImage.deleteMany({
+        where: { postId },
+      });
+
+      // Create new images if provided
+      if (updateData.images && updateData.images.length > 0) {
+        const imageData = updateData.images.map((image, index) => ({
+          postId,
+          imageUrl: image.url,
+          altText: image.altText || null,
+          displayOrder: index,
+          width: image.width || null,
+          height: image.height || null,
+          fileSize: image.fileSize || null,
+        }));
+
+        await tx.postImage.createMany({
+          data: imageData,
+        });
+      }
+    }
 
     // If caption was updated, process hashtags
     if (updateData.caption !== undefined) {

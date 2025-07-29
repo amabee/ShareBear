@@ -115,10 +115,9 @@ model Post {
   id             Int            @id @default(autoincrement())
   userId         Int
   contentType    ContentType
-  caption        String? @db.VarChar(2000)
-  contentUrl     String? @db.VarChar(500)
-  thumbnailUrl   String? @db.VarChar(500)
-  location       String? @db.VarChar(100)
+  caption        String?        @db.VarChar(2000)
+  thumbnailUrl   String?        @db.VarChar(500)
+  location       String?        @db.VarChar(100)
   taggedUsers    String?
   privacyLevel   PrivacySetting @default(PUBLIC)
   allowsComments Boolean        @default(true)
@@ -126,14 +125,33 @@ model Post {
 
   createdAt DateTime  @default(now())
   updatedAt DateTime  @updatedAt
-  expiresAt DateTime? // For story-like posts
+  expiresAt DateTime?
   isDeleted Boolean   @default(false)
 
   user     User          @relation(fields: [userId], references: [id])
+  images   PostImage[]
   comments Comment[]
   likes    Like[]
   shares   Share[]
-  hashtags PostHashtag[] // Many-to-many relation with hashtags
+  hashtags PostHashtag[]
+}
+
+model PostImage {
+  id           Int     @id @default(autoincrement())
+  postId       Int
+  imageUrl     String  @db.VarChar(500)
+  altText      String? @db.VarChar(200)
+  displayOrder Int     @default(0)
+  width        Int?
+  height       Int?
+  fileSize     Int?
+
+  createdAt DateTime @default(now())
+
+  post Post @relation(fields: [postId], references: [id], onDelete: Cascade)
+
+  @@index([postId])
+  @@index([postId, displayOrder])
 }
 
 model Comment {
