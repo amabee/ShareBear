@@ -34,6 +34,14 @@ app.register(requestPatternPlugin);
 app.register(requestIdPlugin);
 app.register(ajvValidatorPlugin);
 
+// Register multipart plugin for file uploads
+app.register(import('@fastify/multipart'), {
+  limits: {
+    fileSize: 10 * 1024 * 1024, // 10MB limit
+    files: 1 // Only allow 1 file per request
+  }
+});
+
 // Custom Error Message Handler. fucking fastify and AJV! 😡😡😡😡
 
 app.setErrorHandler((error, request, reply) => {
