@@ -46,6 +46,26 @@ export function ShareBearPost({ post }) {
     setShareCount(shareCount + 1);
   };
 
+  // Function to render caption with inline hashtags
+  const renderCaptionWithHashtags = (caption) => {
+    const parts = caption.split(/(#\w+)/g);
+
+    return parts.map((part, index) => {
+      if (part.startsWith("#")) {
+        return (
+          <span
+            key={index}
+            className="text-blue-600 font-medium hover:text-blue-700 cursor-pointer"
+          >
+            {part}
+          </span>
+        );
+      }
+      // Regular text
+      return <span key={index}>{part}</span>;
+    });
+  };
+
   return (
     <Card className="max-w-lg mx-auto shadow-md">
       {/* Header */}
@@ -81,7 +101,7 @@ export function ShareBearPost({ post }) {
               )}
             </div>
 
-            {/* 👇 Username added here */}
+            {/* Username */}
             {post.user?.username && (
               <div className="text-xs text-muted-foreground leading-none mt-1">
                 @{post.user.username}
@@ -105,26 +125,13 @@ export function ShareBearPost({ post }) {
         </Button>
       </div>
 
-      {/* Caption - Above images like Facebook */}
+      {/* Caption with inline hashtags */}
       <div className="px-4 pb-3">
         <div className="mb-2">
-          <span className="text-sm">{post.caption}</span>
+          <span className="text-sm">
+            {renderCaptionWithHashtags(post.caption)}
+          </span>
         </div>
-
-        {/* Hashtags */}
-        {post.hashtags.length > 0 && (
-          <div className="flex flex-wrap gap-2 mt-2">
-            {post.hashtags.map((tag) => (
-              <Badge
-                key={tag.hashtag.id}
-                variant="secondary"
-                className="text-xs font-medium rounded-full bg-muted border border-border px-3 py-1 hover:bg-muted/70 transition-colors"
-              >
-                #{tag.hashtag.name}
-              </Badge>
-            ))}
-          </div>
-        )}
       </div>
 
       {/* Images with Carousel */}

@@ -9,7 +9,11 @@ import {
   getPostsByHashtag as getPostsByHashtagService,
   getTrendingHashtags as getTrendingHashtagsService,
 } from "../services/posts.service.js";
-import { sanitizeInput, encodeOutput } from "../utils/sanitize.js";
+import {
+  sanitizeInput,
+  encodeOutput,
+  safeDecodeOutput,
+} from "../utils/sanitize.js";
 
 export const getPosts = async (req, rep) => {
   const currentUserId = req.user.userId;
@@ -19,9 +23,9 @@ export const getPosts = async (req, rep) => {
 
     const encodedPosts = posts.map((post) => ({
       ...post,
-      caption: encodeOutput(post.caption),
+      caption: safeDecodeOutput(post.caption),
       location: encodeOutput(post.location),
-      taggedUsers: encodeOutput(post.taggedUsers),
+      taggedUsers: post.taggedUsers,
     }));
 
     return rep.send({ posts: encodedPosts });
@@ -43,9 +47,9 @@ export const getPost = async (req, rep) => {
 
     const encodedPost = {
       ...post,
-      caption: encodeOutput(post.caption),
-      location: encodeOutput(post.location),
-      taggedUsers: encodeOutput(post.taggedUsers),
+      caption: encodeOutput(safeDecodeOutput(post.caption)), // Safely decode first, then encode for output
+      location: encodeOutput(safeDecodeOutput(post.location)),
+      taggedUsers: encodeOutput(safeDecodeOutput(post.taggedUsers)),
     };
 
     return rep.send({ post: encodedPost });
@@ -57,6 +61,7 @@ export const getPost = async (req, rep) => {
 
 export const createPost = async (req, reply) => {
   let fileUrl = undefined;
+  const MAX_CAPTION_LENGTH = 2000;
   if (req.file) {
     fileUrl = await uploadFile(req.file, "posts");
   }
@@ -76,12 +81,18 @@ export const createPost = async (req, reply) => {
     expiresAt: req.body.expiresAt,
   };
 
+  if (postData.caption && postData.caption.length > MAX_CAPTION_LENGTH) {
+    return reply.status(400).send({
+      error: `Caption too long. Maximum ${MAX_CAPTION_LENGTH} characters allowed.`,
+    });
+  }
+
   const post = await createPostService(req.server.prisma, userId, postData);
   // Encode output fields before sending
   if (post) {
-    post.caption = encodeOutput(post.caption); // Always encode on output
-    post.location = encodeOutput(post.location);
-    post.taggedUsers = encodeOutput(post.taggedUsers);
+    post.caption = encodeOutput(safeDecodeOutput(post.caption)); // Safely decode first, then encode for output
+    post.location = encodeOutput(safeDecodeOutput(post.location));
+    post.taggedUsers = encodeOutput(safeDecodeOutput(post.taggedUsers));
   }
   return reply.status(201).send({ message: "Post created", post });
 };
@@ -109,9 +120,9 @@ export const updatePost = async (req, reply) => {
       .send({ error: "Post not found or not owned by user" });
 
   // Encode output fields before sending
-  post.caption = encodeOutput(post.caption);
-  post.location = encodeOutput(post.location);
-  post.taggedUsers = encodeOutput(post.taggedUsers);
+  post.caption = encodeOutput(safeDecodeOutput(post.caption)); // Safely decode first, then encode for output
+  post.location = encodeOutput(safeDecodeOutput(post.location));
+  post.taggedUsers = encodeOutput(safeDecodeOutput(post.taggedUsers));
 
   return reply.send({ message: "Post updated", post });
 };
@@ -140,9 +151,9 @@ export const restorePost = async (req, reply) => {
       .status(404)
       .send({ error: "Post not found or not owned by user or not deleted" });
   // Encode output fields before sending
-  post.caption = encodeOutput(post.caption);
-  post.location = encodeOutput(post.location);
-  post.taggedUsers = encodeOutput(post.taggedUsers);
+  post.caption = encodeOutput(safeDecodeOutput(post.caption)); // Safely decode first, then encode for output
+  post.location = encodeOutput(safeDecodeOutput(post.location));
+  post.taggedUsers = encodeOutput(safeDecodeOutput(post.taggedUsers));
   return reply.send({ message: "Post restored", post });
 };
 
@@ -151,13 +162,17 @@ export const getPostsByHashtag = async (req, rep) => {
   const currentUserId = req.user.userId;
 
   try {
-    const posts = await getPostsByHashtagService(req.server.prisma, hashtag, currentUserId);
+    const posts = await getPostsByHashtagService(
+      req.server.prisma,
+      hashtag,
+      currentUserId
+    );
 
     const encodedPosts = posts.map((post) => ({
       ...post,
-      caption: encodeOutput(post.caption),
-      location: encodeOutput(post.location),
-      taggedUsers: encodeOutput(post.taggedUsers),
+      caption: encodeOutput(safeDecodeOutput(post.caption)), // Safely decode first, then encode for output
+      location: encodeOutput(safeDecodeOutput(post.location)),
+      taggedUsers: encodeOutput(safeDecodeOutput(post.taggedUsers)),
     }));
 
     return rep.send({ posts: encodedPosts, hashtag });
