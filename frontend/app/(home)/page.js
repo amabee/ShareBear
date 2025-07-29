@@ -1,4 +1,4 @@
-import ShareBearFeedClient from "@/components/ShareBearFeedClient";
+import ShareBearFeedClient from "@/components/Clients/ShareBearFeedClient";
 import { Stories } from "@/components/Stories";
 import { HomePageLayout } from "@/components/HomePageLayout";
 import TopNavBar from "@/components/TopNavBar";

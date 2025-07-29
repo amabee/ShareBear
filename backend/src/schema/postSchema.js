@@ -45,6 +45,22 @@ export const createPostSchema = {
             updatedAt: { type: "string" },
             expiresAt: { type: "string" },
             isDeleted: { type: "boolean" },
+            hashtags: {
+              type: "array",
+              items: {
+                type: "object",
+                properties: {
+                  hashtag: {
+                    type: "object",
+                    properties: {
+                      id: { type: "number" },
+                      name: { type: "string" },
+                      usageCount: { type: "number" },
+                    },
+                  },
+                },
+              },
+            },
           },
         },
       },
@@ -95,8 +111,8 @@ export const updatePostSchema = {
     additionalProperties: false,
     minProperties: 1,
     errorMessage: {
-      minProperties: "At least one field must be provided to update."
-    }
+      minProperties: "At least one field must be provided to update.",
+    },
   },
   response: {
     200: {
@@ -124,7 +140,10 @@ export const softDeletePostSchema = {
 
 export const restorePostSchema = {
   response: {
-    200: { type: "object", properties: { message: { type: "string" }, post: { type: "object" } } },
+    200: {
+      type: "object",
+      properties: { message: { type: "string" }, post: { type: "object" } },
+    },
     401: { type: "object", properties: { error: { type: "string" } } },
     404: { type: "object", properties: { error: { type: "string" } } },
     500: { type: "object", properties: { error: { type: "string" } } },
@@ -156,6 +175,22 @@ export const getPostsSchema = {
               updatedAt: { type: "string" },
               expiresAt: { type: "string" },
               isDeleted: { type: "boolean" },
+              hashtags: {
+                type: "array",
+                items: {
+                  type: "object",
+                  properties: {
+                    hashtag: {
+                      type: "object",
+                      properties: {
+                        id: { type: "number" },
+                        name: { type: "string" },
+                        usageCount: { type: "number" },
+                      },
+                    },
+                  },
+                },
+              },
               user: {
                 type: "object",
                 properties: {
@@ -164,7 +199,14 @@ export const getPostsSchema = {
                   userInfo: {
                     type: "object",
                     properties: {
+                      firstName: { type: "string" },
+                      middleName: { type: "string" },
+                      lastName: { type: "string" },
+                      displayName: { type: "string" },
                       profilePictureUrl: { type: "string" },
+                      coverPhotoUrl: { type: "string" },
+                      bio: { type: "string" },
+                      location: { type: "string" },
                     },
                   },
                 },
@@ -217,6 +259,22 @@ export const getPostSchema = {
             updatedAt: { type: "string" },
             expiresAt: { type: "string" },
             isDeleted: { type: "boolean" },
+            hashtags: {
+              type: "array",
+              items: {
+                type: "object",
+                properties: {
+                  hashtag: {
+                    type: "object",
+                    properties: {
+                      id: { type: "number" },
+                      name: { type: "string" },
+                      usageCount: { type: "number" },
+                    },
+                  },
+                },
+              },
+            },
             user: {
               type: "object",
               properties: {
@@ -292,6 +350,123 @@ export const getPostSchema = {
     },
     401: { type: "object", properties: { error: { type: "string" } } },
     404: { type: "object", properties: { error: { type: "string" } } },
+    500: { type: "object", properties: { error: { type: "string" } } },
+  },
+};
+
+export const getPostsByHashtagSchema = {
+  params: {
+    type: "object",
+    properties: {
+      hashtag: { type: "string", minLength: 1 },
+    },
+    required: ["hashtag"],
+  },
+  response: {
+    200: {
+      type: "object",
+      properties: {
+        posts: {
+          type: "array",
+          items: {
+            type: "object",
+            properties: {
+              id: { type: "number" },
+              userId: { type: "number" },
+              contentType: { type: "string" },
+              caption: { type: "string" },
+              contentUrl: { type: "string" },
+              thumbnailUrl: { type: "string" },
+              location: { type: "string" },
+              taggedUsers: { type: "string" },
+              privacyLevel: { type: "string" },
+              allowsComments: { type: "boolean" },
+              allowsShares: { type: "boolean" },
+              createdAt: { type: "string" },
+              updatedAt: { type: "string" },
+              expiresAt: { type: "string" },
+              isDeleted: { type: "boolean" },
+              hashtags: {
+                type: "array",
+                items: {
+                  type: "object",
+                  properties: {
+                    hashtag: {
+                      type: "object",
+                      properties: {
+                        id: { type: "number" },
+                        name: { type: "string" },
+                        usageCount: { type: "number" },
+                      },
+                    },
+                  },
+                },
+              },
+              user: {
+                type: "object",
+                properties: {
+                  id: { type: "number" },
+                  username: { type: "string" },
+                  userInfo: {
+                    type: "object",
+                    properties: {
+                      firstName: { type: "string" },
+                      middleName: { type: "string" },
+                      lastName: { type: "string" },
+                      displayName: { type: "string" },
+                      profilePictureUrl: { type: "string" },
+                      coverPhotoUrl: { type: "string" },
+                      bio: { type: "string" },
+                      location: { type: "string" },
+                    },
+                  },
+                },
+              },
+              _count: {
+                type: "object",
+                properties: {
+                  likes: { type: "number" },
+                  comments: { type: "number" },
+                  shares: { type: "number" },
+                },
+              },
+            },
+          },
+        },
+        hashtag: { type: "string" },
+      },
+    },
+    401: { type: "object", properties: { error: { type: "string" } } },
+    500: { type: "object", properties: { error: { type: "string" } } },
+  },
+};
+
+export const getTrendingHashtagsSchema = {
+  querystring: {
+    type: "object",
+    properties: {
+      limit: { type: "string", pattern: "^\\d+$" },
+    },
+  },
+  response: {
+    200: {
+      type: "object",
+      properties: {
+        hashtags: {
+          type: "array",
+          items: {
+            type: "object",
+            properties: {
+              id: { type: "number" },
+              name: { type: "string" },
+              usageCount: { type: "number" },
+              createdAt: { type: "string" },
+            },
+          },
+        },
+      },
+    },
+    401: { type: "object", properties: { error: { type: "string" } } },
     500: { type: "object", properties: { error: { type: "string" } } },
   },
 };

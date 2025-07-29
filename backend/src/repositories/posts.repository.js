@@ -30,7 +30,14 @@ export const getPosts = async (prisma, userId) => {
           username: true,
           userInfo: {
             select: {
+              firstName: true,
+              middleName: true,
+              lastName: true,
+              displayName: true,
               profilePictureUrl: true,
+              coverPhotoUrl: true,
+              bio: true,
+              location: true,
             },
           },
         },
@@ -42,13 +49,24 @@ export const getPosts = async (prisma, userId) => {
           shares: true,
         },
       },
+      hashtags: {
+        include: {
+          hashtag: {
+            select: {
+              id: true,
+              name: true,
+              usageCount: true,
+            },
+          },
+        },
+      },
     },
   });
 };
 
 export const getPost = async (prisma, postId) => {
   return await prisma.post.findUnique({
-    where: { 
+    where: {
       id: postId,
       isDeleted: false,
     },
@@ -59,6 +77,12 @@ export const getPost = async (prisma, postId) => {
           username: true,
           userInfo: {
             select: {
+              firstName: true,
+              middleName: true,
+              lastName: true,
+              displayName: true,
+              profilePictureUrl: true,
+              coverPhotoUrl: true,
               profilePictureUrl: true,
             },
           },
@@ -103,9 +127,22 @@ export const getPost = async (prisma, postId) => {
           shares: true,
         },
       },
+      hashtags: {
+        include: {
+          hashtag: {
+            select: {
+              id: true,
+              name: true,
+              usageCount: true,
+            },
+          },
+        },
+      },
     },
   });
 };
+
+
 
 export const createPost = async (prisma, userId, postData) => {
   return await prisma.post.create({
@@ -143,5 +180,82 @@ export const restorePost = async (prisma, postId, userId) => {
   return await prisma.post.updateMany({
     where: { id: postId, userId, isDeleted: true },
     data: { isDeleted: false },
+  });
+};
+
+export const getPostsByHashtag = async (prisma, hashtagName, userId) => {
+  return await prisma.post.findMany({
+    where: {
+      isDeleted: false,
+      hashtags: {
+        some: {
+          hashtag: {
+            name: hashtagName.toLowerCase(),
+          },
+        },
+      },
+    },
+    orderBy: {
+      createdAt: "desc",
+    },
+    include: {
+      user: {
+        select: {
+          id: true,
+          username: true,
+          userInfo: {
+            select: {
+              firstName: true,
+              middleName: true,
+              lastName: true,
+              displayName: true,
+              profilePictureUrl: true,
+              coverPhotoUrl: true,
+              bio: true,
+              location: true,
+            },
+          },
+        },
+      },
+      _count: {
+        select: {
+          likes: true,
+          comments: true,
+          shares: true,
+        },
+      },
+      hashtags: {
+        include: {
+          hashtag: {
+            select: {
+              id: true,
+              name: true,
+              usageCount: true,
+            },
+          },
+        },
+      },
+    },
+  });
+};
+
+export const getTrendingHashtags = async (prisma, limit = 10) => {
+  return await prisma.hashtag.findMany({
+    where: {
+      isActive: true,
+      usageCount: {
+        gt: 0,
+      },
+    },
+    orderBy: {
+      usageCount: "desc",
+    },
+    take: limit,
+    select: {
+      id: true,
+      name: true,
+      usageCount: true,
+      createdAt: true,
+    },
   });
 };

@@ -5,9 +5,9 @@ import { useEffect, useCallback } from "react";
 export const usePerformance = () => {
   const reportMetric = useCallback((name, value, id) => {
     // Send to analytics service in production
-    if (process.env.NODE_ENV === "development") {
-      console.log(`Performance Metric - ${name}:`, value);
-    }
+    // if (process.env.NODE_ENV === "development") {
+    //   console.log(`Performance Metric - ${name}:`, value);
+    // }
     
     // Report to web vitals
     if (typeof window !== "undefined" && window.gtag) {

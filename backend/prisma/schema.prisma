@@ -129,10 +129,11 @@ model Post {
   expiresAt DateTime? // For story-like posts
   isDeleted Boolean   @default(false)
 
-  user     User      @relation(fields: [userId], references: [id])
+  user     User          @relation(fields: [userId], references: [id])
   comments Comment[]
   likes    Like[]
   shares   Share[]
+  hashtags PostHashtag[] // Many-to-many relation with hashtags
 }
 
 model Comment {
@@ -188,6 +189,34 @@ model Follow {
   following User @relation("following", fields: [followingId], references: [id])
 
   @@unique([followerId, followingId])
+}
+
+// 🏷️ Hashtag Models
+model Hashtag {
+  id         Int      @id @default(autoincrement())
+  name       String   @unique @db.VarChar(100) // e.g., "travel", "food"
+  createdAt  DateTime @default(now())
+  usageCount Int      @default(0) // Track how many times it's been used
+  isActive   Boolean  @default(true) // For moderation purposes
+
+  posts PostHashtag[] // Many-to-many relation with posts
+
+  @@index([name])
+  @@index([usageCount])
+}
+
+model PostHashtag {
+  id        Int      @id @default(autoincrement())
+  postId    Int
+  hashtagId Int
+  createdAt DateTime @default(now())
+
+  post    Post    @relation(fields: [postId], references: [id], onDelete: Cascade)
+  hashtag Hashtag @relation(fields: [hashtagId], references: [id])
+
+  @@unique([postId, hashtagId])
+  @@index([postId])
+  @@index([hashtagId])
 }
 
 model Conversation {
@@ -253,7 +282,6 @@ model Story {
 }
 
 // System Logs
-
 model SystemLogs {
   id         String   @id @default(cuid())
   timestamp  DateTime @default(now())

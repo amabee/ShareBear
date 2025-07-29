@@ -5,7 +5,6 @@ fetch(apiUrl)
   .then((response) => response.json())
   .then((data) => {
     imageUrl = data.urls.regular;
-    console.log(imageUrl);
   })
   .catch((error) => console.error("Error fetching image:", error));
 

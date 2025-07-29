@@ -6,6 +6,8 @@ import {
   restorePost as restorePostService,
   getPosts as getPostsService,
   getPost as getPostService,
+  getPostsByHashtag as getPostsByHashtagService,
+  getTrendingHashtags as getTrendingHashtagsService,
 } from "../services/posts.service.js";
 import { sanitizeInput, encodeOutput } from "../utils/sanitize.js";
 
@@ -142,4 +144,37 @@ export const restorePost = async (req, reply) => {
   post.location = encodeOutput(post.location);
   post.taggedUsers = encodeOutput(post.taggedUsers);
   return reply.send({ message: "Post restored", post });
+};
+
+export const getPostsByHashtag = async (req, rep) => {
+  const { hashtag } = req.params;
+  const currentUserId = req.user.userId;
+
+  try {
+    const posts = await getPostsByHashtagService(req.server.prisma, hashtag, currentUserId);
+
+    const encodedPosts = posts.map((post) => ({
+      ...post,
+      caption: encodeOutput(post.caption),
+      location: encodeOutput(post.location),
+      taggedUsers: encodeOutput(post.taggedUsers),
+    }));
+
+    return rep.send({ posts: encodedPosts, hashtag });
+  } catch (error) {
+    req.log.error(error);
+    return rep.status(500).send({ error: "Failed to fetch posts by hashtag" });
+  }
+};
+
+export const getTrendingHashtags = async (req, rep) => {
+  const limit = parseInt(req.query.limit) || 10;
+
+  try {
+    const hashtags = await getTrendingHashtagsService(req.server.prisma, limit);
+    return rep.send({ hashtags });
+  } catch (error) {
+    req.log.error(error);
+    return rep.status(500).send({ error: "Failed to fetch trending hashtags" });
+  }
 };
