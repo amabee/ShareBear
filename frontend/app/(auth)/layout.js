@@ -3,7 +3,7 @@
 import { useAuth } from "@/hooks/useNextAuth";
 import { useRouter } from "next/navigation";
 import { useEffect } from "react";
-import LoadingScreen from "@/components/LoadingScreen";
+import LoadingScreen from "@/components/Reusables/LoadingScreen";
 
 export default function AuthLayout({ children }) {
   const { isAuthenticated, isLoading } = useAuth();
@@ -16,7 +16,9 @@ export default function AuthLayout({ children }) {
   }, [isAuthenticated, isLoading, router]);
 
   if (isLoading) {
-    return <LoadingScreen message="Checking authentication..." showQuotes={false} />;
+    return (
+      <LoadingScreen message="Checking authentication..." showQuotes={false} />
+    );
   }
 
   if (isAuthenticated) {

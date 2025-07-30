@@ -1,10 +1,44 @@
 "use client";
 
 import { useState, useEffect, useRef } from "react";
-import { reelsData } from "@/data/reels";
 import ReelCard from "./ReelCard";
 
 export default function ReelsContainer() {
+  const reelsData = [
+    {
+      id: "reel_1",
+      videoUrl:
+        "http://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4",
+      thumbnail: "/placeholder.svg?height=800&width=450",
+      title: "Amazing sunset timelapse from the mountains 🌅",
+      description:
+        "Captured this breathtaking sunset during my hiking trip in the Alps. The colors were absolutely incredible! #sunset #nature #timelapse #mountains",
+      creator: {
+        id: "creator_1",
+        name: "Nature Explorer",
+        username: "nature_explorer",
+        avatar: "/placeholder.svg?height=40&width=40",
+        verified: true,
+        followers: "2.3M",
+      },
+      stats: {
+        likes: 125000,
+        comments: 3400,
+        shares: 890,
+        views: 2100000,
+      },
+      duration: 45,
+      music: {
+        title: "Peaceful Vibes",
+        artist: "Chill Beats",
+        cover: "/placeholder.svg?height=40&width=40",
+      },
+      hashtags: ["#sunset", "#nature", "#timelapse", "#mountains"],
+      isLiked: false,
+      isSaved: false,
+      isFollowing: false,
+    },
+  ];
   const [reels, setReels] = useState(reelsData);
   const [currentIndex, setCurrentIndex] = useState(0);
   const [isScrolling, setIsScrolling] = useState(false);
@@ -14,23 +48,27 @@ export default function ReelsContainer() {
   const handleScroll = () => {
     if (containerRef.current) {
       setIsScrolling(true);
-      
+
       // Clear existing timeout
       if (scrollTimeoutRef.current) {
         clearTimeout(scrollTimeoutRef.current);
       }
-      
+
       // Set timeout to detect scroll end
       scrollTimeoutRef.current = setTimeout(() => {
         setIsScrolling(false);
         snapToNearestReel();
       }, 150);
-      
+
       const scrollTop = containerRef.current.scrollTop;
       const containerHeight = containerRef.current.clientHeight;
       const newIndex = Math.round(scrollTop / containerHeight);
-      
-      if (newIndex !== currentIndex && newIndex >= 0 && newIndex < reels.length) {
+
+      if (
+        newIndex !== currentIndex &&
+        newIndex >= 0 &&
+        newIndex < reels.length
+      ) {
         setCurrentIndex(newIndex);
       }
     }
@@ -42,7 +80,7 @@ export default function ReelsContainer() {
       const scrollTop = containerRef.current.scrollTop;
       const containerHeight = containerRef.current.clientHeight;
       const targetIndex = Math.round(scrollTop / containerHeight);
-      
+
       containerRef.current.scrollTo({
         top: targetIndex * containerHeight,
         behavior: "smooth",
@@ -97,12 +135,14 @@ export default function ReelsContainer() {
 
   const handleShare = (reelId) => {
     // Add share functionality
-    const reel = reels.find(r => r.id === reelId);
+    const reel = reels.find((r) => r.id === reelId);
     if (reel && navigator.share) {
-      navigator.share({
-        title: `Check out this reel by ${reel.user.username}`,
-        url: window.location.href,
-      }).catch(console.error);
+      navigator
+        .share({
+          title: `Check out this reel by ${reel.user.username}`,
+          url: window.location.href,
+        })
+        .catch(console.error);
     }
   };
 
@@ -129,7 +169,9 @@ export default function ReelsContainer() {
 
       if (e.code === "Space") {
         // Handle play/pause for current video
-        const currentReel = document.querySelector(`[data-reel-index="${currentIndex}"] video`);
+        const currentReel = document.querySelector(
+          `[data-reel-index="${currentIndex}"] video`
+        );
         if (currentReel) {
           if (currentReel.paused) {
             currentReel.play();
@@ -178,9 +220,11 @@ export default function ReelsContainer() {
 
     const container = containerRef.current;
     if (container) {
-      container.addEventListener("touchstart", handleTouchStart, { passive: true });
+      container.addEventListener("touchstart", handleTouchStart, {
+        passive: true,
+      });
       container.addEventListener("touchend", handleTouchEnd, { passive: true });
-      
+
       return () => {
         container.removeEventListener("touchstart", handleTouchStart);
         container.removeEventListener("touchend", handleTouchEnd);
@@ -194,14 +238,14 @@ export default function ReelsContainer() {
         <div
           ref={containerRef}
           className="h-full w-full overflow-y-auto snap-y snap-mandatory scrollbar-hide overscroll-none"
-          style={{ 
+          style={{
             scrollBehavior: isScrolling ? "auto" : "smooth",
-            WebkitOverflowScrolling: "touch"
+            WebkitOverflowScrolling: "touch",
           }}
         >
           {reels.map((reel, index) => (
-            <div 
-              key={reel.id} 
+            <div
+              key={reel.id}
               className="h-screen w-full snap-start snap-always relative"
               data-reel-index={index}
             >

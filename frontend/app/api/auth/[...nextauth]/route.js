@@ -1,7 +1,7 @@
 import NextAuth from "next-auth";
 import CredentialsProvider from "next-auth/providers/credentials";
 
-const handler = NextAuth({
+export const authOptions = {
   providers: [
     CredentialsProvider({
       name: "credentials",
@@ -26,9 +26,7 @@ const handler = NextAuth({
               }),
             }
           );
-
           const data = await response.json();
-
           if (response.ok && data.user) {
             return {
               id: data.user.id,
@@ -38,7 +36,6 @@ const handler = NextAuth({
               refreshToken: data.refreshToken,
             };
           }
-
           throw new Error(data.error || "Login failed");
         } catch (error) {
           throw error;
@@ -50,9 +47,12 @@ const handler = NextAuth({
     signIn: "/login",
     signUp: "/signup",
   },
+  debug: process.env.NODE_ENV === "development",
+  secret: process.env.NEXTAUTH_SECRET,
   callbacks: {
     async jwt({ token, user, account }) {
       // Initial sign in
+      console.log("JWT callback triggered", { token, user });
       if (account && user) {
         return {
           ...token,
@@ -61,35 +61,30 @@ const handler = NextAuth({
           username: user.username,
         };
       }
-
       // Return previous token if the access token has not expired yet
       if (Date.now() < token.accessTokenExpires) {
         return token;
       }
-
       // Access token has expired, try to update it
       return refreshAccessToken(token);
     },
     async session({ session, token }) {
+      console.log("Session callback 3gurd", { session, token });
       session.user.id = token.sub;
       session.user.username = token.username;
       session.accessToken = token.accessToken;
       session.refreshToken = token.refreshToken;
       session.error = token.error;
-
       return session;
     },
-  },
-  pages: {
-    signIn: "/login",
-    signUp: "/signup",
   },
   session: {
     strategy: "jwt",
     maxAge: 7 * 24 * 60 * 60,
   },
-  secret: process.env.NEXTAUTH_SECRET,
-});
+};
+
+const handler = NextAuth(authOptions);
 
 async function refreshAccessToken(token) {
   try {

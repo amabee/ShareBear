@@ -3,7 +3,7 @@
 import { useAuth } from "@/hooks/useNextAuth";
 import { useRouter } from "next/navigation";
 import { useEffect } from "react";
-import LoadingScreen from "@/components/LoadingScreen";
+import LoadingScreen from "@/components/Reusables/LoadingScreen";
 
 export default function AuthGuard({ children }) {
   const { isAuthenticated, isLoading } = useAuth();

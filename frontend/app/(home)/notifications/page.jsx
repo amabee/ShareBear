@@ -1,8 +1,8 @@
 "use client";
 
 import { useState } from "react";
-import { HomePageLayout } from "@/components/HomePageLayout";
-import TopNavBar from "@/components/TopNavBar";
+import { HomePageLayout } from "@/components/Reusables/HomePageLayout";
+import TopNavBar from "@/components/Reusables/TopNavBar";
 import NotificationHeader from "@/components/notifications/NotificationHeader";
 import NotificationTabs from "@/components/notifications/NotificationTabs";
 import NotificationList from "@/components/notifications/NotificationList";

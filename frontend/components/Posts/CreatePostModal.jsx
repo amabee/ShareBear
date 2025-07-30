@@ -602,8 +602,10 @@ export function CreatePostModal({ open, onOpenChange }) {
                         </span>
                         {selectedBg === bg.id && (
                           <div className="absolute inset-0 bg-opacity-20 flex items-center justify-center">
-                            <div className="w-8 h-8 sm:w-7 sm:h-7 border rounded-full shadow-lg 
-                            bg-accent flex items-center justify-center">
+                            <div
+                              className="w-8 h-8 sm:w-7 sm:h-7 border rounded-full shadow-lg 
+                            bg-accent flex items-center justify-center"
+                            >
                               <Check className="w-4 h-4" />
                             </div>
                           </div>

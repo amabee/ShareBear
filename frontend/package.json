@@ -1,7 +1,7 @@
 {
   "name": "frontend",
-  "version": "0.1.0",
-  "private": true,
+  "version": "1.0.2",
+  "private": false,
   "scripts": {
     "dev": "next dev",
     "build": "next build",
@@ -12,7 +12,7 @@
     "performance": "npm run build && npm run start"
   },
   "dependencies": {
-    "@hookform/resolvers": "^5.1.1",
+    "@hookform/resolvers": "^5.2.1",
     "@lottiefiles/react-lottie-player": "^3.6.0",
     "@radix-ui/react-accordion": "^1.2.11",
     "@radix-ui/react-alert-dialog": "^1.1.14",
@@ -54,16 +54,16 @@
     "next-themes": "^0.4.6",
     "nextjs-toploader": "^3.8.16",
     "react": "^18.3.1",
-    "react-day-picker": "^9.8.0",
+    "react-day-picker": "^9.8.1",
     "react-dom": "^18.3.1",
-    "react-hook-form": "^7.60.0",
+    "react-hook-form": "^7.61.1",
     "react-hot-toast": "^2.5.2",
-    "react-resizable-panels": "^3.0.3",
+    "react-resizable-panels": "^3.0.4",
     "recharts": "^2.15.4",
     "sonner": "^2.0.6",
     "tailwind-merge": "^3.3.1",
     "vaul": "^1.1.2",
-    "zod": "^4.0.5",
+    "zod": "^4.0.13",
     "zustand": "^5.0.6"
   },
   "devDependencies": {
@@ -74,6 +74,6 @@
     "eslint": "^9",
     "eslint-config-next": "15.4.1",
     "tailwindcss": "^4",
-    "tw-animate-css": "^1.3.5"
+    "tw-animate-css": "^1.3.6"
   }
 }

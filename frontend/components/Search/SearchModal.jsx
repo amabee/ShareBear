@@ -19,7 +19,7 @@ import {
   Users,
 } from "lucide-react";
 import { VisuallyHidden } from "@radix-ui/react-visually-hidden";
-import { searchSuggestions } from "@/data/search";
+import { searchSuggestions } from "@/data/searchData";
 
 const mockSearchResults = {
   videos: [

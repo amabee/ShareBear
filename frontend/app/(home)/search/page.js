@@ -1,8 +1,8 @@
 "use client";
 
 import { useState } from "react";
-import { HomePageLayout } from "@/components/HomePageLayout";
-import TopNavBar from "@/components/TopNavBar";
+import { HomePageLayout } from "@/components/Reusables/HomePageLayout";
+import TopNavBar from "@/components/Reusables/TopNavBar";
 import SearchHeader from "@/components/search/SearchHeader";
 import VideoGrid from "@/components/search/VideoGrid";
 import SearchModal from "@/components/search/SearchModal";

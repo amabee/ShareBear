@@ -1,5 +1,5 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { apiClient } from "./apiclient";
+import { apiClient } from "./apiClient";
 
 export const usePosts = () => {
   // fetching all posts

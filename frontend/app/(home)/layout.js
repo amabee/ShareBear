@@ -1,11 +1,7 @@
+import AuthGuard from "@/components/Auth/AuthGuard";
+import ClientThemeProvider from "@/providers/ThemeProvider";
 import dynamic from "next/dynamic";
 import NextTopLoader from "nextjs-toploader";
-import AuthGuard from "@/components/auth/AuthGuard";
-
-// Lazy load theme provider to reduce initial bundle
-const ClientThemeProvider = dynamic(() => import("@/providers/ThemeProvider"), {
-  loading: () => <div style={{ visibility: "hidden" }} />,
-});
 
 export default function HomeLayout({ children }) {
   return (
@@ -29,7 +25,7 @@ export default function HomeLayout({ children }) {
       ]}
       disableTransitionOnChange
     >
-      <NextTopLoader 
+      <NextTopLoader
         color="#3b82f6"
         height={3}
         showSpinner={false}
@@ -37,7 +33,7 @@ export default function HomeLayout({ children }) {
         speed={200}
       />
       <AuthGuard>
-        {children}
+      {children}
       </AuthGuard>
     </ClientThemeProvider>
   );

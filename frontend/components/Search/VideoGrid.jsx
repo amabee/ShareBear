@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { sampleImages, sampleVideos } from "@/data/search";
+import { sampleImages, sampleVideos } from "@/data/searchData";
 import MediaCard from "./VideoCard";
 
 export default function MediaGrid() {

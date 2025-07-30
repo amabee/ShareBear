@@ -9,33 +9,33 @@ const useUserStore = create(
         notifications: true,
         language: "en",
       },
-      
+
       // Cached user profile data (can be fetched separately from session)
       profileData: null,
-      
+
       // UI state
       sidebarOpen: false,
       lastVisitedPage: "/",
-      
+
       // Actions
       updatePreferences: (newPreferences) => {
         set((state) => ({
           preferences: { ...state.preferences, ...newPreferences },
         }));
       },
-      
+
       setProfileData: (data) => {
         set({ profileData: data });
       },
-      
+
       setSidebarOpen: (open) => {
         set({ sidebarOpen: open });
       },
-      
+
       setLastVisitedPage: (page) => {
         set({ lastVisitedPage: page });
       },
-      
+
       // Clear user-specific data on logout
       clearUserData: () => {
         set({
@@ -55,4 +55,4 @@ const useUserStore = create(
   )
 );
 
-export default useUserStore; 
+export default useUserStore;

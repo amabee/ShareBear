@@ -8,4 +8,4 @@ export default function SessionProvider({ children, session }) {
       {children}
     </NextAuthSessionProvider>
   );
-} 
+}

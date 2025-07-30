@@ -9,7 +9,7 @@ export default function QueryProvider({ children }) {
       new QueryClient({
         defaultOptions: {
           queries: {
-            staleTime: 60 * 1000, // 1 minute
+            staleTime: 60 * 1000,
             retry: 1,
           },
         },
@@ -17,8 +17,6 @@ export default function QueryProvider({ children }) {
   );
 
   return (
-    <QueryClientProvider client={queryClient}>
-      {children}
-    </QueryClientProvider>
+    <QueryClientProvider client={queryClient}>{children}</QueryClientProvider>
   );
-} 
+}

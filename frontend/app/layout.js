@@ -1,10 +1,10 @@
 import { Poppins } from "next/font/google";
-import "./globals.css";
-import SessionProvider from "@/providers/SessionProvider";
-import QueryProvider from "@/providers/QueryProvider";
 import { Toaster } from "react-hot-toast";
+import "./globals.css";
+import QueryProvider from "@/providers/QueryProvider";
+import SessionProvider from "@/providers/SessionProvider";
 import { getServerSession } from "next-auth";
-import PerformanceMonitor from "@/components/PerformanceMonitor";
+import { authOptions } from "@/app/api/auth/[...nextauth]/route";
 
 const poppins = Poppins({
   variable: "--font-poppins",
@@ -42,32 +42,22 @@ export const viewport = {
 };
 
 export default async function RootLayout({ children }) {
-  const session = await getServerSession();
-
+  const session = await getServerSession(authOptions);
   return (
     <html lang="en" className={poppins.variable}>
       <head>
-        {/* Preload critical resources */}
         <link rel="preconnect" href="https://fonts.googleapis.com" />
-        <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
-        <link rel="dns-prefetch" href="//api.unsplash.com" />
-        <link rel="dns-prefetch" href="//images.unsplash.com" />
-        
-        {/* Preload critical CSS */}
-        <link rel="preload" href="/globals.css" as="style" />
-        
-        {/* Preload critical images if any */}
-        <link rel="preload" href="/next.svg" as="image" type="image/svg+xml" />
+        <link
+          rel="preconnect"
+          href="https://fonts.gstatic.com"
+          crossOrigin="anonymous"
+        />
       </head>
-      <body
-        className="antialiased"
-        suppressHydrationWarning
-      >
+      <body className="antialiased" suppressHydrationWarning>
         <QueryProvider>
           <SessionProvider session={session}>
             {children}
             <Toaster />
-            <PerformanceMonitor />
           </SessionProvider>
         </QueryProvider>
       </body>

@@ -8,7 +8,6 @@ export default withAuth(
   {
     callbacks: {
       authorized: ({ token, req }) => {
-        // Protect all routes under /home
         if (req.nextUrl.pathname.startsWith("/(home)")) {
           return !!token;
         }
