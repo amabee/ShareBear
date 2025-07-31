@@ -161,7 +161,7 @@ export const cleanupExpiredPreviousTokens = async (prisma) => {
 
 // FOR DELETING THE SESSION WITH THE GIVEN REFRESH TOKEN
 
-export const deleteUserSession = async (prisma, sessionId) => {
+export const deleteUserSession = async (prisma, sessionId) => {0
   return prisma.userSession.delete({ where: { id: sessionId } });
 };
 
