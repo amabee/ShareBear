@@ -52,7 +52,6 @@ export const authOptions = {
   callbacks: {
     async jwt({ token, user, account }) {
       // Initial sign in
-      // console.log("JWT callback triggered", { token, user });
       if (account && user) {
         return {
           ...token,
@@ -122,17 +121,12 @@ async function refreshAccessToken(token) {
       ...token,
       accessToken: refreshedTokens.token,
       refreshToken: refreshedTokens.refreshToken,
-      accessTokenExpires: Date.now() + 1 * 60 * 1000, // 1 hour
+      accessTokenExpires: Date.now() + 30 * 60 * 1000, // 30 Mins
     };
   } catch (error) {
     console.error("Error refreshing token:", error);
 
     return null;
-
-    // return {
-    //   ...token,
-    //   error: "RefreshAccessTokenError",
-    // };
   }
 }
 
