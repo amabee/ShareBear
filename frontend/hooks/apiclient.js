@@ -29,10 +29,7 @@ apiClient.interceptors.response.use(
     return response.data;
   },
   async (error) => {
-    // for handling 401 error A.K.A Token Expired
     if (error.response?.status === 401) {
-      // NextAuth will handle token refresh automatically
-      // Just redirect to login if refresh fails
       window.location.href = "/login";
     }
 

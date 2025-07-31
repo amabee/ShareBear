@@ -42,7 +42,15 @@ export const viewport = {
 };
 
 export default async function RootLayout({ children }) {
-  const session = await getServerSession(authOptions);
+  let session = null;
+  
+  try {
+    session = await getServerSession(authOptions);
+  } catch (error) {
+    console.error("Error getting server session:", error);
+    // Continue with null session if there's an error
+  }
+  
   return (
     <html lang="en" className={poppins.variable}>
       <head>

@@ -166,12 +166,11 @@ export function ShareBearPost({ post }) {
                             process.env.NEXT_PUBLIC_IMAGE_HOSTING_URL
                           }/${media.imageUrl.split("/").pop()}`}
                           className="w-full h-full object-cover"
-                          controls
-                          controlsList="nodownload noremoteplayback nofullscreen"
                           disablePictureInPicture
                           preload="metadata"
                           playsInline
                           muted
+                          autoPlay={true}
                           referrerPolicy="no-referrer"
                           crossOrigin="anonymous"
                           style={{

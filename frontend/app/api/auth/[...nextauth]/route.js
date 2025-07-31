@@ -12,9 +12,7 @@ export const authOptions = {
       async authorize(credentials) {
         try {
           const response = await fetch(
-            `${
-              process.env.NEXT_PUBLIC_API_URL || "http://localhost:9001"
-            }/api/auth/login`,
+            `${process.env.NEXT_PUBLIC_API_URL}/api/auth/login`,
             {
               method: "POST",
               headers: {
@@ -48,28 +46,61 @@ export const authOptions = {
     signUp: "/signup",
   },
   debug: process.env.NODE_ENV === "development",
-  secret: process.env.NEXTAUTH_SECRET,
   callbacks: {
     async jwt({ token, user, account }) {
+      // Ensure token is a valid object
+      if (!token || typeof token !== "object") {
+        console.error("Invalid token object:", token);
+        return {};
+      }
+
       // Initial sign in
       if (account && user) {
+        console.log("Initial sign in");
         return {
           ...token,
           accessToken: user.accessToken,
           refreshToken: user.refreshToken,
           username: user.username,
+          accessTokenExpires: Date.now() + 1 * 60 * 1000, // Set expiry time (1 hour)
         };
       }
+
       // Return previous token if the access token has not expired yet
-      if (Date.now() < token.accessTokenExpires) {
+      if (token.accessTokenExpires && Date.now() < token.accessTokenExpires) {
+        console.log("Token still valid: ", token);
         return token;
       }
+
       // Access token has expired, try to update it
-      return refreshAccessToken(token);
+      if (token.refreshToken) {
+        console.log("Token expired, refreshing...");
+        const refreshedToken = await refreshAccessToken(token);
+        return refreshedToken;
+      }
+
+      // No refresh token available, return token as is
+      console.log("No refresh token available");
+      return token;
     },
     async session({ session, token }) {
       if (!token) {
         return null;
+      }
+
+      // console.log(token);
+
+      // If there's an error in the token, return a session with the error
+      if (token.error) {
+        return {
+          ...session,
+          error: token.error,
+        };
+      }
+
+      // Ensure session.user exists
+      if (!session.user) {
+        session.user = {};
       }
 
       session.user.id = token.sub;
@@ -82,14 +113,23 @@ export const authOptions = {
   },
   session: {
     strategy: "jwt",
-    maxAge: 7 * 24 * 60 * 60,
+    maxAge: 7 * 24 * 60 * 60, // 7 days
   },
+  jwt: {
+    secret: process.env.NEXTAUTH_SECRET,
+  },
+  secret: process.env.NEXTAUTH_SECRET,
 };
 
 const handler = NextAuth(authOptions);
 
 async function refreshAccessToken(token) {
-  // console.log("The token in question: ", token);
+  console.log("Refreshing token:", {
+    hasRefreshToken: !!token.refreshToken,
+    hasAccessToken: !!token.accessToken,
+    expiresAt: token.accessTokenExpires,
+  });
+
   try {
     const response = await fetch(
       `${
@@ -109,18 +149,24 @@ async function refreshAccessToken(token) {
     const refreshedTokens = await response.json();
 
     if (!response.ok) {
+      console.error("Refresh failed:", refreshedTokens);
       throw refreshedTokens;
     }
+
+    console.log("Token refreshed successfully");
     return {
       ...token,
       accessToken: refreshedTokens.token,
       refreshToken: refreshedTokens.refreshToken,
-      accessTokenExpires: Date.now() + 1 * 60 * 1000, // 30 Mins
+      accessTokenExpires: Date.now() + 1 * 60 * 1000, // 1 hour
     };
   } catch (error) {
     console.error("Error refreshing token:", error);
 
-    return null;
+    return {
+      ...token,
+      error: "RefreshAccessTokenError",
+    };
   }
 }
 

@@ -3,7 +3,7 @@ import fp from "fastify-plugin";
 import { config } from "../config/index.js";
 
 async function corsPlugin(app) {
-  const origins = config.cors?.origin || [];
+  const origins = config.cors?.origin || ["http://192.168.1.3:3000"];
 
   app.register(cors, {
     origin: (origin, callback) => {
