@@ -44,7 +44,7 @@ export const createPostSchema = {
         post: {
           type: "object",
           properties: {
-            id: { type: "number" },
+            id: { type: "string" },
             userId: { type: "number" },
             contentType: { type: "string" },
             caption: { type: "string" },
@@ -162,7 +162,7 @@ export const createPostMultipartSchema = {
         post: {
           type: "object",
           properties: {
-            id: { type: "number" },
+            id: { type: "string" },
             userId: { type: "number" },
             contentType: { type: "string" },
             caption: { type: "string" },
@@ -234,6 +234,13 @@ export const createPostMultipartSchema = {
 };
 
 export const updatePostSchema = {
+  params: {
+    type: "object",
+    properties: {
+      postId: { type: "string", pattern: "^[a-zA-Z0-9]{32}$" },
+    },
+    required: ["postId"],
+  },
   body: {
     type: "object",
     properties: {
@@ -291,6 +298,13 @@ export const updatePostSchema = {
 };
 
 export const softDeletePostSchema = {
+  params: {
+    type: "object",
+    properties: {
+      postId: { type: "string", pattern: "^[a-zA-Z0-9]{32}$" },
+    },
+    required: ["postId"],
+  },
   response: {
     200: { type: "object", properties: { message: { type: "string" } } },
     401: { type: "object", properties: { error: { type: "string" } } },
@@ -300,6 +314,13 @@ export const softDeletePostSchema = {
 };
 
 export const restorePostSchema = {
+  params: {
+    type: "object",
+    properties: {
+      postId: { type: "string", pattern: "^[a-zA-Z0-9]{32}$" },
+    },
+    required: ["postId"],
+  },
   response: {
     200: {
       type: "object",
@@ -321,7 +342,7 @@ export const getPostsSchema = {
           items: {
             type: "object",
             properties: {
-              id: { type: "number" },
+              id: { type: "string" },
               userId: { type: "number" },
               contentType: { type: "string" },
               caption: { type: "string" },
@@ -409,7 +430,7 @@ export const getPostSchema = {
   params: {
     type: "object",
     properties: {
-      postId: { type: "string", pattern: "^\\d+$" },
+      postId: { type: "string", pattern: "^[a-zA-Z0-9]{32}$" },
     },
     required: ["postId"],
   },
@@ -420,7 +441,7 @@ export const getPostSchema = {
         post: {
           type: "object",
           properties: {
-            id: { type: "number" },
+            id: { type: "string" },
             userId: { type: "number" },
             contentType: { type: "string" },
             caption: { type: "string" },
@@ -562,7 +583,7 @@ export const getPostsByHashtagSchema = {
           items: {
             type: "object",
             properties: {
-              id: { type: "number" },
+              id: { type: "string" },
               userId: { type: "number" },
               contentType: { type: "string" },
               caption: { type: "string" },

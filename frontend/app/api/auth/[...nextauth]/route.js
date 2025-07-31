@@ -111,17 +111,11 @@ async function refreshAccessToken(token) {
     if (!response.ok) {
       throw refreshedTokens;
     }
-
-    // console.log(
-    //   "The refreshed token in question: ",
-    //   refreshedTokens.refreshToken
-    // );
-
     return {
       ...token,
       accessToken: refreshedTokens.token,
       refreshToken: refreshedTokens.refreshToken,
-      accessTokenExpires: Date.now() + 30 * 60 * 1000, // 30 Mins
+      accessTokenExpires: Date.now() + 1 * 60 * 1000, // 30 Mins
     };
   } catch (error) {
     console.error("Error refreshing token:", error);

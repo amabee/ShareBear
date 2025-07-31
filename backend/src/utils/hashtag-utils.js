@@ -25,7 +25,7 @@ export const extractHashtags = (text) => {
 /**
  * Process hashtags for a post - create or update hashtags and link them to the post
  * @param {Object} prisma - Prisma client instance
- * @param {number} postId - The post ID
+ * @param {string} postId - The post ID
  * @param {string[]} hashtagNames - Array of hashtag names
  */
 export const processHashtags = async (prisma, postId, hashtagNames) => {
@@ -75,7 +75,7 @@ export const processHashtags = async (prisma, postId, hashtagNames) => {
 /**
  * Remove hashtag relationships for a post
  * @param {Object} prisma - Prisma client instance
- * @param {number} postId - The post ID
+ * @param {string} postId - The post ID
  */
 export const removePostHashtags = async (prisma, postId) => {
   // Get all hashtag IDs for this post

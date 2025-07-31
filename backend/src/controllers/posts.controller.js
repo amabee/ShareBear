@@ -40,7 +40,7 @@ export const getPost = async (req, rep) => {
   const { postId } = req.params;
 
   try {
-    const post = await getPostService(req.server.prisma, parseInt(postId, 10));
+    const post = await getPostService(req.server.prisma, postId);
 
     if (!post) {
       return rep.status(404).send({ error: "Post not found" });
@@ -61,11 +61,6 @@ export const getPost = async (req, rep) => {
 };
 
 export const createPost = async (req, reply) => {
-  console.log("=== CREATE POST START ===");
-  console.log("Content-Type:", req.headers["content-type"]);
-  console.log("Request body keys:", Object.keys(req.body || {}));
-  console.log("Files:", req.files?.length || 0);
-
   const MAX_CAPTION_LENGTH = 2000;
 
   try {
@@ -75,23 +70,29 @@ export const createPost = async (req, reply) => {
     // Handle multiple file uploads from Fastify multipart
     if (req.files && req.files.length > 0) {
       console.log(`Processing ${req.files.length} file uploads`);
-      
+
       for (let i = 0; i < req.files.length; i++) {
         const file = req.files[i];
         console.log(`Processing file ${i + 1}:`, file.filename);
-        
+
         const fileUrl = await uploadFile(file, "posts", {
           userId: userId,
-          renameStrategy: config.upload.renameStrategy
+          renameStrategy: config.upload.renameStrategy,
         });
         console.log(`File ${i + 1} uploaded successfully:`, fileUrl);
-        
+
         images.push({
           url: fileUrl,
           altText: req.body[`altText_${i}`] || null,
-          width: req.body[`width_${i}`] ? parseInt(req.body[`width_${i}`]) : null,
-          height: req.body[`height_${i}`] ? parseInt(req.body[`height_${i}`]) : null,
-          fileSize: req.body[`fileSize_${i}`] ? parseInt(req.body[`fileSize_${i}`]) : null,
+          width: req.body[`width_${i}`]
+            ? parseInt(req.body[`width_${i}`])
+            : null,
+          height: req.body[`height_${i}`]
+            ? parseInt(req.body[`height_${i}`])
+            : null,
+          fileSize: req.body[`fileSize_${i}`]
+            ? parseInt(req.body[`fileSize_${i}`])
+            : null,
         });
       }
     }
@@ -119,9 +120,8 @@ export const createPost = async (req, reply) => {
     }
 
     const post = await createPostService(req.server.prisma, userId, postData);
-    // Encode output fields before sending
     if (post) {
-      post.caption = encodeOutput(safeDecodeOutput(post.caption)); // Safely decode first, then encode for output
+      post.caption = encodeOutput(safeDecodeOutput(post.caption));
       post.location = encodeOutput(safeDecodeOutput(post.location));
       post.taggedUsers = encodeOutput(safeDecodeOutput(post.taggedUsers));
     }
@@ -136,7 +136,7 @@ export const createPost = async (req, reply) => {
 
 export const updatePost = async (req, reply) => {
   const userId = req.user.userId;
-  const postId = parseInt(req.params.postId, 10);
+  const postId = req.params.postId;
   const updateData = { ...req.body };
 
   // Convert string boolean values to actual booleans
@@ -159,23 +159,27 @@ export const updatePost = async (req, reply) => {
   // Handle image updates if files are provided
   if (req.files && req.files.length > 0) {
     const images = [];
-    
+
     for (let i = 0; i < req.files.length; i++) {
       const file = req.files[i];
       const fileUrl = await uploadFile(file, "posts", {
         userId: userId,
-        renameStrategy: config.upload.renameStrategy
+        renameStrategy: config.upload.renameStrategy,
       });
-      
+
       images.push({
         url: fileUrl,
         altText: req.body[`altText_${i}`] || null,
         width: req.body[`width_${i}`] ? parseInt(req.body[`width_${i}`]) : null,
-        height: req.body[`height_${i}`] ? parseInt(req.body[`height_${i}`]) : null,
-        fileSize: req.body[`fileSize_${i}`] ? parseInt(req.body[`fileSize_${i}`]) : null,
+        height: req.body[`height_${i}`]
+          ? parseInt(req.body[`height_${i}`])
+          : null,
+        fileSize: req.body[`fileSize_${i}`]
+          ? parseInt(req.body[`fileSize_${i}`])
+          : null,
       });
     }
-    
+
     updateData.images = images;
   }
 
@@ -200,7 +204,7 @@ export const updatePost = async (req, reply) => {
 
 export const softDeletePost = async (req, reply) => {
   const userId = req.user.userId;
-  const postId = parseInt(req.params.postId, 10);
+  const postId = req.params.postId;
   const success = await softDeletePostService(
     req.server.prisma,
     postId,
@@ -215,7 +219,7 @@ export const softDeletePost = async (req, reply) => {
 
 export const restorePost = async (req, reply) => {
   const userId = req.user.userId;
-  const postId = parseInt(req.params.postId, 10);
+  const postId = req.params.postId;
   const post = await restorePostService(req.server.prisma, postId, userId);
   if (!post)
     return reply

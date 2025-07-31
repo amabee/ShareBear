@@ -112,7 +112,7 @@ model UserSession {
 }
 
 model Post {
-  id             Int            @id @default(autoincrement())
+  id             String         @id @default(cuid()) @db.VarChar(32)
   userId         Int
   contentType    ContentType
   caption        String?        @db.VarChar(2000)
@@ -138,7 +138,7 @@ model Post {
 
 model PostImage {
   id           Int     @id @default(autoincrement())
-  postId       Int
+  postId       String  @db.VarChar(32)
   imageUrl     String  @db.VarChar(500)
   altText      String? @db.VarChar(200)
   displayOrder Int     @default(0)
@@ -156,7 +156,7 @@ model PostImage {
 
 model Comment {
   id              Int  @id @default(autoincrement())
-  postId          Int
+  postId          String  @db.VarChar(32)
   userId          Int
   parentCommentId Int?
 
@@ -174,7 +174,7 @@ model Comment {
 model Like {
   id        Int      @id @default(autoincrement())
   userId    Int
-  postId    Int
+  postId    String   @db.VarChar(32)
   createdAt DateTime @default(now())
 
   user User @relation(fields: [userId], references: [id])
@@ -186,7 +186,7 @@ model Like {
 model Share {
   id        Int      @id @default(autoincrement())
   userId    Int
-  postId    Int
+  postId    String   @db.VarChar(32)
   caption   String? // Optional caption when sharing
   createdAt DateTime @default(now())
 
@@ -225,7 +225,7 @@ model Hashtag {
 
 model PostHashtag {
   id        Int      @id @default(autoincrement())
-  postId    Int
+  postId    String   @db.VarChar(32)
   hashtagId Int
   createdAt DateTime @default(now())
 
