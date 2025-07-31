@@ -147,25 +147,49 @@ export function ShareBearPost({ post }) {
         </div>
       </div>
 
-      {/* Images with Carousel */}
+      {/* Images And Video with Carousel */}
       {post.images && post.images.length > 0 && (
         <div className="relative">
           <Carousel className="w-full" setApi={setApi}>
             <CarouselContent>
-              {post.images.map((image, index) => (
+              {post.images.map((media, index) => (
                 <CarouselItem key={index}>
                   <AspectRatio
                     ratio={4 / 5}
                     className="overflow-hidden shadow-md bg-black"
                   >
-                    <Image
-                      src={`${
-                        process.env.NEXT_PUBLIC_IMAGE_HOSTING_URL
-                      }/${image.imageUrl.split("/").pop()}`}
-                      alt={`Post content ${index + 1}`}
-                      fill
-                      className="object-cover transition-transform duration-300 ease-in-out"
-                    />
+                    {/* Check if the media is a video */}
+                    {media.imageUrl &&
+                      (media.imageUrl.match(/\.(mp4|webm|ogg|mov)$/i) ? (
+                        <video
+                          src={`${
+                            process.env.NEXT_PUBLIC_IMAGE_HOSTING_URL
+                          }/${media.imageUrl.split("/").pop()}`}
+                          className="w-full h-full object-cover"
+                          controls
+                          controlsList="nodownload noremoteplayback nofullscreen"
+                          disablePictureInPicture
+                          preload="metadata"
+                          playsInline
+                          muted
+                          referrerPolicy="no-referrer"
+                          crossOrigin="anonymous"
+                          style={{
+                            outline: "none",
+                          }}
+                        >
+                          Your browser does not support the video tag.
+                        </video>
+                      ) : (
+                        <Image
+                          src={`${
+                            process.env.NEXT_PUBLIC_IMAGE_HOSTING_URL
+                          }/${media.imageUrl.split("/").pop()}`}
+                          alt={`Post content ${index + 1}`}
+                          fill
+                          className="object-cover transition-transform duration-300 ease-in-out"
+                        />
+                      ))}
                   </AspectRatio>
                 </CarouselItem>
               ))}

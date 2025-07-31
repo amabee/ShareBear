@@ -14,8 +14,8 @@ import requestIdPlugin from "./plugins/requestIdPlugin.js";
 import ajvValidatorPlugin from "./plugins/ajvValidatorPlugin.js";
 import postRoutes from "./routes/posts.routes.js";
 import fastifyMultipart from "@fastify/multipart";
-import fastifyStatic from '@fastify/static';
-import path from 'path';
+import fastifyStatic from "@fastify/static";
+import path from "path";
 
 const app = Fastify({
   trustProxy: true,
@@ -39,8 +39,33 @@ app.register(ajvValidatorPlugin);
 
 // Serve static files from uploads directory
 app.register(fastifyStatic, {
-  root: path.join(process.cwd(), 'uploads'),
-  prefix: '/media/',
+  root: path.join(process.cwd(), "uploads"),
+  prefix: "/media/",
+  acceptRanges: true,
+  lastModified: true,
+  etag: true,
+  maxAge: "1h",
+  immutable: false,
+  decorateReply: false,
+  setHeaders: (res, path) => {
+    // CORS headers
+    res.setHeader("Access-Control-Allow-Origin", "*");
+    res.setHeader("Access-Control-Allow-Methods", "GET, HEAD, OPTIONS");
+    res.setHeader(
+      "Access-Control-Allow-Headers",
+      "Range, Accept-Ranges, Content-Range"
+    );
+    res.setHeader(
+      "Access-Control-Expose-Headers",
+      "Accept-Ranges, Content-Range, Content-Length"
+    );
+
+    // Security headers
+    res.setHeader("X-Content-Type-Options", "nosniff"); // Prevent MIME-type sniffing
+    res.setHeader("X-Frame-Options", "DENY"); // Block embedding in iframes
+    res.setHeader("Referrer-Policy", "no-referrer"); // Don’t leak referrer URLs
+    res.setHeader("Permissions-Policy", "fullscreen=(), picture-in-picture=()"); // Disable fullscreen & PiP
+  },
 });
 
 app.register(fastifyMultipart, {

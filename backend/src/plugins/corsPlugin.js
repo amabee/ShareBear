@@ -18,13 +18,23 @@ async function corsPlugin(app) {
       }
     },
     credentials: true,
-    methods: ["GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"],
-    allowedHeaders: ["Content-Type", "Authorization", "X-Requested-With"],
+    methods: ["GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS", "HEAD"],
+    allowedHeaders: [
+      "Content-Type",
+      "Authorization",
+      "X-Requested-With",
+      "Range",
+      "Accept-Ranges",
+      "Content-Range",
+    ],
     exposedHeaders: [
       "X-Total-Count",
       "X-RateLimit-Limit",
       "X-RateLimit-Remaining",
       "X-RateLimit-Reset",
+      "Accept-Ranges",
+      "Content-Range",
+      "Content-Length",
     ],
   });
 }

@@ -29,5 +29,6 @@ export const config = {
     maxSize: parseInt(process.env.UPLOAD_MAX_SIZE || "10485760"),
     allowedTypes: (process.env.UPLOAD_ALLOWED_TYPES || "").split(","),
     dir: process.env.UPLOAD_DIR || "./uploads",
+    renameStrategy: process.env.FILE_RENAME_STRATEGY || "uuid",
   },
 };

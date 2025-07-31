@@ -7,7 +7,7 @@ async function antiBotPlugin(app) {
     /spider/i,
     /scraper/i,
     /python/i,
-    /curl/i,
+    // /curl/i, // Disabled: curl is commonly used for legitimate API testing and automation
     /wget/i,
     /gpt/i,
     /openai/i,

@@ -10,6 +10,7 @@ async function helmetPlugin(app) {
         styleSrc: ["'self'", "'unsafe-inline'"], // useful for dev
         scriptSrc: ["'self'"],
         imgSrc: ["'self'", "data:", "https:"],
+        mediaSrc: ["'self'", "http://localhost:3000"],
       },
     },
     // ⛔ Prevent clickjacking (deny iframe embedding)
@@ -23,6 +24,8 @@ async function helmetPlugin(app) {
       preload: true,
     },
     hidePoweredBy: true,
+    crossOriginResourcePolicy: { policy: "cross-origin" }, 
+    crossOriginEmbedderPolicy: false,
   });
 }
 

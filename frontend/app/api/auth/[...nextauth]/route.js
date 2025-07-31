@@ -89,7 +89,7 @@ export const authOptions = {
 const handler = NextAuth(authOptions);
 
 async function refreshAccessToken(token) {
-  console.log("The token in question: ", token);
+  // console.log("The token in question: ", token);
   try {
     const response = await fetch(
       `${
@@ -112,10 +112,10 @@ async function refreshAccessToken(token) {
       throw refreshedTokens;
     }
 
-    console.log(
-      "The refreshed token in question: ",
-      refreshedTokens.refreshToken
-    );
+    // console.log(
+    //   "The refreshed token in question: ",
+    //   refreshedTokens.refreshToken
+    // );
 
     return {
       ...token,

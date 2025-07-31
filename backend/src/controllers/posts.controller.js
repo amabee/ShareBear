@@ -14,6 +14,7 @@ import {
   encodeOutput,
   safeDecodeOutput,
 } from "../utils/sanitize.js";
+import { config } from "../config/index.js";
 
 export const getPosts = async (req, rep) => {
   const currentUserId = req.user.userId;
@@ -79,7 +80,10 @@ export const createPost = async (req, reply) => {
         const file = req.files[i];
         console.log(`Processing file ${i + 1}:`, file.filename);
         
-        const fileUrl = await uploadFile(file, "posts");
+        const fileUrl = await uploadFile(file, "posts", {
+          userId: userId,
+          renameStrategy: config.upload.renameStrategy
+        });
         console.log(`File ${i + 1} uploaded successfully:`, fileUrl);
         
         images.push({
@@ -158,7 +162,10 @@ export const updatePost = async (req, reply) => {
     
     for (let i = 0; i < req.files.length; i++) {
       const file = req.files[i];
-      const fileUrl = await uploadFile(file, "posts");
+      const fileUrl = await uploadFile(file, "posts", {
+        userId: userId,
+        renameStrategy: config.upload.renameStrategy
+      });
       
       images.push({
         url: fileUrl,
