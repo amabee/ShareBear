@@ -6,8 +6,6 @@ import { LoaderCircle } from "lucide-react";
 export default function ShareBearFeedClient() {
   const { data: posts, isLoading, error } = usePosts();
 
-  console.log("POSTS: ", posts);
-
   if (isLoading)
     return (
       <div className="flex justify-center items-center h-32">

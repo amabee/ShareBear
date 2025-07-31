@@ -52,7 +52,7 @@ export const authOptions = {
   callbacks: {
     async jwt({ token, user, account }) {
       // Initial sign in
-      console.log("JWT callback triggered", { token, user });
+      // console.log("JWT callback triggered", { token, user });
       if (account && user) {
         return {
           ...token,
@@ -69,7 +69,10 @@ export const authOptions = {
       return refreshAccessToken(token);
     },
     async session({ session, token }) {
-      console.log("Session callback 3gurd", { session, token });
+      if (!token) {
+        return null;
+      }
+
       session.user.id = token.sub;
       session.user.username = token.username;
       session.accessToken = token.accessToken;
@@ -87,6 +90,7 @@ export const authOptions = {
 const handler = NextAuth(authOptions);
 
 async function refreshAccessToken(token) {
+  console.log("The token in question: ", token);
   try {
     const response = await fetch(
       `${
@@ -109,19 +113,26 @@ async function refreshAccessToken(token) {
       throw refreshedTokens;
     }
 
+    console.log(
+      "The refreshed token in question: ",
+      refreshedTokens.refreshToken
+    );
+
     return {
       ...token,
       accessToken: refreshedTokens.token,
-      refreshToken: refreshedTokens.refreshToken ?? token.refreshToken,
-      accessTokenExpires: Date.now() + 60 * 60 * 1000, // 1 hour
+      refreshToken: refreshedTokens.refreshToken,
+      accessTokenExpires: Date.now() + 1 * 60 * 1000, // 1 hour
     };
   } catch (error) {
     console.error("Error refreshing token:", error);
 
-    return {
-      ...token,
-      error: "RefreshAccessTokenError",
-    };
+    return null;
+
+    // return {
+    //   ...token,
+    //   error: "RefreshAccessTokenError",
+    // };
   }
 }
 

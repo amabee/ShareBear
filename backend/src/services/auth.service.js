@@ -153,13 +153,16 @@ export async function refreshUserToken(prisma, refreshToken, req) {
 
     await logSecurityEvent(
       prisma,
-      `Failed to refresh token - Token sent: ${session}`,
+      `Failed to refresh token - Invalid or missing session`,
       req,
       "ERROR",
       {
-        userId: user.id,
-        username: user.username,
+        refreshToken: refreshToken
+          ? refreshToken.substring(0, 8) + "***"
+          : null,
         reason: "invalid_refresh_token",
+        sessionFound: !!session,
+        userFound: !!(session && session.user),
       }
     );
 
@@ -167,9 +170,37 @@ export async function refreshUserToken(prisma, refreshToken, req) {
   }
 
   if (session.expiresAt < new Date()) {
+    // Log before deleting so we still have access to user info
+    await logSecurityEvent(prisma, `Refresh token expired`, req, "WARN", {
+      userId: session.user.id,
+      username: session.user.username,
+      sessionId: session.id,
+      expiredAt: session.expiresAt,
+      reason: "expired_refresh_token",
+    });
+
     await deleteUserSession(prisma, session.id);
+
     const error = new Error("Refresh token expired");
     error.code = "EXPIRED_REFRESH_TOKEN";
+    throw error;
+  }
+
+  // Check if user is still active
+  if (!session.user.isActive) {
+    await logSecurityEvent(
+      prisma,
+      "Refresh token used for inactive account",
+      req,
+      "WARN",
+      {
+        userId: session.user.id,
+        username: session.user.username,
+        reason: "account_inactive",
+      }
+    );
+    const error = new Error("Account is inactive");
+    error.code = "INACTIVE_ACCOUNT";
     throw error;
   }
 
@@ -178,6 +209,13 @@ export async function refreshUserToken(prisma, refreshToken, req) {
   const newExpiry = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000);
 
   await rotateRefreshToken(prisma, session, newRefreshToken, newExpiry, req);
+
+  // Log successful refresh
+  await logSecurityEvent(prisma, "Token refreshed successfully", req, "INFO", {
+    userId: session.user.id,
+    username: session.user.username,
+    sessionId: session.id,
+  });
 
   return {
     user: session.user,
