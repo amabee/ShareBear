@@ -1,27 +1,26 @@
 "use client";
-
-import { useAuth } from "@/hooks/useNextAuth";
+import { useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
 import { useEffect } from "react";
 import LoadingScreen from "@/components/Reusables/LoadingScreen";
 
 export default function AuthLayout({ children }) {
-  const { isAuthenticated, isLoading } = useAuth();
+  const { data: session, status } = useSession();
   const router = useRouter();
 
   useEffect(() => {
-    if (!isLoading && isAuthenticated) {
+    if (status === "authenticated" && session?.user) {
       router.push("/");
     }
-  }, [isAuthenticated, isLoading, router]);
+  }, [status, session, router]);
 
-  if (isLoading) {
+  if (status === "loading") {
     return (
       <LoadingScreen message="Checking authentication..." showQuotes={false} />
     );
   }
 
-  if (isAuthenticated) {
+  if (status === "authenticated" && session?.user) {
     return null;
   }
 

@@ -59,12 +59,45 @@ export const createUser = async (
 
 // FOR FIND THE SESSION BY TOKEN
 export const findSessionByToken = async (prisma, refreshToken) => {
-  return prisma.userSession.findUnique({
+  // First try to find by current refresh token
+  let session = await prisma.userSession.findUnique({
     where: { refreshToken },
     include: { user: true },
   });
+
+  // If not found, try to find by previous refresh token (within grace period)
+  if (!session) {
+    // Since previousRefreshToken is no longer unique, use findFirst
+    session = await prisma.userSession.findFirst({
+      where: {
+        previousRefreshToken: refreshToken,
+        // Only consider sessions that have rotatedAt timestamp
+        rotatedAt: {
+          not: null,
+        },
+      },
+      include: { user: true },
+    });
+
+    // Check if the previous token is within grace period (30 seconds)
+    if (session && session.rotatedAt) {
+      const gracePeriodMs = 30 * 1000; // 30 seconds
+      const timeSinceRotation = Date.now() - session.rotatedAt.getTime();
+
+      if (timeSinceRotation > gracePeriodMs) {
+        // Previous token is outside grace period, treat as not found
+        return null;
+      }
+    } else if (session && !session.rotatedAt) {
+      // No rotation timestamp, treat as invalid
+      return null;
+    }
+  }
+
+  return session;
 };
 
+// STORE THE REFRESHED TOKEN
 export const storeRefreshToken = async (
   prisma,
   userId,
@@ -83,7 +116,7 @@ export const storeRefreshToken = async (
   });
 };
 
-// FOR ROTATING / REFRESHING THE USER TOKEN -> GENERATE NEW TOKEN AND UPDATE SESSION
+// FOR ROTATING / REFRESHING THE USER TOKEN WITH GRACE PERIOD -> GENERATE NEW TOKEN AND UPDATE SESSION
 
 export const rotateRefreshToken = async (
   prisma,
@@ -95,10 +128,33 @@ export const rotateRefreshToken = async (
   return prisma.userSession.update({
     where: { id: session.id },
     data: {
-      refreshToken: newRefreshToken,
+      previousRefreshToken: session.refreshToken, // Store current as previous
+      refreshToken: newRefreshToken, // Set new as current
+      rotatedAt: new Date(), // Mark rotation time
       expiresAt: newExpiry,
       deviceInfo: req.headers["user-agent"] || null,
       ipAddress: req.ip,
+    },
+  });
+};
+
+// CLEANUP THE OLD PREVIOUS TOKENS BIATCH!
+export const cleanupExpiredPreviousTokens = async (prisma) => {
+  const gracePeriodMs = 60 * 1000; // 1 minute cleanup
+  const cutoffTime = new Date(Date.now() - gracePeriodMs);
+
+  return prisma.userSession.updateMany({
+    where: {
+      rotatedAt: {
+        lt: cutoffTime,
+      },
+      previousRefreshToken: {
+        not: null,
+      },
+    },
+    data: {
+      previousRefreshToken: null,
+      rotatedAt: null,
     },
   });
 };

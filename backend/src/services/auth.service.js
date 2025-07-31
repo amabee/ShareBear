@@ -10,6 +10,7 @@ import {
   logoutDeleteSession,
   updateLastUpdatedTimeStamp,
   deleteUserSession,
+  cleanupExpiredPreviousTokens,
 } from "../repositories/auth.repository.js";
 import { generateUniqueUsername } from "../utils/username-generator.js";
 import { logSecurityEvent, logUserAction } from "../utils/system-logger.js";
@@ -204,7 +205,34 @@ export async function refreshUserToken(prisma, refreshToken, req) {
     throw error;
   }
 
-  // Generate new refresh token
+  // Check if this is using a previous token (within grace period)
+  const isUsingPreviousToken = session.previousRefreshToken === refreshToken;
+
+  if (isUsingPreviousToken) {
+    await logSecurityEvent(
+      prisma,
+      "Using previous refresh token within grace period",
+      req,
+      "INFO",
+      {
+        userId: session.user.id,
+        username: session.user.username,
+        sessionId: session.id,
+        timeSinceRotation: session.rotatedAt
+          ? Date.now() - session.rotatedAt.getTime()
+          : null,
+      }
+    );
+
+    // Return the current token instead of generating a new one
+    return {
+      user: session.user,
+      newRefreshToken: session.refreshToken, // Return current token, not previous
+      newExpiry: session.expiresAt,
+    };
+  }
+
+  // Generate new refresh token only if using current token
   const newRefreshToken = crypto.randomBytes(48).toString("hex");
   const newExpiry = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000);
 
@@ -216,6 +244,15 @@ export async function refreshUserToken(prisma, refreshToken, req) {
     username: session.user.username,
     sessionId: session.id,
   });
+
+  // Schedule cleanup of previous token after grace period
+  setTimeout(async () => {
+    try {
+      await cleanupExpiredPreviousTokens(prisma);
+    } catch (error) {
+      console.error("Failed to cleanup expired previous tokens:", error);
+    }
+  }, 60 * 1000); // 1 minute
 
   return {
     user: session.user,
