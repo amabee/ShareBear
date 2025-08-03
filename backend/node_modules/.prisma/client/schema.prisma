@@ -30,6 +30,7 @@ enum ContentType {
   TEXT
   IMAGE
   VIDEO
+  MIXED
 }
 
 enum MessageType {

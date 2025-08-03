@@ -1,15 +1,39 @@
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { useQuery, useMutation, useQueryClient, useInfiniteQuery } from "@tanstack/react-query";
 import { apiClient } from "./apiClient";
 import { useCreatePostStore, ContentType } from "@/stores/createPostStore";
 import toast from "react-hot-toast";
 
-export const usePosts = () => {
+export const usePosts = (page = 1, limit = 5) => {
   // fetching all posts
   return useQuery({
     queryKey: ["posts"],
-    queryFn: () => apiClient.get("/api/posts"),
+    queryFn: () => apiClient.get(`/api/posts?page=${page}&limit=${limit}`),
     staleTime: 1000 * 60 * 5, // stale time is 5 mins
-    refetchInterval: 100000, // refetch every 1 min
+    refetchOnWindowFocus: true,
+  });
+};
+
+// NEW: Infinite scrolling hook
+export const useInfinitePosts = (limit = 5) => {
+  return useInfiniteQuery({
+    queryKey: ["posts", "infinite"],
+    queryFn: ({ pageParam = 1 }) => 
+      apiClient.get(`/api/posts?page=${pageParam}&limit=${limit}`),
+    getNextPageParam: (lastPage) => {
+      // Check if there's a next page based on pagination data
+      if (lastPage?.pagination?.hasNextPage) {
+        return lastPage.pagination.page + 1;
+      }
+      return undefined; // No more pages
+    },
+    getPreviousPageParam: (firstPage) => {
+      // Check if there's a previous page
+      if (firstPage?.pagination?.hasPreviousPage) {
+        return firstPage.pagination.page - 1;
+      }
+      return undefined;
+    },
+    staleTime: 1000 * 60 * 5, // stale time is 5 mins
     refetchOnWindowFocus: true,
   });
 };

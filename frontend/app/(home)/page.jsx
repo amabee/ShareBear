@@ -1,4 +1,4 @@
-import ShareBearFeedClient from "@/components/Clients/ShareBearFeedClient";
+import ShareBearFeedClient, { ShareBearInfiniteFeedClient } from "@/components/Clients/ShareBearFeedClient";
 import { ShareBearFeed } from "@/components/Feed/ShareBearFeed";
 import { HomePageLayout } from "@/components/Reusables/HomePageLayout";
 import {
@@ -45,7 +45,7 @@ const HomePage = () => {
               <Stories />
             </Suspense>
             <Suspense fallback={<FeedSkeleton />}>
-              <ShareBearFeedClient />
+              <ShareBearInfiniteFeedClient />
             </Suspense>
           </div>
           <div className="hidden lg:block">

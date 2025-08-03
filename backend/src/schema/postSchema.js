@@ -4,7 +4,7 @@ export const createPostSchema = {
     properties: {
       contentType: {
         type: "string",
-        enum: ["TEXT", "IMAGE", "VIDEO"],
+        enum: ["TEXT", "IMAGE", "VIDEO", "MIXED"],
         errorMessage: "Invalid content type",
       },
       caption: { type: "string" },
@@ -122,7 +122,7 @@ export const createPostMultipartSchema = {
     properties: {
       contentType: {
         type: "string",
-        enum: ["TEXT", "IMAGE", "VIDEO"],
+        enum: ["TEXT", "IMAGE", "VIDEO", "MIXED"],
         errorMessage: "Invalid content type",
       },
       caption: { type: "string" },
@@ -246,7 +246,7 @@ export const updatePostSchema = {
     properties: {
       contentType: {
         type: "string",
-        enum: ["TEXT", "IMAGE", "VIDEO"],
+        enum: ["TEXT", "IMAGE", "VIDEO", "MIXED"],
         errorMessage: "Invalid content type",
       },
       caption: { type: "string" },

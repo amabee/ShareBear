@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import Image from "next/image";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
@@ -33,6 +33,7 @@ export function ShareBearPost({ post }) {
   const [api, setApi] = useState(null);
   const [current, setCurrent] = useState(0);
   const [count, setCount] = useState(0);
+  const videoRef = useRef(null);
 
   useEffect(() => {
     if (!api) {
@@ -77,6 +78,14 @@ export function ShareBearPost({ post }) {
       }
       return <span key={index}>{part}</span>;
     });
+  };
+
+  const handleVolumeChange = (e) => {
+    const volume = parseFloat(e.target.value);
+
+    if (videoRef.current) {
+      videoRef.current.volume = volume;
+    }
   };
 
   return (
@@ -167,10 +176,10 @@ export function ShareBearPost({ post }) {
                           }/${media.imageUrl.split("/").pop()}`}
                           className="w-full h-full object-cover"
                           disablePictureInPicture
+                          controls
+                          controlsList="nodownload nofullscreen noremoteplayback nopictureinpicture"
                           preload="metadata"
                           playsInline
-                          muted
-                          autoPlay={true}
                           referrerPolicy="no-referrer"
                           crossOrigin="anonymous"
                           style={{
