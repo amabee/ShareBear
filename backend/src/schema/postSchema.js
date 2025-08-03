@@ -333,6 +333,32 @@ export const restorePostSchema = {
 };
 
 export const getPostsSchema = {
+  querystring: {
+    type: "object",
+    properties: {
+      page: { 
+        oneOf: [
+          { type: "integer", minimum: 1 },
+          { type: "string", pattern: "^[1-9]\\d*$" }
+        ],
+        default: 1,
+        description: "Page number for pagination"
+      },
+      limit: { 
+        oneOf: [
+          { type: "integer", minimum: 1, maximum: 50 },
+          { type: "string", pattern: "^([1-9]|[1-4]\\d|50)$" }
+        ],
+        default: 10,
+        description: "Number of posts per page (max 50)"
+      },
+      cursor: {
+        type: "string",
+        description: "Cursor for cursor-based pagination (post ID)"
+      }
+    },
+    additionalProperties: false
+  },
   response: {
     200: {
       type: "object",
@@ -419,6 +445,19 @@ export const getPostsSchema = {
             },
           },
         },
+        pagination: {
+          type: "object",
+          properties: {
+            page: { type: "integer" },
+            limit: { type: "integer" },
+            totalPosts: { type: "integer" },
+            totalPages: { type: "integer" },
+            hasNextPage: { type: "boolean" },
+            hasPreviousPage: { type: "boolean" },
+            nextCursor: { type: "string" },
+            previousCursor: { type: "string" }
+          }
+        }
       },
     },
     401: { type: "object", properties: { error: { type: "string" } } },
@@ -574,6 +613,32 @@ export const getPostsByHashtagSchema = {
     },
     required: ["hashtag"],
   },
+  querystring: {
+    type: "object",
+    properties: {
+      page: { 
+        oneOf: [
+          { type: "integer", minimum: 1 },
+          { type: "string", pattern: "^[1-9]\\d*$" }
+        ],
+        default: 1,
+        description: "Page number for pagination"
+      },
+      limit: { 
+        oneOf: [
+          { type: "integer", minimum: 1, maximum: 50 },
+          { type: "string", pattern: "^([1-9]|[1-4]\\d|50)$" }
+        ],
+        default: 10,
+        description: "Number of posts per page (max 50)"
+      },
+      cursor: {
+        type: "string",
+        description: "Cursor for cursor-based pagination (post ID)"
+      }
+    },
+    additionalProperties: false
+  },
   response: {
     200: {
       type: "object",
@@ -661,6 +726,19 @@ export const getPostsByHashtagSchema = {
           },
         },
         hashtag: { type: "string" },
+        pagination: {
+          type: "object",
+          properties: {
+            page: { type: "integer" },
+            limit: { type: "integer" },
+            totalPosts: { type: "integer" },
+            totalPages: { type: "integer" },
+            hasNextPage: { type: "boolean" },
+            hasPreviousPage: { type: "boolean" },
+            nextCursor: { type: "string" },
+            previousCursor: { type: "string" }
+          }
+        }
       },
     },
     401: { type: "object", properties: { error: { type: "string" } } },

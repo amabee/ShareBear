@@ -135,9 +135,9 @@ export const restorePost = async (prisma, postId, userId) => {
   });
 };
 
-export const getPosts = async (prisma, userId) => {
+export const getPosts = async (prisma, userId, paginationOptions = {}) => {
   return await prisma.$transaction(async (tx) => {
-    return await getPostsRepo(tx, userId);
+    return await getPostsRepo(tx, userId, paginationOptions);
   });
 };
 
@@ -147,9 +147,9 @@ export const getPost = async (prisma, postId) => {
   });
 };
 
-export const getPostsByHashtag = async (prisma, hashtagName, userId) => {
+export const getPostsByHashtag = async (prisma, hashtagName, userId, paginationOptions = {}) => {
   return await prisma.$transaction(async (tx) => {
-    return await getPostsByHashtagRepo(tx, hashtagName, userId);
+    return await getPostsByHashtagRepo(tx, hashtagName, userId, paginationOptions);
   });
 };
 

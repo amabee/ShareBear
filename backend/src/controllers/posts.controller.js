@@ -18,18 +18,26 @@ import { config } from "../config/index.js";
 
 export const getPosts = async (req, rep) => {
   const currentUserId = req.user.userId;
+  const { page = 1, limit = 10, cursor } = req.query;
 
   try {
-    const posts = await getPostsService(req.server.prisma, currentUserId);
+    const result = await getPostsService(req.server.prisma, currentUserId, {
+      page: parseInt(page),
+      limit: parseInt(limit),
+      cursor
+    });
 
-    const encodedPosts = posts.map((post) => ({
+    const encodedPosts = result.posts.map((post) => ({
       ...post,
       caption: safeDecodeOutput(post.caption),
       location: encodeOutput(post.location),
       taggedUsers: post.taggedUsers,
     }));
 
-    return rep.send({ posts: encodedPosts });
+    return rep.send({ 
+      posts: encodedPosts,
+      pagination: result.pagination
+    });
   } catch (error) {
     req.log.error(error);
     return rep.status(500).send({ error: "Failed to fetch posts" });
@@ -235,22 +243,32 @@ export const restorePost = async (req, reply) => {
 export const getPostsByHashtag = async (req, rep) => {
   const { hashtag } = req.params;
   const currentUserId = req.user.userId;
+  const { page = 1, limit = 10, cursor } = req.query;
 
   try {
-    const posts = await getPostsByHashtagService(
+    const result = await getPostsByHashtagService(
       req.server.prisma,
       hashtag,
-      currentUserId
+      currentUserId,
+      {
+        page: parseInt(page),
+        limit: parseInt(limit),
+        cursor
+      }
     );
 
-    const encodedPosts = posts.map((post) => ({
+    const encodedPosts = result.posts.map((post) => ({
       ...post,
       caption: encodeOutput(safeDecodeOutput(post.caption)), // Safely decode first, then encode for output
       location: encodeOutput(safeDecodeOutput(post.location)),
       taggedUsers: encodeOutput(safeDecodeOutput(post.taggedUsers)),
     }));
 
-    return rep.send({ posts: encodedPosts, hashtag });
+    return rep.send({ 
+      posts: encodedPosts, 
+      hashtag,
+      pagination: result.pagination
+    });
   } catch (error) {
     req.log.error(error);
     return rep.status(500).send({ error: "Failed to fetch posts by hashtag" });
