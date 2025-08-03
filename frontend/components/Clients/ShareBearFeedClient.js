@@ -4,6 +4,7 @@ import { ShareBearFeed } from "@/components/Feed/ShareBearFeed";
 import { LoaderCircle } from "lucide-react";
 import { useEffect, useRef, useCallback } from "react";
 import { Button } from "@/components/ui/button";
+import { usePostsStore } from "@/stores/usePostsStore";
 
 export default function ShareBearFeedClient() {
   const { data: posts, isLoading, error } = usePosts();
@@ -31,9 +32,10 @@ export function ShareBearInfiniteFeedClient() {
     fetchNextPage,
     hasNextPage,
     isFetchingNextPage,
-  } = useInfinitePosts(5); // 5 posts per page
+  } = useInfinitePosts(5);
 
-  // Intersection Observer for infinite scroll
+  const { batchUpdateInteractions } = usePostsStore();
+
   const observerRef = useRef();
   const lastPostRef = useCallback(
     (node) => {
@@ -54,6 +56,20 @@ export function ShareBearInfiniteFeedClient() {
 
   // Flatten all posts from all pages
   const allPosts = data?.pages?.flatMap((page) => page.posts || []) || [];
+
+  useEffect(() => {
+    if (allPosts.length > 0) {
+      const updates = allPosts.map((post) => ({
+        postId: post.id,
+        data: {
+          liked: post.liked,
+          likeCount: post._count?.likes || 0,
+          shareCount: post.shares || 0,
+        },
+      }));
+      batchUpdateInteractions(updates);
+    }
+  }, [allPosts, batchUpdateInteractions]);
 
   if (isLoading)
     return (

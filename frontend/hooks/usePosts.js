@@ -1,4 +1,9 @@
-import { useQuery, useMutation, useQueryClient, useInfiniteQuery } from "@tanstack/react-query";
+import {
+  useQuery,
+  useMutation,
+  useQueryClient,
+  useInfiniteQuery,
+} from "@tanstack/react-query";
 import { apiClient } from "./apiClient";
 import { useCreatePostStore, ContentType } from "@/stores/createPostStore";
 import toast from "react-hot-toast";
@@ -17,7 +22,7 @@ export const usePosts = (page = 1, limit = 5) => {
 export const useInfinitePosts = (limit = 5) => {
   return useInfiniteQuery({
     queryKey: ["posts", "infinite"],
-    queryFn: ({ pageParam = 1 }) => 
+    queryFn: ({ pageParam = 1 }) =>
       apiClient.get(`/api/posts?page=${pageParam}&limit=${limit}`),
     getNextPageParam: (lastPage) => {
       // Check if there's a next page based on pagination data
