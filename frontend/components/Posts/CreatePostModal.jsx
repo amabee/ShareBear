@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useRef, useEffect } from "react";
+import { useRef, useEffect } from "react";
 import {
   Camera,
   ImageIcon,
@@ -17,6 +17,7 @@ import {
   Users,
   Sparkles,
   Check,
+  Search,
 } from "lucide-react";
 import {
   Carousel,
@@ -26,94 +27,119 @@ import {
   CarouselPrevious,
 } from "@/components/ui/carousel";
 import { AspectRatio } from "../ui/aspect-ratio";
+import EmojiPicker from "emoji-picker-react";
+import { backgroundOptions, fontSizes } from "./CreatePostsOptions";
+import { useCreatePostStore } from "@/stores/createPostStore";
+import { useCreatePost } from "@/hooks/usePosts";
 
 export function CreatePostModal({ open, onOpenChange }) {
-  const [text, setText] = useState("");
-  const [files, setFiles] = useState([]);
-  const [isDragging, setIsDragging] = useState(false);
-  const [selectedBg, setSelectedBg] = useState("white");
-  const [textAlign, setTextAlign] = useState("left");
-  const [fontSize, setFontSize] = useState("medium");
-  const [isBold, setIsBold] = useState(false);
-  const [isItalic, setIsItalic] = useState(false);
-  const [activeTab, setActiveTab] = useState("text");
+  // Replace all local state with Zustand store
+  const {
+    // State
+    text,
+    files,
+    isDragging,
+    selectedBg,
+    textAlign,
+    fontSize,
+    isBold,
+    isItalic,
+    activeTab,
+    showEmojiPicker,
+    showLocationPicker,
+    selectedLocation,
+    locationSearch,
+    isSubmitting,
+
+    // Actions
+    setText,
+    setFiles,
+    addFiles,
+    removeFile,
+    setIsDragging,
+    setSelectedBg,
+    setTextAlign,
+    setFontSize,
+    setIsBold,
+    setIsItalic,
+    setActiveTab,
+    setShowEmojiPicker,
+    setShowLocationPicker,
+    setSelectedLocation,
+    setLocationSearch,
+    addEmoji,
+    resetForm,
+    getPostDataForAPI,
+    validatePost,
+    getIsDisabled,
+    closeAllPopups,
+  } = useCreatePostStore();
+
+  // Use the mutation hook
+  const createPostMutation = useCreatePost();
+
   const fileInputRef = useRef(null);
   const modalRef = useRef(null);
+  const emojiPickerRef = useRef(null);
+  const locationPickerRef = useRef(null);
 
-  const backgroundOptions = [
-    {
-      id: "white",
-      name: "Default",
-      color: "bg-white",
-      textColor: "text-gray-900",
-      gradient: "from-white to-gray-50",
-    },
-    {
-      id: "blue",
-      name: "Ocean",
-      color: "bg-blue-500",
-      textColor: "text-white",
-      gradient: "from-blue-400 to-blue-600",
-    },
-    {
-      id: "purple",
-      name: "Sunset",
-      color: "bg-purple-500",
-      textColor: "text-white",
-      gradient: "from-purple-400 to-pink-500",
-    },
-    {
-      id: "green",
-      name: "Nature",
-      color: "bg-green-500",
-      textColor: "text-white",
-      gradient: "from-green-400 to-emerald-600",
-    },
-    {
-      id: "red",
-      name: "Energy",
-      color: "bg-red-500",
-      textColor: "text-white",
-      gradient: "from-red-400 to-rose-600",
-    },
-    {
-      id: "yellow",
-      name: "Sunshine",
-      color: "bg-yellow-400",
-      textColor: "text-gray-900",
-      gradient: "from-yellow-300 to-orange-400",
-    },
-    {
-      id: "pink",
-      name: "Dream",
-      color: "bg-pink-500",
-      textColor: "text-white",
-      gradient: "from-pink-400 to-rose-500",
-    },
-    {
-      id: "gray",
-      name: "Classic",
-      color: "bg-gray-700",
-      textColor: "text-white",
-      gradient: "from-gray-600 to-gray-800",
-    },
+  // Sample locations for demo
+  const sampleLocations = [
+    "New York, NY",
+    "Los Angeles, CA",
+    "Chicago, IL",
+    "Houston, TX",
+    "Phoenix, AZ",
+    "Philadelphia, PA",
+    "San Antonio, TX",
+    "San Diego, CA",
+    "Dallas, TX",
+    "San Jose, CA",
+    "Austin, TX",
+    "Jacksonville, FL",
   ];
 
-  const fontSizes = [
-    { id: "small", name: "Small", size: "text-base" },
-    { id: "medium", name: "Medium", size: "text-lg" },
-    { id: "large", name: "Large", size: "text-xl" },
-    { id: "xlarge", name: "Extra Large", size: "text-2xl" },
-  ];
+  const filteredLocations = sampleLocations.filter((location) =>
+    location.toLowerCase().includes(locationSearch.toLowerCase())
+  );
 
   const currentBg = backgroundOptions.find((bg) => bg.id === selectedBg);
   const currentFontSize = fontSizes.find((fs) => fs.id === fontSize);
+
+  // Handle clicks outside of emoji and location pickers
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (
+        emojiPickerRef.current &&
+        !emojiPickerRef.current.contains(event.target)
+      ) {
+        setShowEmojiPicker(false);
+      }
+      if (
+        locationPickerRef.current &&
+        !locationPickerRef.current.contains(event.target)
+      ) {
+        setShowLocationPicker(false);
+      }
+    };
+
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+    };
+  }, [setShowEmojiPicker, setShowLocationPicker]);
 
   // Handle escape key and outside clicks
   useEffect(() => {
     const handleEscape = (e) => {
       if (e.key === "Escape") {
-        onOpenChange(false);
+        if (showEmojiPicker) {
+          setShowEmojiPicker(false);
+        } else if (showLocationPicker) {
+          setShowLocationPicker(false);
+        } else {
+          onOpenChange(false);
+        }
       }
     };
 
@@ -134,17 +160,32 @@ export function CreatePostModal({ open, onOpenChange }) {
       document.removeEventListener("mousedown", handleClickOutside);
       document.body.style.overflow = "unset";
     };
-  }, [open, onOpenChange]);
+  }, [
+    open,
+    onOpenChange,
+    showEmojiPicker,
+    showLocationPicker,
+    setShowEmojiPicker,
+    setShowLocationPicker,
+  ]);
 
   const handleTextChange = (e) => {
     setText(e.target.value);
   };
 
+  const handleEmojiSelect = (emojiData) => {
+    addEmoji(emojiData.emoji);
+  };
+
   const handleFileSelect = (selectedFiles) => {
     if (selectedFiles) {
       const fileArray = Array.from(selectedFiles);
-      setFiles((prev) => [...prev, ...fileArray]);
+      addFiles(fileArray);
     }
+  };
+
+  const triggerFileInput = () => {
+    fileInputRef.current?.click();
   };
 
   const handleDragOver = (e) => {
@@ -164,31 +205,35 @@ export function CreatePostModal({ open, onOpenChange }) {
       (file) => file.type.startsWith("image/") || file.type.startsWith("video/")
     );
     if (droppedFiles.length > 0) {
-      setFiles((prev) => [...prev, ...droppedFiles]);
+      addFiles(droppedFiles);
     }
   };
 
-  const removeFile = (indexToRemove) => {
-    setFiles((prev) => prev.filter((_, index) => index !== indexToRemove));
-  };
-
-  const handleSubmit = () => {
-    alert("Post created! (mock)");
-    setText("");
-    setFiles([]);
-    setSelectedBg("white");
-    setTextAlign("left");
-    setFontSize("medium");
-    setIsBold(false);
-    setIsItalic(false);
-    setActiveTab("text");
-    if (fileInputRef.current) {
-      fileInputRef.current.value = "";
+  const handleSubmit = async () => {
+    // Validate the post first
+    const validation = validatePost();
+    if (!validation.isValid) {
+      console.error("Validation errors:", validation.errors);
+      return;
     }
-    onOpenChange(false);
+
+    // Get the post data for API submission
+    const postData = getPostDataForAPI();
+
+    try {
+      // Submit the post using the mutation
+      await createPostMutation.mutateAsync(postData);
+
+      // Close the modal on success (resetForm is handled in the mutation)
+      onOpenChange(false);
+    } catch (error) {
+      // Error handling is done in the mutation
+      console.error("Failed to create post:", error);
+    }
   };
 
-  const isDisabled = !text.trim() && files.length === 0;
+  // Use the computed isDisabled from the store
+  const isDisabled = getIsDisabled();
 
   const getTextStyle = () => {
     return `${currentFontSize.size} ${isBold ? "font-bold" : "font-normal"} ${
@@ -196,7 +241,6 @@ export function CreatePostModal({ open, onOpenChange }) {
     } text-${textAlign} ${currentBg.textColor}`;
   };
 
-  // Add this helper function after the existing helper functions
   const renderFilePreview = () => {
     if (!files || files.length === 0) return null;
 
@@ -255,7 +299,6 @@ export function CreatePostModal({ open, onOpenChange }) {
       );
     }
 
-    // Multiple files - use carousel
     return (
       <div className="px-4 sm:px-6 pb-4 sm:pb-6">
         <div className="bg-gray-50 rounded-xl border border-gray-200 p-3">
@@ -334,14 +377,20 @@ export function CreatePostModal({ open, onOpenChange }) {
     <div className="fixed inset-0 z-50 flex items-center justify-center">
       <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" />
 
+      {/* Hidden file input - moved outside to always be accessible */}
+      <input
+        ref={fileInputRef}
+        type="file"
+        accept="image/*,video/*"
+        multiple
+        onChange={(e) => handleFileSelect(e.target.files)}
+        className="hidden"
+      />
+
       {/* Modal */}
       <div
         ref={modalRef}
-        className="relative bg-white rounded-2xl
-         shadow-2xl w-full max-w-sm
-          sm:max-w-md md:max-w-2xl
-           lg:max-w-4xl xl:max-w-7xl 
-           max-h-[95vh] sm:max-h-[90vh] mx-4 overflow-hidden animate-in fade-in-0 zoom-in-95 duration-200"
+        className="relative bg-white rounded-2xl shadow-2xl w-full max-w-sm sm:max-w-md md:max-w-2xl lg:max-w-4xl xl:max-w-7xl max-h-[95vh] sm:max-h-[90vh] mx-4 overflow-hidden animate-in fade-in-0 zoom-in-95 duration-200"
       >
         <div className="flex flex-col h-full max-h-[90vh] overflow-hidden">
           {/* Header */}
@@ -410,6 +459,12 @@ export function CreatePostModal({ open, onOpenChange }) {
                       Anyone can see this
                     </span>
                   </div>
+                  {selectedLocation && (
+                    <div className="flex items-center gap-1 text-xs text-blue-600 mt-1">
+                      <MapPin className="w-3 h-3" />
+                      <span>{selectedLocation}</span>
+                    </div>
+                  )}
                 </div>
               </div>
 
@@ -428,7 +483,10 @@ export function CreatePostModal({ open, onOpenChange }) {
                     value={text}
                     onChange={handleTextChange}
                     style={{
-                      minHeight: window.innerWidth < 640 ? "160px" : "240px",
+                      minHeight:
+                        typeof window !== "undefined" && window.innerWidth < 640
+                          ? "160px"
+                          : "240px",
                       placeholderColor: currentBg.textColor.includes("white")
                         ? "rgba(255,255,255,0.8)"
                         : "rgba(0,0,0,0.6)",
@@ -451,7 +509,7 @@ export function CreatePostModal({ open, onOpenChange }) {
                     onDragOver={handleDragOver}
                     onDragLeave={handleDragLeave}
                     onDrop={handleDrop}
-                    onClick={() => fileInputRef.current?.click()}
+                    onClick={triggerFileInput}
                   >
                     <div className="p-3 sm:p-4 bg-gradient-to-br from-blue-500 to-purple-600 rounded-xl sm:rounded-2xl w-fit mx-auto mb-3 sm:mb-4">
                       <Camera className="w-6 h-6 sm:w-8 sm:h-8 text-white" />
@@ -462,20 +520,12 @@ export function CreatePostModal({ open, onOpenChange }) {
                     <p className="text-gray-500 text-sm">
                       Drag and drop or click to browse
                     </p>
-                    <input
-                      ref={fileInputRef}
-                      type="file"
-                      accept="image/*,video/*"
-                      multiple
-                      onChange={(e) => handleFileSelect(e.target.files)}
-                      className="hidden"
-                    />
                   </div>
                 </div>
               )}
 
               {/* Quick Actions */}
-              <div className="px-4 sm:px-6 pb-4 sm:pb-6">
+              <div className="px-4 sm:px-6 pb-4 sm:pb-6 relative">
                 <div className="flex items-center justify-between p-3 sm:p-4 bg-gradient-to-r from-gray-50 to-gray-100 rounded-xl sm:rounded-2xl border border-gray-200">
                   <span className="text-xs sm:text-sm font-semibold text-gray-700">
                     Enhance your post
@@ -484,22 +534,115 @@ export function CreatePostModal({ open, onOpenChange }) {
                     <button
                       className="p-2 sm:p-3 hover:bg-white rounded-lg sm:rounded-xl transition-all hover:scale-110 group"
                       title="Photo/Video"
-                      onClick={() => fileInputRef.current?.click()}
+                      onClick={triggerFileInput}
                     >
                       <Camera className="w-4 h-4 sm:w-5 sm:h-5 text-green-500 group-hover:text-green-600" />
                     </button>
-                    <button
-                      className="p-2 sm:p-3 hover:bg-white rounded-lg sm:rounded-xl transition-all hover:scale-110 group"
-                      title="Feeling/Activity"
-                    >
-                      <Smile className="w-4 h-4 sm:w-5 sm:h-5 text-yellow-500 group-hover:text-yellow-600" />
-                    </button>
-                    <button
-                      className="p-2 sm:p-3 hover:bg-white rounded-lg sm:rounded-xl transition-all hover:scale-110 group"
-                      title="Check in"
-                    >
-                      <MapPin className="w-4 h-4 sm:w-5 sm:h-5 text-red-500 group-hover:text-red-600" />
-                    </button>
+                    <div className="relative">
+                      <button
+                        className="p-2 sm:p-3 hover:bg-white rounded-lg sm:rounded-xl transition-all hover:scale-110 group"
+                        title="Add Emoji"
+                        onClick={() => setShowEmojiPicker(!showEmojiPicker)}
+                      >
+                        <Smile className="w-4 h-4 sm:w-5 sm:h-5 text-yellow-500 group-hover:text-yellow-600" />
+                      </button>
+                      {showEmojiPicker && (
+                        <div
+                          ref={emojiPickerRef}
+                          className="absolute bottom-full right-0 mb-2 z-50"
+                        >
+                          <EmojiPicker
+                            onEmojiClick={handleEmojiSelect}
+                            width={300}
+                            height={400}
+                            theme="light"
+                            searchDisabled={false}
+                            skinTonesDisabled={false}
+                            previewConfig={{
+                              showPreview: false,
+                            }}
+                          />
+                        </div>
+                      )}
+                    </div>
+                    <div className="relative">
+                      <button
+                        className="p-2 sm:p-3 hover:bg-white rounded-lg sm:rounded-xl transition-all hover:scale-110 group"
+                        title="Add Location"
+                        onClick={() =>
+                          setShowLocationPicker(!showLocationPicker)
+                        }
+                      >
+                        <MapPin className="w-4 h-4 sm:w-5 sm:h-5 text-red-500 group-hover:text-red-600" />
+                      </button>
+                      {showLocationPicker && (
+                        <div
+                          ref={locationPickerRef}
+                          className="absolute bottom-full right-0 mb-2 z-50 bg-white rounded-xl shadow-2xl border border-gray-200 w-80 max-h-96 overflow-hidden"
+                        >
+                          <div className="p-4 border-b border-gray-100">
+                            <div className="relative">
+                              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400" />
+                              <input
+                                type="text"
+                                placeholder="Search for a location..."
+                                value={locationSearch}
+                                onChange={(e) =>
+                                  setLocationSearch(e.target.value)
+                                }
+                                className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                              />
+                            </div>
+                          </div>
+                          <div className="max-h-60 overflow-y-auto">
+                            {filteredLocations.length > 0 ? (
+                              filteredLocations.map((location, index) => (
+                                <button
+                                  key={index}
+                                  onClick={() => {
+                                    setSelectedLocation(location);
+                                    setShowLocationPicker(false);
+                                    setLocationSearch("");
+                                  }}
+                                  className="w-full text-left px-4 py-3 hover:bg-gray-50 transition-colors flex items-center gap-3"
+                                >
+                                  <MapPin className="w-4 h-4 text-gray-400" />
+                                  <span className="text-gray-900">
+                                    {location}
+                                  </span>
+                                </button>
+                              ))
+                            ) : (
+                              <div className="px-4 py-8 text-center text-gray-500">
+                                <MapPin className="w-8 h-8 mx-auto mb-2 text-gray-300" />
+                                <p>No locations found</p>
+                              </div>
+                            )}
+                          </div>
+                          {selectedLocation && (
+                            <div className="p-3 border-t border-gray-100 bg-gray-50">
+                              <div className="flex items-center justify-between">
+                                <div className="flex items-center gap-2">
+                                  <Check className="w-4 h-4 text-green-600" />
+                                  <span className="text-sm font-medium text-gray-900">
+                                    {selectedLocation}
+                                  </span>
+                                </div>
+                                <button
+                                  onClick={() => {
+                                    setSelectedLocation("");
+                                    setShowLocationPicker(false);
+                                  }}
+                                  className="text-sm text-red-600 hover:text-red-800"
+                                >
+                                  Remove
+                                </button>
+                              </div>
+                            </div>
+                          )}
+                        </div>
+                      )}
+                    </div>
                   </div>
                 </div>
               </div>
@@ -536,26 +679,30 @@ export function CreatePostModal({ open, onOpenChange }) {
               <div className="p-4 sm:p-6 border-t border-gray-100 bg-gradient-to-r from-white to-gray-50">
                 <button
                   onClick={handleSubmit}
-                  disabled={isDisabled}
+                  disabled={isDisabled || isSubmitting}
                   className={`w-full py-3 sm:py-4 px-6 sm:px-8 rounded-xl sm:rounded-2xl font-bold text-base sm:text-lg transition-all duration-300 ${
-                    isDisabled
+                    isDisabled || isSubmitting
                       ? "bg-gray-200 text-gray-400 cursor-not-allowed"
-                      : "bg-primary hover:cursor-pointer hover:scale-[1.02] active:scale-[0.98] text-white shadow-lg hover:shadow-xl"
+                      : "bg-blue-600 hover:bg-blue-700 hover:cursor-pointer hover:scale-[1.02] active:scale-[0.98] text-white shadow-lg hover:shadow-xl"
                   }`}
                 >
-                  {isDisabled ? "Add content to post" : "Share with world"}
+                  {isSubmitting
+                    ? "Posting..."
+                    : isDisabled
+                    ? "Add content to post"
+                    : "Share with world"}
                 </button>
               </div>
             </div>
 
-            {/* Sidebar - Hidden on mobile, shown as overlay on tablet, sidebar on desktop */}
+            {/* Sidebar */}
             <div
               className={`${
                 activeTab === "text" || activeTab === "background"
                   ? "block"
                   : "hidden"
               } lg:block w-full lg:w-80 overflow-y-auto ${
-                window.innerWidth < 1024
+                typeof window !== "undefined" && window.innerWidth < 1024
                   ? "absolute inset-0 bg-white z-10"
                   : "border-l border-gray-100 bg-gradient-to-b from-gray-50 to-white"
               }`}
@@ -604,9 +751,9 @@ export function CreatePostModal({ open, onOpenChange }) {
                           <div className="absolute inset-0 bg-opacity-20 flex items-center justify-center">
                             <div
                               className="w-8 h-8 sm:w-7 sm:h-7 border rounded-full shadow-lg 
-                            bg-accent flex items-center justify-center"
+                            bg-white flex items-center justify-center"
                             >
-                              <Check className="w-4 h-4" />
+                              <Check className="w-4 h-4 text-blue-600" />
                             </div>
                           </div>
                         )}

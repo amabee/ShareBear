@@ -70,7 +70,7 @@ export const authOptions = {
           username: user.username,
           email: user.email, // Make sure to include email
           sub: user.id, // Make sure to include sub (user ID)
-          accessTokenExpires: Date.now() + 30 * 60 * 1000,
+          accessTokenExpires: Date.now() + 5 * 60 * 1000,
         };
       }
 
@@ -271,7 +271,7 @@ async function performRefresh(token) {
       ...token,
       accessToken: refreshedTokens.token,
       refreshToken: refreshedTokens.refreshToken,
-      accessTokenExpires: Date.now() + 30 * 60 * 1000,
+      accessTokenExpires: Date.now() + 5 * 60 * 1000,
       error: undefined,
     };
 

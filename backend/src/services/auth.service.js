@@ -140,44 +140,49 @@ export async function generateTokens(prisma, user, req) {
 }
 
 export async function refreshUserToken(prisma, refreshToken, req) {
+  console.log("🔧 GRACE PERIOD VERSION - Backend updated!");
+  console.log("🔍 Refresh attempt:", {
+    tokenPreview: refreshToken.substring(0, 16) + "...",
+    timestamp: new Date().toISOString(),
+  });
+
   if (!refreshToken) {
     const error = new Error("Refresh token is required");
     error.code = "MISSING_REFRESH_TOKEN";
     throw error;
   }
 
-  const session = await findSessionByToken(prisma, refreshToken);
+  let session;
+  try {
+    session = await findSessionByToken(prisma, refreshToken);
+    console.log("🔍 Session lookup result:", {
+      found: !!session,
+      userId: session?.userId,
+      sessionId: session?.id,
+      currentToken: session?.refreshToken?.substring(0, 16) + "...",
+      previousToken:
+        session?.previousRefreshToken?.substring(0, 16) + "..." || "none",
+      rotatedAt: session?.rotatedAt,
+      timeSinceRotation: session?.rotatedAt
+        ? Date.now() - session.rotatedAt.getTime()
+        : null,
+    });
+  } catch (error) {
+    console.error("❌ Database error during session lookup:", error);
+    throw error;
+  }
 
   if (!session || !session.user) {
     const error = new Error("Invalid refresh token");
     error.code = "INVALID_REFRESH_TOKEN";
-
-    await logSecurityEvent(
-      prisma,
-      `Failed to refresh token - Invalid or missing session`,
-      req,
-      "ERROR",
-      {
-        refreshToken: refreshToken
-          ? refreshToken.substring(0, 8) + "***"
-          : null,
-        reason: "invalid_refresh_token",
-        sessionFound: !!session,
-        userFound: !!(session && session.user),
-      }
-    );
-
     throw error;
   }
 
   if (session.expiresAt < new Date()) {
-    // Log before deleting so we still have access to user info
-    await logSecurityEvent(prisma, `Refresh token expired`, req, "WARN", {
-      userId: session.user.id,
-      username: session.user.username,
+    console.log("❌ Session expired:", {
       sessionId: session.id,
       expiredAt: session.expiresAt,
-      reason: "expired_refresh_token",
+      userId: session.userId,
     });
 
     await deleteUserSession(prisma, session.id);
@@ -187,19 +192,7 @@ export async function refreshUserToken(prisma, refreshToken, req) {
     throw error;
   }
 
-  // Check if user is still active
   if (!session.user.isActive) {
-    await logSecurityEvent(
-      prisma,
-      "Refresh token used for inactive account",
-      req,
-      "WARN",
-      {
-        userId: session.user.id,
-        username: session.user.username,
-        reason: "account_inactive",
-      }
-    );
     const error = new Error("Account is inactive");
     error.code = "INACTIVE_ACCOUNT";
     throw error;
@@ -208,21 +201,14 @@ export async function refreshUserToken(prisma, refreshToken, req) {
   // Check if this is using a previous token (within grace period)
   const isUsingPreviousToken = session.previousRefreshToken === refreshToken;
 
+  console.log("🔍 Token analysis:", {
+    isUsingPreviousToken,
+    currentTokenMatch: session.refreshToken === refreshToken,
+    hasRotatedAt: !!session.rotatedAt,
+  });
+
   if (isUsingPreviousToken) {
-    await logSecurityEvent(
-      prisma,
-      "Using previous refresh token within grace period",
-      req,
-      "INFO",
-      {
-        userId: session.user.id,
-        username: session.user.username,
-        sessionId: session.id,
-        timeSinceRotation: session.rotatedAt
-          ? Date.now() - session.rotatedAt.getTime()
-          : null,
-      }
-    );
+    console.log("✅ Using previous refresh token within grace period");
 
     // Return the current token instead of generating a new one
     return {
@@ -236,23 +222,23 @@ export async function refreshUserToken(prisma, refreshToken, req) {
   const newRefreshToken = crypto.randomBytes(48).toString("hex");
   const newExpiry = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000);
 
-  await rotateRefreshToken(prisma, session, newRefreshToken, newExpiry, req);
-
-  // Log successful refresh
-  await logSecurityEvent(prisma, "Token refreshed successfully", req, "INFO", {
-    userId: session.user.id,
-    username: session.user.username,
+  console.log("🔄 About to rotate token:", {
     sessionId: session.id,
+    oldToken: session.refreshToken.substring(0, 16) + "...",
+    newToken: newRefreshToken.substring(0, 16) + "...",
   });
 
-  // Schedule cleanup of previous token after grace period
-  setTimeout(async () => {
-    try {
-      await cleanupExpiredPreviousTokens(prisma);
-    } catch (error) {
-      console.error("Failed to cleanup expired previous tokens:", error);
-    }
-  }, 60 * 1000); // 1 minute
+  try {
+    await rotateRefreshToken(prisma, session, newRefreshToken, newExpiry, req);
+    console.log("✅ Token rotation successful");
+  } catch (rotationError) {
+    console.error("❌ Token rotation failed:", {
+      error: rotationError.message,
+      code: rotationError.code,
+      sessionId: session.id,
+    });
+    throw rotationError;
+  }
 
   return {
     user: session.user,

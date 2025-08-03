@@ -1,5 +1,7 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { apiClient } from "./apiClient";
+import { useCreatePostStore, ContentType } from "@/stores/createPostStore";
+import toast from "react-hot-toast";
 
 export const usePosts = () => {
   // fetching all posts
@@ -25,9 +27,214 @@ export const usePost = (postId) => {
 export const useCreatePost = () => {
   const queryClient = useQueryClient();
 
+  const {
+    getPostDataForAPI,
+    resetForm,
+    setIsSubmitting,
+    setLastSubmittedPost,
+  } = useCreatePostStore();
+
   return useMutation({
-    mutationFn: (newPost) => apiClient.post("/api/posts", newPost),
-    onSuccess: () => {
+    mutationFn: async (postData) => {
+      const formData = new FormData();
+
+      // Add the main post data (matching your sample structure)
+      formData.append("userId", postData.userId.toString());
+      formData.append("caption", postData.caption || "");
+      formData.append("location", postData.location || "");
+      formData.append("contentType", postData.contentType);
+      formData.append("allowsComments", postData.allowsComments.toString());
+      formData.append("allowsShares", postData.allowsShares.toString());
+
+      // Optional fields
+      if (postData.thumbnailUrl) {
+        formData.append("thumbnailUrl", postData.thumbnailUrl);
+      }
+      if (postData.taggedUsers) {
+        formData.append("taggedUsers", JSON.stringify(postData.taggedUsers));
+      }
+      if (postData.privacyLevel) {
+        formData.append("privacyLevel", postData.privacyLevel);
+      }
+      if (postData.expiresAt) {
+        formData.append("expiresAt", postData.expiresAt);
+      }
+
+      // Add styling information as JSON string
+      formData.append("styling", JSON.stringify(postData.styling));
+      formData.append("timestamp", postData.timestamp);
+
+      // Add files if they exist (only if content type is not TEXT)
+      if (
+        postData.files &&
+        postData.files.length > 0 &&
+        postData.contentType !== ContentType.TEXT
+      ) {
+        postData.files.forEach((file, index) => {
+          formData.append(`files[${index}]`, file);
+        });
+        formData.append("fileCount", postData.files.length.toString());
+      }
+
+      // Add metadata
+      if (postData.metadata) {
+        formData.append("metadata", JSON.stringify(postData.metadata));
+      }
+
+      // Use your existing apiClient but with FormData
+      return apiClient.post("/api/posts/create", formData, {
+        headers: {
+          "Content-Type": "multipart/form-data",
+        },
+      });
+    },
+
+    onMutate: async (postData) => {
+      // Set submitting state in Zustand
+      setIsSubmitting(true);
+
+      // Cancel outgoing refetches (so they don't overwrite our optimistic update)
+      await queryClient.cancelQueries({ queryKey: ["posts"] });
+
+      // Snapshot the previous value
+      const previousPosts = queryClient.getQueryData(["posts"]);
+
+      // Create optimistic post object
+      const optimisticPost = {
+        id: `temp-${Date.now()}`, // Temporary ID
+        userId: postData.userId,
+        caption: postData.caption,
+        location: postData.location,
+        contentType: postData.contentType,
+        allowsComments: postData.allowsComments,
+        allowsShares: postData.allowsShares,
+        thumbnailUrl: postData.thumbnailUrl,
+        taggedUsers: postData.taggedUsers,
+        privacyLevel: postData.privacyLevel,
+        expiresAt: postData.expiresAt,
+        user: {
+          // Get current user data from your auth context/store
+          id: postData.userId,
+          name: "You",
+          avatar: "/current-user-avatar.jpg",
+        },
+        createdAt: new Date().toISOString(),
+        isOptimistic: true, // Flag to identify optimistic updates
+        likes: 0,
+        comments: 0,
+        shares: 0,
+        // Include files for preview purposes (won't be sent to server in this format)
+        files: postData.files || [],
+        styling: postData.styling,
+      };
+
+      // Optimistically update the posts list
+      queryClient.setQueryData(["posts"], (oldData) => {
+        if (!oldData) return { data: [optimisticPost], total: 1 };
+
+        // Handle different response structures
+        if (Array.isArray(oldData)) {
+          return [optimisticPost, ...oldData];
+        }
+
+        if (oldData.data && Array.isArray(oldData.data)) {
+          return {
+            ...oldData,
+            data: [optimisticPost, ...oldData.data],
+            total: (oldData.total || 0) + 1,
+          };
+        }
+
+        return oldData;
+      });
+
+      return { previousPosts, optimisticPost };
+    },
+
+    onSuccess: (response, variables, context) => {
+      // Get the actual post data from server response
+      const newPost = response.data || response;
+
+      // Update the optimistic post with real server data
+      queryClient.setQueryData(["posts"], (oldData) => {
+        if (!oldData) return oldData;
+
+        const updatePost = (posts) =>
+          posts.map((post) =>
+            post.id === context.optimisticPost.id
+              ? { ...newPost, isOptimistic: false }
+              : post
+          );
+
+        if (Array.isArray(oldData)) {
+          return updatePost(oldData);
+        }
+
+        if (oldData.data && Array.isArray(oldData.data)) {
+          return {
+            ...oldData,
+            data: updatePost(oldData.data),
+          };
+        }
+
+        return oldData;
+      });
+
+      // Store the submitted post in Zustand for reference
+      setLastSubmittedPost(newPost);
+
+      // Reset the form
+      resetForm();
+
+      // Show success message based on content type
+      const contentTypeMessages = {
+        [ContentType.TEXT]: "Text post created successfully! 📝",
+        [ContentType.IMAGE]: "Image post created successfully! 📸",
+        [ContentType.VIDEO]: "Video post created successfully! 🎥",
+        [ContentType.MIXED]: "Mixed media post created successfully! 🎭",
+      };
+
+      toast.success(
+        contentTypeMessages[variables.contentType] ||
+          "Post created successfully! 🎉"
+      );
+
+      // Optional: Invalidate related queries
+      queryClient.invalidateQueries({ queryKey: ["user-posts"] });
+      queryClient.invalidateQueries({ queryKey: ["user-stats"] });
+    },
+
+    onError: (error, variables, context) => {
+      // Rollback the optimistic update
+      if (context?.previousPosts) {
+        queryClient.setQueryData(["posts"], context.previousPosts);
+      }
+
+      // Extract error message
+      const errorMessage =
+        error?.response?.data?.message ||
+        error?.message ||
+        "Failed to create post";
+
+      // Show error toast with content type context
+      toast.error(
+        `Failed to create ${variables.contentType.toLowerCase()} post: ${errorMessage}`
+      );
+
+      // Log for debugging
+      console.error("Post creation failed:", {
+        error,
+        contentType: variables.contentType,
+        hasFiles: variables.files?.length > 0,
+        fileCount: variables.files?.length || 0,
+      });
+    },
+
+    onSettled: () => {
+      // Always reset submitting state
+      setIsSubmitting(false);
+
+      // Invalidate and refetch posts to ensure consistency
       queryClient.invalidateQueries({ queryKey: ["posts"] });
     },
   });
