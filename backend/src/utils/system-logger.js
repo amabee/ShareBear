@@ -57,7 +57,9 @@ export const logError = async (
 ) => {
   return logEvent(prisma, "ERROR", source, error.message, {
     ipAddress: req?.ip,
-    userAgent: req?.headers["user-agent"],
+    userAgent:
+      req.headers?.["user-agent"].toLowerCase() ||
+      req.raw?.headers?.["user-agent"].toLowerCase(),
     requestId: req?.id,
     stackTrace: error.stack,
     context: {
@@ -78,7 +80,9 @@ export const logUserAction = async (
   return logEvent(prisma, "INFO", "user-action", `User performed: ${action}`, {
     userId,
     ipAddress: req.ip,
-    userAgent: req.headers["user-agent"],
+    userAgent:
+      req.headers?.["user-agent"].toLowerCase() ||
+      req.raw?.headers?.["user-agent"].toLowerCase(),
     requestId: req.id,
     context: { action, ...details },
   });

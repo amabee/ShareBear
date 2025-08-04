@@ -5,6 +5,7 @@ import { config } from "./config/index.js";
 import helloRoutes from "./routes/hello.routes.js";
 import authRoutes from "./routes/auth.routes.js";
 import followRoutes from "./routes/follow.routes.js";
+import userRoutes from "./routes/user.routes.js";
 import helmetPlugin from "./plugins/helmetPlugin.js";
 import rateLimitPlugin from "./plugins/ratelimitPlugin.js";
 import corsPlugin from "./plugins/corsPlugin.js";
@@ -99,6 +100,7 @@ app.setErrorHandler((error, request, reply) => {
 app.register(helloRoutes, { prefix: "/api" });
 app.register(authRoutes, { prefix: "/api/auth" });
 app.register(followRoutes, { prefix: "/api/follow" });
+app.register(userRoutes, { prefix: "/api/users" });
 app.register(postRoutes, { prefix: "/api/posts" });
 
 app.listen({ port: config.port, host: config.host }, (err, address) => {
