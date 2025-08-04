@@ -5,7 +5,7 @@ export const getUserData = async (prisma, identifier) => {
     ? { email: identifier }
     : { username: identifier };
 
-  return prisma.user.findUnique({
+  const user = await prisma.user.findUnique({
     where: whereClause,
     include: {
       userInfo: {
@@ -15,12 +15,33 @@ export const getUserData = async (prisma, identifier) => {
           lastName: true,
           displayName: true,
           profilePictureUrl: true,
-          bio: true,
-          location: true,
+          coverPhotoUrl: true,
+        },
+      },
+      _count: {
+        select: {
+          likes: true,
+          followers: {
+            where: { status: "accepted" },
+          },
+          following: {
+            where: { status: "accepted" },
+          },
         },
       },
     },
   });
+
+  if (!user) return null;
+
+  return {
+    ...user,
+    stats: {
+      likeCount: user._count.likes,
+      followersCount: user._count.followers,
+      followingCount: user._count.following,
+    },
+  };
 };
 
 // Get user profile with stats and follow status

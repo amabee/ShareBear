@@ -139,7 +139,7 @@ const MediaCarousel = ({ images, postId }) => {
                       ref={videoRef}
                       src={`${
                         process.env.NEXT_PUBLIC_IMAGE_HOSTING_URL
-                      }/${media.imageUrl.split("/").pop()}`}
+                      }/posts/${media.imageUrl.split("/").pop()}`}
                       className="w-full h-full object-cover"
                       disablePictureInPicture
                       controls
@@ -156,7 +156,7 @@ const MediaCarousel = ({ images, postId }) => {
                     <Image
                       src={`${
                         process.env.NEXT_PUBLIC_IMAGE_HOSTING_URL
-                      }/${media.imageUrl.split("/").pop()}`}
+                      }/posts/${media.imageUrl.split("/").pop()}`}
                       alt={`Post content ${index + 1}`}
                       fill
                       className="object-cover transition-transform duration-300 ease-in-out"

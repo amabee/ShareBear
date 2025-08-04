@@ -28,7 +28,7 @@ import {
 export default async function userRoutes(fastify, options) {
   // Authentication Hook
   fastify.addHook("preHandler", fastify.authenticate);
-  
+
   // Get user data by identifier (username or email)
   fastify.get(
     "/:identifier",

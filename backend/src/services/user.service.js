@@ -21,7 +21,7 @@ export async function getUserData(prisma, identifier, req) {
 
     // Log user data access
     if (req) {
-      await logUserAction(prisma, "get_user_data", req, "INFO", {
+      await logUserAction(prisma, user.id, "get_user_data", req,  {
         targetUserId: user.id,
         targetUsername: user.username,
         identifier: identifier,
@@ -91,12 +91,18 @@ export async function getFollowers(
 
     // Log followers access
     if (req) {
-      await logUserAction(prisma, "get_user_followers", req, "INFO", {
-        targetIdentifier: identifier,
-        followersCount: followers.length,
-        limit,
-        offset,
-      });
+      await logUserAction(
+        prisma,
+        followers.followingId,
+        "get_user_followers",
+        req,
+        {
+          targetIdentifier: identifier,
+          followersCount: followers.length,
+          limit,
+          offset,
+        }
+      );
     }
 
     return followers;
@@ -132,7 +138,7 @@ export async function getFollowings(
 
     // Log followings access
     if (req) {
-      await logUserAction(prisma, "get_user_followings", req, "INFO", {
+      await logUserAction(prisma, user.id, "get_user_followings", req, {
         targetUserId: user.id,
         targetIdentifier: identifier,
         followingsCount: followings.length,

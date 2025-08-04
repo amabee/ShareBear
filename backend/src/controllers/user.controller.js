@@ -30,8 +30,6 @@ export const getUserDataHandler = async (req, reply) => {
       user.userInfo.firstName = encodeOutput(user.userInfo.firstName);
       user.userInfo.lastName = encodeOutput(user.userInfo.lastName);
       user.userInfo.displayName = encodeOutput(user.userInfo.displayName);
-      user.userInfo.bio = encodeOutput(user.userInfo.bio);
-      user.userInfo.location = encodeOutput(user.userInfo.location);
     }
 
     return reply.send({ user });

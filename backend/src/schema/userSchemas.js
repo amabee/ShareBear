@@ -4,10 +4,10 @@ export const getUserDataSchema = {
     type: "object",
     required: ["identifier"],
     properties: {
-      identifier: { 
-        type: "string", 
+      identifier: {
+        type: "string",
         minLength: 2,
-        errorMessage: "User identifier is required"
+        errorMessage: "User identifier is required",
       },
     },
   },
@@ -33,11 +33,15 @@ export const getUserDataSchema = {
                 lastName: { type: "string" },
                 displayName: { type: "string" },
                 profilePictureUrl: { type: "string" },
-                bio: { type: "string" },
-                location: { type: "string" },
-                // website: { type: "string" },
-                // isPrivate: { type: "boolean" },
-                // isVerified: { type: "boolean" },
+                coverPhotoUrl: { type: "string" },
+              },
+            },
+            stats: {
+              type: "object",
+              properties: {
+                likeCount: { type: "number" },
+                followersCount: { type: "number" },
+                followingCount: { type: "number" },
               },
             },
           },
@@ -71,10 +75,10 @@ export const getUserProfileSchema = {
     type: "object",
     required: ["identifier"],
     properties: {
-      identifier: { 
-        type: "string", 
+      identifier: {
+        type: "string",
         minLength: 1,
-        errorMessage: "User identifier is required"
+        errorMessage: "User identifier is required",
       },
     },
   },
@@ -150,10 +154,10 @@ export const getUserStatsSchema = {
     type: "object",
     required: ["identifier"],
     properties: {
-      identifier: { 
-        type: "string", 
+      identifier: {
+        type: "string",
         minLength: 1,
-        errorMessage: "User identifier is required"
+        errorMessage: "User identifier is required",
       },
     },
   },
@@ -198,28 +202,28 @@ export const getFollowersSchema = {
     type: "object",
     required: ["identifier"],
     properties: {
-      identifier: { 
-        type: "string", 
+      identifier: {
+        type: "string",
         minLength: 1,
-        errorMessage: "User identifier is required"
+        errorMessage: "User identifier is required",
       },
     },
   },
   querystring: {
     type: "object",
     properties: {
-      limit: { 
-        type: "integer", 
-        minimum: 1, 
-        maximum: 100, 
+      limit: {
+        type: "integer",
+        minimum: 1,
+        maximum: 100,
         default: 20,
-        errorMessage: "Limit must be between 1 and 100"
+        errorMessage: "Limit must be between 1 and 100",
       },
-      offset: { 
-        type: "integer", 
-        minimum: 0, 
+      offset: {
+        type: "integer",
+        minimum: 0,
         default: 0,
-        errorMessage: "Offset must be 0 or greater"
+        errorMessage: "Offset must be 0 or greater",
       },
     },
   },
@@ -286,28 +290,28 @@ export const getFollowingsSchema = {
     type: "object",
     required: ["identifier"],
     properties: {
-      identifier: { 
-        type: "string", 
+      identifier: {
+        type: "string",
         minLength: 1,
-        errorMessage: "User identifier is required"
+        errorMessage: "User identifier is required",
       },
     },
   },
   querystring: {
     type: "object",
     properties: {
-      limit: { 
-        type: "integer", 
-        minimum: 1, 
-        maximum: 100, 
+      limit: {
+        type: "integer",
+        minimum: 1,
+        maximum: 100,
         default: 20,
-        errorMessage: "Limit must be between 1 and 100"
+        errorMessage: "Limit must be between 1 and 100",
       },
-      offset: { 
-        type: "integer", 
-        minimum: 0, 
+      offset: {
+        type: "integer",
+        minimum: 0,
         default: 0,
-        errorMessage: "Offset must be 0 or greater"
+        errorMessage: "Offset must be 0 or greater",
       },
     },
   },
@@ -374,23 +378,23 @@ export const searchUsersSchema = {
     type: "object",
     required: ["q"],
     properties: {
-      q: { 
-        type: "string", 
+      q: {
+        type: "string",
         minLength: 1,
-        errorMessage: "Search query is required"
+        errorMessage: "Search query is required",
       },
-      limit: { 
-        type: "integer", 
-        minimum: 1, 
-        maximum: 100, 
+      limit: {
+        type: "integer",
+        minimum: 1,
+        maximum: 100,
         default: 20,
-        errorMessage: "Limit must be between 1 and 100"
+        errorMessage: "Limit must be between 1 and 100",
       },
-      offset: { 
-        type: "integer", 
-        minimum: 0, 
+      offset: {
+        type: "integer",
+        minimum: 0,
         default: 0,
-        errorMessage: "Offset must be 0 or greater"
+        errorMessage: "Offset must be 0 or greater",
       },
     },
   },
@@ -446,12 +450,12 @@ export const getSuggestedUsersSchema = {
   querystring: {
     type: "object",
     properties: {
-      limit: { 
-        type: "integer", 
-        minimum: 1, 
-        maximum: 50, 
+      limit: {
+        type: "integer",
+        minimum: 1,
+        maximum: 50,
         default: 10,
-        errorMessage: "Limit must be between 1 and 50"
+        errorMessage: "Limit must be between 1 and 50",
       },
     },
   },
@@ -505,55 +509,55 @@ export const updateUserProfileSchema = {
   body: {
     type: "object",
     properties: {
-      firstName: { 
-        type: "string", 
+      firstName: {
+        type: "string",
         maxLength: 50,
-        errorMessage: "First name must be 50 characters or less"
+        errorMessage: "First name must be 50 characters or less",
       },
-      lastName: { 
-        type: "string", 
+      lastName: {
+        type: "string",
         maxLength: 50,
-        errorMessage: "Last name must be 50 characters or less"
+        errorMessage: "Last name must be 50 characters or less",
       },
-      displayName: { 
-        type: "string", 
+      displayName: {
+        type: "string",
         maxLength: 100,
-        errorMessage: "Display name must be 100 characters or less"
+        errorMessage: "Display name must be 100 characters or less",
       },
-      bio: { 
-        type: "string", 
+      bio: {
+        type: "string",
         maxLength: 500,
-        errorMessage: "Bio must be 500 characters or less"
+        errorMessage: "Bio must be 500 characters or less",
       },
-      location: { 
-        type: "string", 
+      location: {
+        type: "string",
         maxLength: 100,
-        errorMessage: "Location must be 100 characters or less"
+        errorMessage: "Location must be 100 characters or less",
       },
-      profilePictureUrl: { 
-        type: "string", 
+      profilePictureUrl: {
+        type: "string",
         format: "uri",
-        errorMessage: "Profile picture URL must be a valid URI"
+        errorMessage: "Profile picture URL must be a valid URI",
       },
-      coverPhotoUrl: { 
-        type: "string", 
+      coverPhotoUrl: {
+        type: "string",
         format: "uri",
-        errorMessage: "Cover photo URL must be a valid URI"
+        errorMessage: "Cover photo URL must be a valid URI",
       },
-      birthDate: { 
-        type: "string", 
+      birthDate: {
+        type: "string",
         format: "date",
-        errorMessage: "Birth date must be a valid date"
+        errorMessage: "Birth date must be a valid date",
       },
-      gender: { 
-        type: "string", 
+      gender: {
+        type: "string",
         enum: ["MALE", "FEMALE", "OTHER", "UNSPECIFIED"],
-        errorMessage: "Gender must be one of: MALE, FEMALE, OTHER, UNSPECIFIED"
+        errorMessage: "Gender must be one of: MALE, FEMALE, OTHER, UNSPECIFIED",
       },
-      website: { 
-        type: "string", 
+      website: {
+        type: "string",
         format: "uri",
-        errorMessage: "Website must be a valid URI"
+        errorMessage: "Website must be a valid URI",
       },
       isPrivate: { type: "boolean" },
       isVerified: { type: "boolean" },
@@ -611,21 +615,24 @@ export const updateUserAccountSettingsSchema = {
   body: {
     type: "object",
     properties: {
-      accountType: { 
-        type: "string", 
+      accountType: {
+        type: "string",
         enum: ["PERSONAL", "BUSINESS", "CREATOR"],
-        errorMessage: "Account type must be one of: PERSONAL, BUSINESS, CREATOR"
+        errorMessage:
+          "Account type must be one of: PERSONAL, BUSINESS, CREATOR",
       },
-      privacySettings: { 
-        type: "string", 
+      privacySettings: {
+        type: "string",
         enum: ["PUBLIC", "PRIVATE", "FRIENDS"],
-        errorMessage: "Privacy settings must be one of: PUBLIC, PRIVATE, FRIENDS"
+        errorMessage:
+          "Privacy settings must be one of: PUBLIC, PRIVATE, FRIENDS",
       },
       verificationStatus: { type: "boolean" },
-      phone: { 
-        type: "string", 
+      phone: {
+        type: "string",
         pattern: "^[+]?[0-9\\s\\-()]+$",
-        errorMessage: "Phone number must contain only digits, spaces, hyphens, parentheses, and optionally a plus sign"
+        errorMessage:
+          "Phone number must contain only digits, spaces, hyphens, parentheses, and optionally a plus sign",
       },
     },
   },
@@ -675,10 +682,10 @@ export const deactivateUserSchema = {
     type: "object",
     required: ["userId"],
     properties: {
-      userId: { 
-        type: "integer", 
+      userId: {
+        type: "integer",
         minimum: 1,
-        errorMessage: "User ID must be a positive integer"
+        errorMessage: "User ID must be a positive integer",
       },
     },
   },
@@ -724,10 +731,10 @@ export const reactivateUserSchema = {
     type: "object",
     required: ["userId"],
     properties: {
-      userId: { 
-        type: "integer", 
+      userId: {
+        type: "integer",
         minimum: 1,
-        errorMessage: "User ID must be a positive integer"
+        errorMessage: "User ID must be a positive integer",
       },
     },
   },
@@ -765,4 +772,4 @@ export const reactivateUserSchema = {
       },
     },
   },
-}; 
+};

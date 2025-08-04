@@ -1,5 +1,4 @@
-import ShareBearFeedClient, { ShareBearInfiniteFeedClient } from "@/components/Clients/ShareBearFeedClient";
-import { ShareBearFeed } from "@/components/Feed/ShareBearFeed";
+import { ShareBearInfiniteFeedClient } from "@/components/Clients/ShareBearFeedClient";
 import { HomePageLayout } from "@/components/Reusables/HomePageLayout";
 import {
   FeedSkeleton,
@@ -31,13 +30,7 @@ const HomePage = () => {
         <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
           <div className="hidden lg:block">
             <div className="sticky top-24">
-              <Suspense
-                fallback={
-                  <div className="h-64 bg-gray-100 animate-pulse rounded-lg" />
-                }
-              >
-                <ProfileCard />
-              </Suspense>
+              <ProfileCard />
             </div>
           </div>
           <div className="lg:col-span-2 space-y-6">
