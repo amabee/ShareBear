@@ -832,7 +832,7 @@ export const createCommentSchema = {
   params: {
     type: "object",
     properties: {
-      postId: { type: "string", pattern: "^[a-zA-Z0-9]{32}$" }, // Updated to match 32 char postId
+      postId: { type: "string", pattern: "^[a-zA-Z0-9]{25}$" },
     },
     required: ["postId"],
   },
@@ -904,6 +904,7 @@ export const updateCommentSchema = {
   params: {
     type: "object",
     properties: {
+      postId: { type: "string", pattern: "^[a-zA-Z0-9]{25}$" },
       commentId: { type: "string", pattern: "^[1-9]\\d*$" }, // Integer as string in URL
     },
     required: ["commentId"],
@@ -970,6 +971,7 @@ export const deleteCommentSchema = {
   params: {
     type: "object",
     properties: {
+      postId: { type: "string", pattern: "^[a-zA-Z0-9]{25}$" },
       commentId: { type: "string", pattern: "^[1-9]\\d*$" }, // Integer as string in URL
     },
     required: ["commentId"],
@@ -991,7 +993,7 @@ export const getCommentsSchema = {
   params: {
     type: "object",
     properties: {
-      postId: { type: "string", pattern: "^[a-zA-Z0-9]{32}$" }, // Updated to match 32 char postId
+      postId: { type: "string", pattern: "^[a-zA-Z0-9]{25}$" },
     },
     required: ["postId"],
   },

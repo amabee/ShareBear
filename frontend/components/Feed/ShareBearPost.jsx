@@ -212,14 +212,7 @@ const ActionButtons = ({ postId }) => {
         <Button
           variant="ghost"
           size="sm"
-          onClick={() => {
-            console.log("Before toggle - liked:", liked);
-            toggleLike(postId);
-            console.log(
-              "After toggle - liked:",
-              getPostInteraction(postId).liked
-            );
-          }}
+          onClick={() => toggleLike(postId)}
           className={cn(
             "flex-1 h-9 text-sm font-medium",
             liked ? "text-red-500" : "text-muted-foreground"
@@ -236,6 +229,7 @@ const ActionButtons = ({ postId }) => {
           <MessageCircle className="h-4 w-4 mr-2" />
           Comment
         </Button>
+       
         <Button
           variant="ghost"
           size="sm"
