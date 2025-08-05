@@ -344,7 +344,7 @@ export const unlikePost = async (req, reply) => {
 export const createComment = async (req, reply) => {
   const userId = req.user.userId;
   const { postId } = req.params;
-  const { content, parentId } = req.body;
+  const { content, parentCommentId } = req.body; // Fixed field name
 
   // Validate required fields
   if (!content || content.trim().length === 0) {
@@ -360,7 +360,7 @@ export const createComment = async (req, reply) => {
   try {
     const commentData = {
       content: sanitizeInput(content),
-      parentId: parentId || null,
+      parentCommentId: parentCommentId || null, // Fixed field name
     };
 
     const comment = await createCommentService(
@@ -417,7 +417,7 @@ export const updateComment = async (req, reply) => {
 
     const comment = await updateCommentService(
       req.server.prisma,
-      commentId,
+      parseInt(commentId), // Convert to integer
       userId,
       updateData
     );
@@ -453,7 +453,7 @@ export const deleteComment = async (req, reply) => {
   try {
     const result = await deleteCommentService(
       req.server.prisma,
-      commentId,
+      parseInt(commentId), // Convert to integer
       userId
     );
     return reply.send(result);
@@ -479,7 +479,7 @@ export const getComments = async (req, reply) => {
     const result = await getCommentsService(req.server.prisma, postId, {
       page: parseInt(page),
       limit: parseInt(limit),
-      cursor,
+      cursor: cursor ? parseInt(cursor) : undefined, // Convert cursor to integer
     });
 
     // Encode output for all comments and replies

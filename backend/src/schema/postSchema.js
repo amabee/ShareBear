@@ -832,7 +832,7 @@ export const createCommentSchema = {
   params: {
     type: "object",
     properties: {
-      postId: { type: "string", pattern: "^[a-zA-Z0-9]{25}$" },
+      postId: { type: "string", pattern: "^[a-zA-Z0-9]{32}$" }, // Updated to match 32 char postId
     },
     required: ["postId"],
   },
@@ -845,9 +845,9 @@ export const createCommentSchema = {
         maxLength: 1000,
         errorMessage: "Comment content must be between 1 and 1000 characters",
       },
-      parentId: {
-        type: "string",
-        pattern: "^[a-zA-Z0-9]{25}$",
+      parentCommentId: {
+        type: "integer",
+        minimum: 1,
         nullable: true,
       },
     },
@@ -862,17 +862,17 @@ export const createCommentSchema = {
         comment: {
           type: "object",
           properties: {
-            id: { type: "string" },
+            id: { type: "integer" },
             postId: { type: "string" },
-            userId: { type: "string" },
+            userId: { type: "integer" },
             content: { type: "string" },
-            parentId: { type: "string" },
+            parentCommentId: { type: ["integer", "null"] },
             createdAt: { type: "string" },
             updatedAt: { type: "string" },
             user: {
               type: "object",
               properties: {
-                id: { type: "string" },
+                id: { type: "integer" },
                 username: { type: "string" },
                 userInfo: {
                   type: "object",
@@ -886,7 +886,7 @@ export const createCommentSchema = {
             _count: {
               type: "object",
               properties: {
-                replies: { type: "number" },
+                replies: { type: "integer" },
               },
             },
           },
@@ -904,7 +904,7 @@ export const updateCommentSchema = {
   params: {
     type: "object",
     properties: {
-      commentId: { type: "string", pattern: "^[a-zA-Z0-9]{25}$" },
+      commentId: { type: "string", pattern: "^[1-9]\\d*$" }, // Integer as string in URL
     },
     required: ["commentId"],
   },
@@ -929,17 +929,17 @@ export const updateCommentSchema = {
         comment: {
           type: "object",
           properties: {
-            id: { type: "string" },
+            id: { type: "integer" },
             postId: { type: "string" },
-            userId: { type: "string" },
+            userId: { type: "integer" },
             content: { type: "string" },
-            parentId: { type: "string" },
+            parentCommentId: { type: ["integer", "null"] },
             createdAt: { type: "string" },
             updatedAt: { type: "string" },
             user: {
               type: "object",
               properties: {
-                id: { type: "string" },
+                id: { type: "integer" },
                 username: { type: "string" },
                 userInfo: {
                   type: "object",
@@ -953,7 +953,7 @@ export const updateCommentSchema = {
             _count: {
               type: "object",
               properties: {
-                replies: { type: "number" },
+                replies: { type: "integer" },
               },
             },
           },
@@ -970,7 +970,7 @@ export const deleteCommentSchema = {
   params: {
     type: "object",
     properties: {
-      commentId: { type: "string", pattern: "^[a-zA-Z0-9]{25}$" },
+      commentId: { type: "string", pattern: "^[1-9]\\d*$" }, // Integer as string in URL
     },
     required: ["commentId"],
   },
@@ -991,7 +991,7 @@ export const getCommentsSchema = {
   params: {
     type: "object",
     properties: {
-      postId: { type: "string", pattern: "^[a-zA-Z0-9]{25}$" },
+      postId: { type: "string", pattern: "^[a-zA-Z0-9]{32}$" }, // Updated to match 32 char postId
     },
     required: ["postId"],
   },
@@ -1016,6 +1016,7 @@ export const getCommentsSchema = {
       },
       cursor: {
         type: "string",
+        pattern: "^[1-9]\\d*$", // Integer as string for comment ID cursor
         description: "Cursor for cursor-based pagination (comment ID)",
       },
     },
@@ -1030,17 +1031,17 @@ export const getCommentsSchema = {
           items: {
             type: "object",
             properties: {
-              id: { type: "string" },
+              id: { type: "integer" },
               postId: { type: "string" },
-              userId: { type: "string" },
+              userId: { type: "integer" },
               content: { type: "string" },
-              parentId: { type: "string" },
+              parentCommentId: { type: ["integer", "null"] },
               createdAt: { type: "string" },
               updatedAt: { type: "string" },
               user: {
                 type: "object",
                 properties: {
-                  id: { type: "string" },
+                  id: { type: "integer" },
                   username: { type: "string" },
                   userInfo: {
                     type: "object",
@@ -1056,14 +1057,15 @@ export const getCommentsSchema = {
                 items: {
                   type: "object",
                   properties: {
-                    id: { type: "string" },
+                    id: { type: "integer" },
                     content: { type: "string" },
-                    userId: { type: "string" },
+                    userId: { type: "integer" },
+                    parentCommentId: { type: "integer" },
                     createdAt: { type: "string" },
                     user: {
                       type: "object",
                       properties: {
-                        id: { type: "string" },
+                        id: { type: "integer" },
                         username: { type: "string" },
                         userInfo: {
                           type: "object",
@@ -1080,7 +1082,7 @@ export const getCommentsSchema = {
               _count: {
                 type: "object",
                 properties: {
-                  replies: { type: "number" },
+                  replies: { type: "integer" },
                 },
               },
             },
@@ -1095,8 +1097,8 @@ export const getCommentsSchema = {
             totalPages: { type: "integer" },
             hasNextPage: { type: "boolean" },
             hasPreviousPage: { type: "boolean" },
-            nextCursor: { type: "string" },
-            previousCursor: { type: "string" },
+            nextCursor: { type: ["integer", "null"] }, // Updated to integer
+            previousCursor: { type: ["integer", "null"] }, // Updated to integer
           },
         },
       },
