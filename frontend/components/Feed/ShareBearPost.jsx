@@ -196,16 +196,9 @@ const ActionButtons = ({ postId }) => {
   const { getPostInteraction, toggleLike, toggleBookmark, incrementShare } =
     usePostsStore();
 
-  const interaction = getPostInteraction(postId);
+  const { liked, bookmarked, allowsComments, allowsShares } =
+    getPostInteraction(postId);
 
-  const { liked, bookmarked } = getPostInteraction(postId);
-
-  console.log("ActionButtons render:", {
-    postId,
-    interaction,
-    liked,
-    bookmarked,
-  });
   return (
     <div className="flex items-center justify-between mb-3">
       <div className="flex items-center space-x-1 flex-1">
@@ -221,50 +214,66 @@ const ActionButtons = ({ postId }) => {
           <Heart className={cn("h-4 w-4 mr-2", liked && "fill-current")} />
           Like
         </Button>
-        <Button
-          variant="ghost"
-          size="sm"
-          className="flex-1 h-9 text-sm font-medium text-muted-foreground"
-        >
-          <MessageCircle className="h-4 w-4 mr-2" />
-          Comment
-        </Button>
-       
-        <Button
-          variant="ghost"
-          size="sm"
-          onClick={() => incrementShare(postId)}
-          className="flex-1 h-9 text-sm font-medium text-muted-foreground"
-        >
-          <Share className="h-4 w-4 mr-2" />
-          Share
-        </Button>
+
+        {allowsComments && (
+          <Button
+            variant="ghost"
+            size="sm"
+            className="flex-1 h-9 text-sm font-medium text-muted-foreground"
+          >
+            <MessageCircle className="h-4 w-4 mr-2" />
+            Comment
+          </Button>
+        )}
+
+        {allowsShares && (
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={() => incrementShare(postId)}
+            className="flex-1 h-9 text-sm font-medium text-muted-foreground"
+          >
+            <Share className="h-4 w-4 mr-2" />
+            Share
+          </Button>
+        )}
       </div>
-      <Button
+
+      {/* WILL PUT THE BOOKMARK LATER ON */}
+      {/* <Button
         variant="ghost"
         size="icon"
         onClick={() => toggleBookmark(postId)}
         className={cn("h-8 w-8 p-0 ml-2", bookmarked && "text-yellow-500")}
       >
         <Bookmark className={cn("h-5 w-5", bookmarked && "fill-current")} />
-      </Button>
+      </Button> */}
     </div>
   );
 };
 
 export function ShareBearPost({ post }) {
   const { initializePost, getPostInteraction } = usePostsStore();
-  const { likeCount, shareCount } = getPostInteraction(post.id);
+  const { likeCount, shareCount, allowsComments } = getPostInteraction(post.id);
 
-  // Initialize post data in store on mount
   useEffect(() => {
     initializePost(post.id, {
       liked: post.liked,
       likeCount: post._count?.likes || 0,
       bookmarked: false,
-      shareCount: post.shares || 0,
+      shareCount: post._count?.shares || 0,
+      allowsComments: post.allowsComments,
+      allowsShares: post.allowsShares,
     });
-  }, [post.id, post.liked, post._count?.likes, post.shares, initializePost]);
+  }, [
+    post.id,
+    post.liked,
+    post._count?.likes,
+    post._count?.shares,
+    post.allowsComments,
+    post.allowsShares,
+    initializePost,
+  ]);
 
   return (
     <Card className="max-w-md mx-auto shadow-lg border-none">
@@ -311,9 +320,15 @@ export function ShareBearPost({ post }) {
         <ActionButtons postId={post.id} />
 
         {/* Comments Preview */}
-        <div className="text-sm text-muted-foreground">
-          View all {post._count?.comments.toLocaleString()} comments
-        </div>
+        {allowsComments ? (
+          <div className="text-sm text-muted-foreground">
+            View all {post._count?.comments.toLocaleString()} comments
+          </div>
+        ) : (
+          <div className="text-sm text-muted-foreground">
+            Comments not allowed on this post
+          </div>
+        )}
       </CardContent>
     </Card>
   );

@@ -19,6 +19,8 @@ export const usePostsStore = create(
             likeCount: initialData.likeCount || 0,
             bookmarked: initialData.bookmarked || false,
             shareCount: initialData.shareCount || 0,
+            allowsComments: initialData.allowsComments,
+            allowsShares: initialData.allowsShares,
             currentSlide: 0,
           });
         }
@@ -43,11 +45,11 @@ export const usePostsStore = create(
         }
       }),
 
-    // Increment share count
+    // Increment share count (with permission check)
     incrementShare: (postId) =>
       set((state) => {
         const interaction = state.postInteractions.get(postId);
-        if (interaction) {
+        if (interaction && interaction.allowedShares) {
           interaction.shareCount += 1;
         }
       }),
@@ -61,6 +63,24 @@ export const usePostsStore = create(
         }
       }),
 
+    // Toggle comment permissions for post owner
+    toggleCommentPermission: (postId) =>
+      set((state) => {
+        const interaction = state.postInteractions.get(postId);
+        if (interaction) {
+          interaction.allowsComments = !interaction.allowsComments;
+        }
+      }),
+
+    // Toggle share permissions for post owner
+    toggleSharePermission: (postId) =>
+      set((state) => {
+        const interaction = state.postInteractions.get(postId);
+        if (interaction) {
+          interaction.allowsShares = !interaction.allowsShares;
+        }
+      }),
+
     // Get post interaction data
     getPostInteraction: (postId) => {
       return (
@@ -69,9 +89,23 @@ export const usePostsStore = create(
           likeCount: 0,
           bookmarked: false,
           shareCount: 0,
+          allowsComments: false,
+          allowsShares: true,
           currentSlide: 0,
         }
       );
+    },
+
+    // Check if comments are allowed for a post
+    canComment: (postId) => {
+      const interaction = get().postInteractions.get(postId);
+      return interaction ? interaction.allowsComments : false; // Changed from true to false
+    },
+
+    // Check if shares are allowed for a post
+    canShare: (postId) => {
+      const interaction = get().postInteractions.get(postId);
+      return interaction ? interaction.allowsShares : true;
     },
 
     // Clear all interactions (useful for logout)
