@@ -8,6 +8,15 @@ import {
   getPost as getPostService,
   getPostsByHashtag as getPostsByHashtagService,
   getTrendingHashtags as getTrendingHashtagsService,
+  likePost as likePostService,
+  unlikePost as unlikePostService,
+  createComment as createCommentService,
+  updateComment as updateCommentService,
+  deleteComment as deleteCommentService,
+  getComments as getCommentsService,
+  sharePost as sharePostService,
+  unsharePost as unsharePostService,
+  getShares as getSharesService,
 } from "../services/posts.service.js";
 import {
   sanitizeInput,
@@ -24,7 +33,7 @@ export const getPosts = async (req, rep) => {
     const result = await getPostsService(req.server.prisma, currentUserId, {
       page: parseInt(page),
       limit: parseInt(limit),
-      cursor
+      cursor,
     });
 
     const encodedPosts = result.posts.map((post) => ({
@@ -34,9 +43,9 @@ export const getPosts = async (req, rep) => {
       taggedUsers: post.taggedUsers,
     }));
 
-    return rep.send({ 
+    return rep.send({
       posts: encodedPosts,
-      pagination: result.pagination
+      pagination: result.pagination,
     });
   } catch (error) {
     req.log.error(error);
@@ -46,9 +55,10 @@ export const getPosts = async (req, rep) => {
 
 export const getPost = async (req, rep) => {
   const { postId } = req.params;
+  const currentUserId = req.user?.userId; // Make optional for public posts
 
   try {
-    const post = await getPostService(req.server.prisma, postId);
+    const post = await getPostService(req.server.prisma, postId, currentUserId);
 
     if (!post) {
       return rep.status(404).send({ error: "Post not found" });
@@ -56,7 +66,7 @@ export const getPost = async (req, rep) => {
 
     const encodedPost = {
       ...post,
-      caption: encodeOutput(safeDecodeOutput(post.caption)), // Safely decode first, then encode for output
+      caption: encodeOutput(safeDecodeOutput(post.caption)),
       location: encodeOutput(safeDecodeOutput(post.location)),
       taggedUsers: encodeOutput(safeDecodeOutput(post.taggedUsers)),
     };
@@ -203,7 +213,7 @@ export const updatePost = async (req, reply) => {
       .send({ error: "Post not found or not owned by user" });
 
   // Encode output fields before sending
-  post.caption = encodeOutput(safeDecodeOutput(post.caption)); // Safely decode first, then encode for output
+  post.caption = encodeOutput(safeDecodeOutput(post.caption));
   post.location = encodeOutput(safeDecodeOutput(post.location));
   post.taggedUsers = encodeOutput(safeDecodeOutput(post.taggedUsers));
 
@@ -234,7 +244,7 @@ export const restorePost = async (req, reply) => {
       .status(404)
       .send({ error: "Post not found or not owned by user or not deleted" });
   // Encode output fields before sending
-  post.caption = encodeOutput(safeDecodeOutput(post.caption)); // Safely decode first, then encode for output
+  post.caption = encodeOutput(safeDecodeOutput(post.caption));
   post.location = encodeOutput(safeDecodeOutput(post.location));
   post.taggedUsers = encodeOutput(safeDecodeOutput(post.taggedUsers));
   return reply.send({ message: "Post restored", post });
@@ -253,21 +263,21 @@ export const getPostsByHashtag = async (req, rep) => {
       {
         page: parseInt(page),
         limit: parseInt(limit),
-        cursor
+        cursor,
       }
     );
 
     const encodedPosts = result.posts.map((post) => ({
       ...post,
-      caption: encodeOutput(safeDecodeOutput(post.caption)), // Safely decode first, then encode for output
+      caption: encodeOutput(safeDecodeOutput(post.caption)),
       location: encodeOutput(safeDecodeOutput(post.location)),
       taggedUsers: encodeOutput(safeDecodeOutput(post.taggedUsers)),
     }));
 
-    return rep.send({ 
-      posts: encodedPosts, 
+    return rep.send({
+      posts: encodedPosts,
       hashtag,
-      pagination: result.pagination
+      pagination: result.pagination,
     });
   } catch (error) {
     req.log.error(error);
@@ -284,5 +294,309 @@ export const getTrendingHashtags = async (req, rep) => {
   } catch (error) {
     req.log.error(error);
     return rep.status(500).send({ error: "Failed to fetch trending hashtags" });
+  }
+};
+
+// ========== LIKE CONTROLLERS ==========
+export const likePost = async (req, reply) => {
+  const userId = req.user.userId;
+  const { postId } = req.params;
+
+  try {
+    const like = await likePostService(req.server.prisma, postId, userId);
+    return reply.status(201).send({
+      message: "Post liked successfully",
+      like,
+    });
+  } catch (error) {
+    req.log.error(error);
+
+    if (error.message.includes("Post not found")) {
+      return reply.status(404).send({ error: error.message });
+    }
+    if (error.message.includes("already liked")) {
+      return reply.status(409).send({ error: error.message });
+    }
+
+    return reply.status(500).send({ error: "Failed to like post" });
+  }
+};
+
+export const unlikePost = async (req, reply) => {
+  const userId = req.user.userId;
+  const { postId } = req.params;
+
+  try {
+    const result = await unlikePostService(req.server.prisma, postId, userId);
+    return reply.send(result);
+  } catch (error) {
+    req.log.error(error);
+
+    if (error.message.includes("Like not found")) {
+      return reply.status(404).send({ error: error.message });
+    }
+
+    return reply.status(500).send({ error: "Failed to unlike post" });
+  }
+};
+
+// ========== COMMENT CONTROLLERS ==========
+export const createComment = async (req, reply) => {
+  const userId = req.user.userId;
+  const { postId } = req.params;
+  const { content, parentId } = req.body;
+
+  // Validate required fields
+  if (!content || content.trim().length === 0) {
+    return reply.status(400).send({ error: "Comment content is required" });
+  }
+
+  if (content.length > 1000) {
+    return reply.status(400).send({
+      error: "Comment too long. Maximum 1000 characters allowed.",
+    });
+  }
+
+  try {
+    const commentData = {
+      content: sanitizeInput(content),
+      parentId: parentId || null,
+    };
+
+    const comment = await createCommentService(
+      req.server.prisma,
+      postId,
+      userId,
+      commentData
+    );
+
+    // Encode output before sending
+    const encodedComment = {
+      ...comment,
+      content: encodeOutput(comment.content),
+    };
+
+    return reply.status(201).send({
+      message: "Comment created successfully",
+      comment: encodedComment,
+    });
+  } catch (error) {
+    req.log.error(error);
+
+    if (error.message.includes("Post not found")) {
+      return reply.status(404).send({ error: error.message });
+    }
+    if (error.message.includes("Comments are not allowed")) {
+      return reply.status(403).send({ error: error.message });
+    }
+
+    return reply.status(500).send({ error: "Failed to create comment" });
+  }
+};
+
+export const updateComment = async (req, reply) => {
+  const userId = req.user.userId;
+  const { commentId } = req.params;
+  const { content } = req.body;
+
+  // Validate required fields
+  if (!content || content.trim().length === 0) {
+    return reply.status(400).send({ error: "Comment content is required" });
+  }
+
+  if (content.length > 1000) {
+    return reply.status(400).send({
+      error: "Comment too long. Maximum 1000 characters allowed.",
+    });
+  }
+
+  try {
+    const updateData = {
+      content: sanitizeInput(content),
+    };
+
+    const comment = await updateCommentService(
+      req.server.prisma,
+      commentId,
+      userId,
+      updateData
+    );
+
+    // Encode output before sending
+    const encodedComment = {
+      ...comment,
+      content: encodeOutput(comment.content),
+    };
+
+    return reply.send({
+      message: "Comment updated successfully",
+      comment: encodedComment,
+    });
+  } catch (error) {
+    req.log.error(error);
+
+    if (
+      error.message.includes("Comment not found") ||
+      error.message.includes("don't have permission")
+    ) {
+      return reply.status(404).send({ error: error.message });
+    }
+
+    return reply.status(500).send({ error: "Failed to update comment" });
+  }
+};
+
+export const deleteComment = async (req, reply) => {
+  const userId = req.user.userId;
+  const { commentId } = req.params;
+
+  try {
+    const result = await deleteCommentService(
+      req.server.prisma,
+      commentId,
+      userId
+    );
+    return reply.send(result);
+  } catch (error) {
+    req.log.error(error);
+
+    if (
+      error.message.includes("Comment not found") ||
+      error.message.includes("don't have permission")
+    ) {
+      return reply.status(404).send({ error: error.message });
+    }
+
+    return reply.status(500).send({ error: "Failed to delete comment" });
+  }
+};
+
+export const getComments = async (req, reply) => {
+  const { postId } = req.params;
+  const { page = 1, limit = 20, cursor } = req.query;
+
+  try {
+    const result = await getCommentsService(req.server.prisma, postId, {
+      page: parseInt(page),
+      limit: parseInt(limit),
+      cursor,
+    });
+
+    // Encode output for all comments and replies
+    const encodedComments = result.comments.map((comment) => ({
+      ...comment,
+      content: encodeOutput(comment.content),
+      replies: comment.replies?.map((reply) => ({
+        ...reply,
+        content: encodeOutput(reply.content),
+      })),
+    }));
+
+    return reply.send({
+      comments: encodedComments,
+      pagination: result.pagination,
+    });
+  } catch (error) {
+    req.log.error(error);
+    return reply.status(500).send({ error: "Failed to fetch comments" });
+  }
+};
+
+// ========== SHARE CONTROLLERS ==========
+export const sharePost = async (req, reply) => {
+  const userId = req.user.userId;
+  const { postId } = req.params;
+  const { caption, privacyLevel } = req.body;
+
+  try {
+    const shareData = {
+      caption: caption ? sanitizeInput(caption) : null,
+      privacyLevel: privacyLevel || "PUBLIC",
+    };
+
+    // Validate privacy level
+    const validPrivacyLevels = ["PUBLIC", "FRIENDS", "PRIVATE"];
+    if (!validPrivacyLevels.includes(shareData.privacyLevel)) {
+      return reply.status(400).send({
+        error: "Invalid privacy level. Must be PUBLIC, FRIENDS, or PRIVATE",
+      });
+    }
+
+    const share = await sharePostService(
+      req.server.prisma,
+      postId,
+      userId,
+      shareData
+    );
+
+    // Encode output before sending
+    const encodedShare = {
+      ...share,
+      caption: share.caption ? encodeOutput(share.caption) : null,
+    };
+
+    return reply.status(201).send({
+      message: "Post shared successfully",
+      share: encodedShare,
+    });
+  } catch (error) {
+    req.log.error(error);
+
+    if (error.message.includes("Post not found")) {
+      return reply.status(404).send({ error: error.message });
+    }
+    if (error.message.includes("Shares are not allowed")) {
+      return reply.status(403).send({ error: error.message });
+    }
+    if (error.message.includes("already shared")) {
+      return reply.status(409).send({ error: error.message });
+    }
+
+    return reply.status(500).send({ error: "Failed to share post" });
+  }
+};
+
+export const unsharePost = async (req, reply) => {
+  const userId = req.user.userId;
+  const { postId } = req.params;
+
+  try {
+    const result = await unsharePostService(req.server.prisma, postId, userId);
+    return reply.send(result);
+  } catch (error) {
+    req.log.error(error);
+
+    if (error.message.includes("Share not found")) {
+      return reply.status(404).send({ error: error.message });
+    }
+
+    return reply.status(500).send({ error: "Failed to unshare post" });
+  }
+};
+
+export const getShares = async (req, reply) => {
+  const { postId } = req.params;
+  const { page = 1, limit = 20, cursor } = req.query;
+
+  try {
+    const result = await getSharesService(req.server.prisma, postId, {
+      page: parseInt(page),
+      limit: parseInt(limit),
+      cursor,
+    });
+
+    // Encode output for all shares
+    const encodedShares = result.shares.map((share) => ({
+      ...share,
+      caption: share.caption ? encodeOutput(share.caption) : null,
+    }));
+
+    return reply.send({
+      shares: encodedShares,
+      pagination: result.pagination,
+    });
+  } catch (error) {
+    req.log.error(error);
+    return reply.status(500).send({ error: "Failed to fetch shares" });
   }
 };

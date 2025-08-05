@@ -196,15 +196,30 @@ const ActionButtons = ({ postId }) => {
   const { getPostInteraction, toggleLike, toggleBookmark, incrementShare } =
     usePostsStore();
 
+  const interaction = getPostInteraction(postId);
+
   const { liked, bookmarked } = getPostInteraction(postId);
 
+  console.log("ActionButtons render:", {
+    postId,
+    interaction,
+    liked,
+    bookmarked,
+  });
   return (
     <div className="flex items-center justify-between mb-3">
       <div className="flex items-center space-x-1 flex-1">
         <Button
           variant="ghost"
           size="sm"
-          onClick={() => toggleLike(postId)}
+          onClick={() => {
+            console.log("Before toggle - liked:", liked);
+            toggleLike(postId);
+            console.log(
+              "After toggle - liked:",
+              getPostInteraction(postId).liked
+            );
+          }}
           className={cn(
             "flex-1 h-9 text-sm font-medium",
             liked ? "text-red-500" : "text-muted-foreground"

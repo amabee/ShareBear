@@ -6,132 +6,39 @@ import {
   getPost as getPostRepo,
   getPostsByHashtag as getPostsByHashtagRepo,
   getTrendingHashtags as getTrendingHashtagsRepo,
+  createPost as createPostRepo,
+  likePost as likePostRepo,
+  unlikePost as unlikePostRepo,
+  createComment as createCommentRepo,
+  updateComment as updateCommentRepo,
+  deleteComment as deleteCommentRepo,
+  getComments as getCommentsRepo,
+  sharePost as sharePostRepo,
+  unsharePost as unsharePostRepo,
+  getShares as getSharesRepo,
 } from "../repositories/posts.repository.js";
 
 export const createPost = async (prisma, userId, postData) => {
   return await prisma.$transaction(async (tx) => {
-    // Create the post first
-    const post = await tx.post.create({
-      data: {
-        userId,
-        contentType: postData.contentType,
-        caption: postData.caption,
-        thumbnailUrl: postData.thumbnailUrl,
-        location: postData.location,
-        taggedUsers: postData.taggedUsers,
-        privacyLevel: postData.privacyLevel,
-        allowsComments: postData.allowsComments,
-        allowsShares: postData.allowsShares,
-        expiresAt: postData.expiresAt,
-      },
-    });
-
-    // Handle image uploads if present
-    if (postData.images && postData.images.length > 0) {
-      const imageData = postData.images.map((image, index) => ({
-        postId: post.id,
-        imageUrl: image.url,
-        altText: image.altText || null,
-        displayOrder: index,
-        width: image.width || null,
-        height: image.height || null,
-        fileSize: image.fileSize || null,
-      }));
-
-      await tx.postImage.createMany({
-        data: imageData,
-      });
-    }
-
-    // Extract and process hashtags from caption
-    if (postData.caption) {
-      const { extractHashtags, processHashtags } = await import("../utils/hashtag-utils.js");
-      const hashtags = extractHashtags(postData.caption);
-      if (hashtags.length > 0) {
-        await processHashtags(tx, post.id, hashtags);
-      }
-    }
-
-    return post;
+    return await createPostRepo(tx, userId, postData);
   });
 };
 
 export const updatePost = async (prisma, postId, userId, updateData) => {
   return await prisma.$transaction(async (tx) => {
-    // Update the post
-    const result = await tx.post.updateMany({
-      where: { id: postId, userId, isDeleted: false },
-      data: updateData,
-    });
-
-    if (result.count === 0) return null;
-
-    // Handle image updates if present
-    if (updateData.images !== undefined) {
-      // Delete existing images
-      await tx.postImage.deleteMany({
-        where: { postId },
-      });
-
-      // Create new images if provided
-      if (updateData.images && updateData.images.length > 0) {
-        const imageData = updateData.images.map((image, index) => ({
-          postId,
-          imageUrl: image.url,
-          altText: image.altText || null,
-          displayOrder: index,
-          width: image.width || null,
-          height: image.height || null,
-          fileSize: image.fileSize || null,
-        }));
-
-        await tx.postImage.createMany({
-          data: imageData,
-        });
-      }
-    }
-
-    // If caption was updated, process hashtags
-    if (updateData.caption !== undefined) {
-      const { extractHashtags, processHashtags, removePostHashtags } = await import("../utils/hashtag-utils.js");
-      
-      // Remove existing hashtag relationships
-      await removePostHashtags(tx, postId);
-      
-      // Extract and process new hashtags
-      const hashtags = extractHashtags(updateData.caption);
-      if (hashtags.length > 0) {
-        await processHashtags(tx, postId, hashtags);
-      }
-    }
-
-    return await tx.post.findUnique({ where: { id: postId } });
+    return await updatePostRepo(tx, postId, userId, updateData);
   });
 };
 
 export const softDeletePost = async (prisma, postId, userId) => {
   return await prisma.$transaction(async (tx) => {
-    // Soft delete the post
-    const result = await tx.post.updateMany({
-      where: { id: postId, userId, isDeleted: false },
-      data: { isDeleted: true },
-    });
-
-    // If post was found and updated, remove hashtag relationships
-    if (result.count > 0) {
-      const { removePostHashtags } = await import("../utils/hashtag-utils.js");
-      await removePostHashtags(tx, postId);
-    }
-
-    return result.count > 0;
+    return await softDeletePostRepo(tx, postId, userId);
   });
 };
 
 export const restorePost = async (prisma, postId, userId) => {
   return await prisma.$transaction(async (tx) => {
-    const result = await restorePostRepo(tx, postId, userId);
-    if (result.count === 0) return null;
-    return await tx.post.findUnique({ where: { id: postId } });
+    return await restorePostRepo(tx, postId, userId);
   });
 };
 
@@ -141,20 +48,87 @@ export const getPosts = async (prisma, userId, paginationOptions = {}) => {
   });
 };
 
-export const getPost = async (prisma, postId) => {
+export const getPost = async (prisma, postId, userId) => {
   return await prisma.$transaction(async (tx) => {
-    return await getPostRepo(tx, postId);
+    return await getPostRepo(tx, postId, userId);
   });
 };
 
-export const getPostsByHashtag = async (prisma, hashtagName, userId, paginationOptions = {}) => {
+export const getPostsByHashtag = async (
+  prisma,
+  hashtagName,
+  userId,
+  paginationOptions = {}
+) => {
   return await prisma.$transaction(async (tx) => {
-    return await getPostsByHashtagRepo(tx, hashtagName, userId, paginationOptions);
+    return await getPostsByHashtagRepo(
+      tx,
+      hashtagName,
+      userId,
+      paginationOptions
+    );
   });
 };
 
 export const getTrendingHashtags = async (prisma, limit) => {
   return await prisma.$transaction(async (tx) => {
     return await getTrendingHashtagsRepo(tx, limit);
+  });
+};
+
+// Like functionality
+export const likePost = async (prisma, postId, userId) => {
+  return await prisma.$transaction(async (tx) => {
+    return await likePostRepo(tx, postId, userId);
+  });
+};
+
+export const unlikePost = async (prisma, postId, userId) => {
+  return await prisma.$transaction(async (tx) => {
+    return await unlikePostRepo(tx, postId, userId);
+  });
+};
+
+// Comment functionality
+export const createComment = async (prisma, postId, userId, commentData) => {
+  return await prisma.$transaction(async (tx) => {
+    return await createCommentRepo(tx, postId, userId, commentData);
+  });
+};
+
+export const updateComment = async (prisma, commentId, userId, updateData) => {
+  return await prisma.$transaction(async (tx) => {
+    return await updateCommentRepo(tx, commentId, userId, updateData);
+  });
+};
+
+export const deleteComment = async (prisma, commentId, userId) => {
+  return await prisma.$transaction(async (tx) => {
+    return await deleteCommentRepo(tx, commentId, userId);
+  });
+};
+
+export const getComments = async (prisma, postId, paginationOptions = {}) => {
+  return await prisma.$transaction(async (tx) => {
+    return await getCommentsRepo(tx, postId, paginationOptions);
+  });
+};
+
+// Share functionality
+export const sharePost = async (prisma, postId, userId, shareData = {}) => {
+  return await prisma.$transaction(async (tx) => {
+    return await sharePostRepo(tx, postId, userId, shareData);
+  });
+};
+
+export const unsharePost = async (prisma, postId, userId) => {
+  return await prisma.$transaction(async (tx) => {
+    return await unsharePostRepo(tx, postId, userId);
+  });
+};
+
+export const getShares = async (prisma, postId, paginationOptions = {}) => {
+  return await prisma.$transaction(async (tx) => {
+    return await getSharesRepo(tx, postId, paginationOptions);
   });
 };

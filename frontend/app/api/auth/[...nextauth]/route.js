@@ -48,11 +48,11 @@ export const authOptions = {
   debug: process.env.NODE_ENV === "development",
   callbacks: {
     async jwt({ token, user, account, trigger }) {
-      console.log("JWT Callback triggered:", {
-        trigger,
-        hasToken: !!token,
-        hasUser: !!user,
-      });
+      // console.log("JWT Callback triggered:", {
+      //   trigger,
+      //   hasToken: !!token,
+      //   hasUser: !!user,
+      // });
 
       // Ensure token is a valid object - initialize if null/undefined
       if (!token || typeof token !== "object") {

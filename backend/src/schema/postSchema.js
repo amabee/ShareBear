@@ -16,22 +16,16 @@ export const createPostSchema = {
         enum: ["PUBLIC", "PRIVATE", "FRIENDS"],
         errorMessage: "Invalid privacy level",
       },
-      allowsComments: { 
-        oneOf: [
-          { type: "string" },
-          { type: "boolean" }
-        ]
+      allowsComments: {
+        oneOf: [{ type: "string" }, { type: "boolean" }],
       },
-      allowsShares: { 
-        oneOf: [
-          { type: "string" },
-          { type: "boolean" }
-        ]
+      allowsShares: {
+        oneOf: [{ type: "string" }, { type: "boolean" }],
       },
-      expiresAt: { 
-        type: "string", 
+      expiresAt: {
+        type: "string",
         format: "date-time",
-        nullable: true 
+        nullable: true,
       },
     },
     additionalProperties: true,
@@ -116,7 +110,7 @@ export const createPostSchema = {
 };
 
 export const createPostMultipartSchema = {
-  consumes: ['multipart/form-data'],
+  consumes: ["multipart/form-data"],
   body: {
     type: "object",
     properties: {
@@ -134,22 +128,16 @@ export const createPostMultipartSchema = {
         enum: ["PUBLIC", "PRIVATE", "FRIENDS"],
         errorMessage: "Invalid privacy level",
       },
-      allowsComments: { 
-        oneOf: [
-          { type: "string" },
-          { type: "boolean" }
-        ]
+      allowsComments: {
+        oneOf: [{ type: "string" }, { type: "boolean" }],
       },
-      allowsShares: { 
-        oneOf: [
-          { type: "string" },
-          { type: "boolean" }
-        ]
+      allowsShares: {
+        oneOf: [{ type: "string" }, { type: "boolean" }],
       },
-      expiresAt: { 
-        type: "string", 
+      expiresAt: {
+        type: "string",
         format: "date-time",
-        nullable: true 
+        nullable: true,
       },
     },
     additionalProperties: true,
@@ -258,22 +246,16 @@ export const updatePostSchema = {
         enum: ["PUBLIC", "PRIVATE", "FRIENDS"],
         errorMessage: "Invalid privacy level",
       },
-      allowsComments: { 
-        oneOf: [
-          { type: "string" },
-          { type: "boolean" }
-        ]
+      allowsComments: {
+        oneOf: [{ type: "string" }, { type: "boolean" }],
       },
-      allowsShares: { 
-        oneOf: [
-          { type: "string" },
-          { type: "boolean" }
-        ]
+      allowsShares: {
+        oneOf: [{ type: "string" }, { type: "boolean" }],
       },
-      expiresAt: { 
-        type: "string", 
+      expiresAt: {
+        type: "string",
         format: "date-time",
-        nullable: true 
+        nullable: true,
       },
     },
     additionalProperties: false,
@@ -336,28 +318,28 @@ export const getPostsSchema = {
   querystring: {
     type: "object",
     properties: {
-      page: { 
+      page: {
         oneOf: [
           { type: "integer", minimum: 1 },
-          { type: "string", pattern: "^[1-9]\\d*$" }
+          { type: "string", pattern: "^[1-9]\\d*$" },
         ],
         default: 1,
-        description: "Page number for pagination"
+        description: "Page number for pagination",
       },
-      limit: { 
+      limit: {
         oneOf: [
           { type: "integer", minimum: 1, maximum: 50 },
-          { type: "string", pattern: "^([1-9]|[1-4]\\d|50)$" }
+          { type: "string", pattern: "^([1-9]|[1-4]\\d|50)$" },
         ],
         default: 10,
-        description: "Number of posts per page (max 50)"
+        description: "Number of posts per page (max 50)",
       },
       cursor: {
         type: "string",
-        description: "Cursor for cursor-based pagination (post ID)"
-      }
+        description: "Cursor for cursor-based pagination (post ID)",
+      },
     },
-    additionalProperties: false
+    additionalProperties: false,
   },
   response: {
     200: {
@@ -398,6 +380,7 @@ export const getPostsSchema = {
               updatedAt: { type: "string" },
               expiresAt: { type: "string" },
               isDeleted: { type: "boolean" },
+              liked: { type: "boolean" }, // Added this field
               hashtags: {
                 type: "array",
                 items: {
@@ -455,9 +438,9 @@ export const getPostsSchema = {
             hasNextPage: { type: "boolean" },
             hasPreviousPage: { type: "boolean" },
             nextCursor: { type: "string" },
-            previousCursor: { type: "string" }
-          }
-        }
+            previousCursor: { type: "string" },
+          },
+        },
       },
     },
     401: { type: "object", properties: { error: { type: "string" } } },
@@ -510,6 +493,7 @@ export const getPostSchema = {
             updatedAt: { type: "string" },
             expiresAt: { type: "string" },
             isDeleted: { type: "boolean" },
+            liked: { type: "boolean" }, // Added this field
             hashtags: {
               type: "array",
               items: {
@@ -616,28 +600,28 @@ export const getPostsByHashtagSchema = {
   querystring: {
     type: "object",
     properties: {
-      page: { 
+      page: {
         oneOf: [
           { type: "integer", minimum: 1 },
-          { type: "string", pattern: "^[1-9]\\d*$" }
+          { type: "string", pattern: "^[1-9]\\d*$" },
         ],
         default: 1,
-        description: "Page number for pagination"
+        description: "Page number for pagination",
       },
-      limit: { 
+      limit: {
         oneOf: [
           { type: "integer", minimum: 1, maximum: 50 },
-          { type: "string", pattern: "^([1-9]|[1-4]\\d|50)$" }
+          { type: "string", pattern: "^([1-9]|[1-4]\\d|50)$" },
         ],
         default: 10,
-        description: "Number of posts per page (max 50)"
+        description: "Number of posts per page (max 50)",
       },
       cursor: {
         type: "string",
-        description: "Cursor for cursor-based pagination (post ID)"
-      }
+        description: "Cursor for cursor-based pagination (post ID)",
+      },
     },
-    additionalProperties: false
+    additionalProperties: false,
   },
   response: {
     200: {
@@ -678,6 +662,7 @@ export const getPostsByHashtagSchema = {
               updatedAt: { type: "string" },
               expiresAt: { type: "string" },
               isDeleted: { type: "boolean" },
+              liked: { type: "boolean" }, // Added this field
               hashtags: {
                 type: "array",
                 items: {
@@ -736,9 +721,9 @@ export const getPostsByHashtagSchema = {
             hasNextPage: { type: "boolean" },
             hasPreviousPage: { type: "boolean" },
             nextCursor: { type: "string" },
-            previousCursor: { type: "string" }
-          }
-        }
+            previousCursor: { type: "string" },
+          },
+        },
       },
     },
     401: { type: "object", properties: { error: { type: "string" } } },
@@ -772,6 +757,542 @@ export const getTrendingHashtagsSchema = {
       },
     },
     401: { type: "object", properties: { error: { type: "string" } } },
+    500: { type: "object", properties: { error: { type: "string" } } },
+  },
+};
+
+// ========== LIKE SCHEMAS ==========
+export const likePostSchema = {
+  params: {
+    type: "object",
+    properties: {
+      postId: { type: "string", pattern: "^[a-zA-Z0-9]{25}$" },
+    },
+    required: ["postId"],
+  },
+  response: {
+    201: {
+      type: "object",
+      properties: {
+        message: { type: "string" },
+        like: {
+          type: "object",
+          properties: {
+            id: { type: "string" },
+            postId: { type: "string" },
+            userId: { type: "string" },
+            createdAt: { type: "string" },
+            user: {
+              type: "object",
+              properties: {
+                id: { type: "string" },
+                username: { type: "string" },
+                userInfo: {
+                  type: "object",
+                  properties: {
+                    displayName: { type: "string" },
+                    profilePictureUrl: { type: "string" },
+                  },
+                },
+              },
+            },
+          },
+        },
+      },
+    },
+    404: { type: "object", properties: { error: { type: "string" } } },
+    409: { type: "object", properties: { error: { type: "string" } } },
+    500: { type: "object", properties: { error: { type: "string" } } },
+  },
+};
+
+export const unlikePostSchema = {
+  params: {
+    type: "object",
+    properties: {
+      postId: { type: "string", pattern: "^[a-zA-Z0-9]{25}$" },
+    },
+    required: ["postId"],
+  },
+  response: {
+    200: {
+      type: "object",
+      properties: {
+        success: { type: "boolean" },
+        message: { type: "string" },
+      },
+    },
+    404: { type: "object", properties: { error: { type: "string" } } },
+    500: { type: "object", properties: { error: { type: "string" } } },
+  },
+};
+
+// ========== COMMENT SCHEMAS ==========
+export const createCommentSchema = {
+  params: {
+    type: "object",
+    properties: {
+      postId: { type: "string", pattern: "^[a-zA-Z0-9]{25}$" },
+    },
+    required: ["postId"],
+  },
+  body: {
+    type: "object",
+    properties: {
+      content: {
+        type: "string",
+        minLength: 1,
+        maxLength: 1000,
+        errorMessage: "Comment content must be between 1 and 1000 characters",
+      },
+      parentId: {
+        type: "string",
+        pattern: "^[a-zA-Z0-9]{25}$",
+        nullable: true,
+      },
+    },
+    required: ["content"],
+    additionalProperties: false,
+  },
+  response: {
+    201: {
+      type: "object",
+      properties: {
+        message: { type: "string" },
+        comment: {
+          type: "object",
+          properties: {
+            id: { type: "string" },
+            postId: { type: "string" },
+            userId: { type: "string" },
+            content: { type: "string" },
+            parentId: { type: "string" },
+            createdAt: { type: "string" },
+            updatedAt: { type: "string" },
+            user: {
+              type: "object",
+              properties: {
+                id: { type: "string" },
+                username: { type: "string" },
+                userInfo: {
+                  type: "object",
+                  properties: {
+                    displayName: { type: "string" },
+                    profilePictureUrl: { type: "string" },
+                  },
+                },
+              },
+            },
+            _count: {
+              type: "object",
+              properties: {
+                replies: { type: "number" },
+              },
+            },
+          },
+        },
+      },
+    },
+    400: { type: "object", properties: { error: { type: "string" } } },
+    403: { type: "object", properties: { error: { type: "string" } } },
+    404: { type: "object", properties: { error: { type: "string" } } },
+    500: { type: "object", properties: { error: { type: "string" } } },
+  },
+};
+
+export const updateCommentSchema = {
+  params: {
+    type: "object",
+    properties: {
+      commentId: { type: "string", pattern: "^[a-zA-Z0-9]{25}$" },
+    },
+    required: ["commentId"],
+  },
+  body: {
+    type: "object",
+    properties: {
+      content: {
+        type: "string",
+        minLength: 1,
+        maxLength: 1000,
+        errorMessage: "Comment content must be between 1 and 1000 characters",
+      },
+    },
+    required: ["content"],
+    additionalProperties: false,
+  },
+  response: {
+    200: {
+      type: "object",
+      properties: {
+        message: { type: "string" },
+        comment: {
+          type: "object",
+          properties: {
+            id: { type: "string" },
+            postId: { type: "string" },
+            userId: { type: "string" },
+            content: { type: "string" },
+            parentId: { type: "string" },
+            createdAt: { type: "string" },
+            updatedAt: { type: "string" },
+            user: {
+              type: "object",
+              properties: {
+                id: { type: "string" },
+                username: { type: "string" },
+                userInfo: {
+                  type: "object",
+                  properties: {
+                    displayName: { type: "string" },
+                    profilePictureUrl: { type: "string" },
+                  },
+                },
+              },
+            },
+            _count: {
+              type: "object",
+              properties: {
+                replies: { type: "number" },
+              },
+            },
+          },
+        },
+      },
+    },
+    400: { type: "object", properties: { error: { type: "string" } } },
+    404: { type: "object", properties: { error: { type: "string" } } },
+    500: { type: "object", properties: { error: { type: "string" } } },
+  },
+};
+
+export const deleteCommentSchema = {
+  params: {
+    type: "object",
+    properties: {
+      commentId: { type: "string", pattern: "^[a-zA-Z0-9]{25}$" },
+    },
+    required: ["commentId"],
+  },
+  response: {
+    200: {
+      type: "object",
+      properties: {
+        success: { type: "boolean" },
+        message: { type: "string" },
+      },
+    },
+    404: { type: "object", properties: { error: { type: "string" } } },
+    500: { type: "object", properties: { error: { type: "string" } } },
+  },
+};
+
+export const getCommentsSchema = {
+  params: {
+    type: "object",
+    properties: {
+      postId: { type: "string", pattern: "^[a-zA-Z0-9]{25}$" },
+    },
+    required: ["postId"],
+  },
+  querystring: {
+    type: "object",
+    properties: {
+      page: {
+        oneOf: [
+          { type: "integer", minimum: 1 },
+          { type: "string", pattern: "^[1-9]\\d*$" },
+        ],
+        default: 1,
+        description: "Page number for pagination",
+      },
+      limit: {
+        oneOf: [
+          { type: "integer", minimum: 1, maximum: 50 },
+          { type: "string", pattern: "^([1-9]|[1-4]\\d|50)$" },
+        ],
+        default: 20,
+        description: "Number of comments per page (max 50)",
+      },
+      cursor: {
+        type: "string",
+        description: "Cursor for cursor-based pagination (comment ID)",
+      },
+    },
+    additionalProperties: false,
+  },
+  response: {
+    200: {
+      type: "object",
+      properties: {
+        comments: {
+          type: "array",
+          items: {
+            type: "object",
+            properties: {
+              id: { type: "string" },
+              postId: { type: "string" },
+              userId: { type: "string" },
+              content: { type: "string" },
+              parentId: { type: "string" },
+              createdAt: { type: "string" },
+              updatedAt: { type: "string" },
+              user: {
+                type: "object",
+                properties: {
+                  id: { type: "string" },
+                  username: { type: "string" },
+                  userInfo: {
+                    type: "object",
+                    properties: {
+                      displayName: { type: "string" },
+                      profilePictureUrl: { type: "string" },
+                    },
+                  },
+                },
+              },
+              replies: {
+                type: "array",
+                items: {
+                  type: "object",
+                  properties: {
+                    id: { type: "string" },
+                    content: { type: "string" },
+                    userId: { type: "string" },
+                    createdAt: { type: "string" },
+                    user: {
+                      type: "object",
+                      properties: {
+                        id: { type: "string" },
+                        username: { type: "string" },
+                        userInfo: {
+                          type: "object",
+                          properties: {
+                            displayName: { type: "string" },
+                            profilePictureUrl: { type: "string" },
+                          },
+                        },
+                      },
+                    },
+                  },
+                },
+              },
+              _count: {
+                type: "object",
+                properties: {
+                  replies: { type: "number" },
+                },
+              },
+            },
+          },
+        },
+        pagination: {
+          type: "object",
+          properties: {
+            page: { type: "integer" },
+            limit: { type: "integer" },
+            totalComments: { type: "integer" },
+            totalPages: { type: "integer" },
+            hasNextPage: { type: "boolean" },
+            hasPreviousPage: { type: "boolean" },
+            nextCursor: { type: "string" },
+            previousCursor: { type: "string" },
+          },
+        },
+      },
+    },
+    500: { type: "object", properties: { error: { type: "string" } } },
+  },
+};
+
+// ========== SHARE SCHEMAS ==========
+export const sharePostSchema = {
+  params: {
+    type: "object",
+    properties: {
+      postId: { type: "string", pattern: "^[a-zA-Z0-9]{25}$" },
+    },
+    required: ["postId"],
+  },
+  body: {
+    type: "object",
+    properties: {
+      caption: {
+        type: "string",
+        maxLength: 500,
+        nullable: true,
+      },
+      privacyLevel: {
+        type: "string",
+        enum: ["PUBLIC", "FRIENDS", "PRIVATE"],
+        default: "PUBLIC",
+        errorMessage: "Invalid privacy level",
+      },
+    },
+    additionalProperties: false,
+  },
+  response: {
+    201: {
+      type: "object",
+      properties: {
+        message: { type: "string" },
+        share: {
+          type: "object",
+          properties: {
+            id: { type: "string" },
+            postId: { type: "string" },
+            userId: { type: "string" },
+            caption: { type: "string" },
+            privacyLevel: { type: "string" },
+            createdAt: { type: "string" },
+            user: {
+              type: "object",
+              properties: {
+                id: { type: "string" },
+                username: { type: "string" },
+                userInfo: {
+                  type: "object",
+                  properties: {
+                    displayName: { type: "string" },
+                    profilePictureUrl: { type: "string" },
+                  },
+                },
+              },
+            },
+            post: {
+              type: "object",
+              properties: {
+                id: { type: "string" },
+                caption: { type: "string" },
+                contentType: { type: "string" },
+                user: {
+                  type: "object",
+                  properties: {
+                    username: { type: "string" },
+                    userInfo: {
+                      type: "object",
+                      properties: {
+                        displayName: { type: "string" },
+                      },
+                    },
+                  },
+                },
+              },
+            },
+          },
+        },
+      },
+    },
+    400: { type: "object", properties: { error: { type: "string" } } },
+    403: { type: "object", properties: { error: { type: "string" } } },
+    404: { type: "object", properties: { error: { type: "string" } } },
+    409: { type: "object", properties: { error: { type: "string" } } },
+    500: { type: "object", properties: { error: { type: "string" } } },
+  },
+};
+
+export const unsharePostSchema = {
+  params: {
+    type: "object",
+    properties: {
+      postId: { type: "string", pattern: "^[a-zA-Z0-9]{25}$" },
+    },
+    required: ["postId"],
+  },
+  response: {
+    200: {
+      type: "object",
+      properties: {
+        success: { type: "boolean" },
+        message: { type: "string" },
+      },
+    },
+    404: { type: "object", properties: { error: { type: "string" } } },
+    500: { type: "object", properties: { error: { type: "string" } } },
+  },
+};
+
+export const getSharesSchema = {
+  params: {
+    type: "object",
+    properties: {
+      postId: { type: "string", pattern: "^[a-zA-Z0-9]{25}$" },
+    },
+    required: ["postId"],
+  },
+  querystring: {
+    type: "object",
+    properties: {
+      page: {
+        oneOf: [
+          { type: "integer", minimum: 1 },
+          { type: "string", pattern: "^[1-9]\\d*$" },
+        ],
+        default: 1,
+        description: "Page number for pagination",
+      },
+      limit: {
+        oneOf: [
+          { type: "integer", minimum: 1, maximum: 50 },
+          { type: "string", pattern: "^([1-9]|[1-4]\\d|50)$" },
+        ],
+        default: 20,
+        description: "Number of shares per page (max 50)",
+      },
+      cursor: {
+        type: "string",
+        description: "Cursor for cursor-based pagination (share ID)",
+      },
+    },
+    additionalProperties: false,
+  },
+  response: {
+    200: {
+      type: "object",
+      properties: {
+        shares: {
+          type: "array",
+          items: {
+            type: "object",
+            properties: {
+              id: { type: "string" },
+              postId: { type: "string" },
+              userId: { type: "string" },
+              caption: { type: "string" },
+              privacyLevel: { type: "string" },
+              createdAt: { type: "string" },
+              user: {
+                type: "object",
+                properties: {
+                  id: { type: "string" },
+                  username: { type: "string" },
+                  userInfo: {
+                    type: "object",
+                    properties: {
+                      displayName: { type: "string" },
+                      profilePictureUrl: { type: "string" },
+                    },
+                  },
+                },
+              },
+            },
+          },
+        },
+        pagination: {
+          type: "object",
+          properties: {
+            page: { type: "integer" },
+            limit: { type: "integer" },
+            totalShares: { type: "integer" },
+            totalPages: { type: "integer" },
+            hasNextPage: { type: "boolean" },
+            hasPreviousPage: { type: "boolean" },
+            nextCursor: { type: "string" },
+            previousCursor: { type: "string" },
+          },
+        },
+      },
+    },
     500: { type: "object", properties: { error: { type: "string" } } },
   },
 };

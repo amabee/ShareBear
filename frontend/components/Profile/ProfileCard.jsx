@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { useUserDetail } from "@/hooks/useUser";
 import { useSession } from "next-auth/react";
 import { formatCount } from "@/utils/formatCount";
+import ProfileCardSkeleton from "../Skeletons/ProfileCardSkeleton";
 
 export default function ProfileCard() {
   const { data: session, status } = useSession();
@@ -16,7 +17,7 @@ export default function ProfileCard() {
   } = useUserDetail(session?.user?.username);
 
   if (isLoading) {
-    return <div className="h-96 bg-gray-100 animate-pulse rounded-lg" />;
+    return <ProfileCardSkeleton />;
   }
   if (error) {
     return <div>Error loading profile</div>;

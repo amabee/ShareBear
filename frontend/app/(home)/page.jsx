@@ -5,12 +5,13 @@ import {
   StoriesSkeleton,
 } from "@/components/Reusables/Skeletons";
 import TopNavBar from "@/components/Reusables/TopNavBar";
+import ProfileCardSkeleton from "@/components/Skeletons/ProfileCardSkeleton";
 import { Stories } from "@/components/Stories/Stories";
 import dynamic from "next/dynamic";
 import React, { Suspense } from "react";
 
 const ProfileCard = dynamic(() => import("@/components/Profile/ProfileCard"), {
-  loading: () => <div className="h-96 bg-gray-100 animate-pulse rounded-lg" />,
+  loading: () => <ProfileCardSkeleton />,
 });
 
 const Suggestions = dynamic(
