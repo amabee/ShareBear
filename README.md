@@ -26,14 +26,14 @@ ShareBear is a complete social media application with:
 ### **Frontend Features**
 - **Modern UI/UX**: Beautiful, responsive design with Tailwind CSS and shadcn/ui
 - **Authentication**: NextAuth.js with automatic token refresh
-- **Real-time Feed**: Dynamic post feed with infinite scrolling
-- **User Profiles**: Complete profile pages with posts, photos, and stats
-- **Search & Discovery**: Advanced search functionality
-- **Notifications**: Real-time notification system
+- **Real-time Feed**: Dynamic post feed with infinite scrolling (Not yet realtime but will add in the future)
+- **User Profiles**: Complete profile pages with posts, photos, and stats (Still working on this)
+- **Search & Discovery**: Advanced search functionality (Still working on this)
+- **Notifications**: Real-time notification system (Still working on this)
 - **Mobile-First**: Responsive design with mobile bottom navigation
 - **Dark/Light Themes**: Multiple theme support with theme switching
-- **Reels/Stories**: Video content support
-- **Chat System**: Direct messaging and conversations
+- **Reels/Stories**: Video content support (Still working on this)
+- **Chat System**: Direct messaging and conversations (Still working on this)
 
 ### **Backend Features**
 - **User Authentication** (JWT-based with NextAuth.js)
