@@ -46,8 +46,8 @@ export default function ProfileCard() {
 
       <CardContent className="relative pt-0 px-6 pb-6">
         {/* Avatar */}
-        <div className="absolute left-1/2 -top-16 transform -translate-x-1/2">
-          <Avatar className="h-20 w-20 shadow-md">
+        <div className="absolute left-1/2 -top-18 transform -translate-x-1/2">
+          <Avatar className="h-22 w-22 shadow-md">
             <AvatarImage
               className="object-cover"
               src={

@@ -284,21 +284,38 @@ export const searchUsers = async (prisma, query, limit = 20, offset = 0) => {
   });
 };
 
-// Get suggested users (users not followed by current user)
-export const getSuggestedUsers = async (prisma, userId, limit = 10) => {
-  return prisma.user.findMany({
+// Updated getSuggestedUsers with randomization
+export const getSuggestedUsers = async (prisma, userIdentifier, limit = 10) => {
+  const currentUser = await prisma.user.findFirst({
+    where: { username: userIdentifier },
+    select: { id: true },
+  });
+
+  if (!currentUser) {
+    throw new Error("User not found");
+  }
+
+  const currentUserId = currentUser.id;
+
+  const randomUserIds = await prisma.user.findManyRandom(limit, {
     where: {
       AND: [
-        { id: { not: userId } }, // Exclude current user
+        { id: { not: currentUserId } },
         {
           followers: {
             none: {
-              followerId: userId,
+              followerId: currentUserId,
             },
           },
         },
       ],
     },
+  });
+
+  const userIds = randomUserIds.map((user) => user.id);
+
+  return prisma.user.findMany({
+    where: { id: { in: userIds } },
     include: {
       userInfo: {
         select: {
@@ -307,29 +324,13 @@ export const getSuggestedUsers = async (prisma, userId, limit = 10) => {
           displayName: true,
           profilePictureUrl: true,
           bio: true,
-          isVerified: true,
         },
       },
       _count: {
         select: {
-          followers: {
-            where: { status: "accepted" },
-          },
+          followers: true,
         },
       },
     },
-    orderBy: [
-      {
-        userInfo: {
-          isVerified: "desc",
-        },
-      },
-      {
-        _count: {
-          followers: "desc",
-        },
-      },
-    ],
-    take: limit,
   });
 };

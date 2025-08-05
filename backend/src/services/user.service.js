@@ -21,7 +21,7 @@ export async function getUserData(prisma, identifier, req) {
 
     // Log user data access
     if (req) {
-      await logUserAction(prisma, user.id, "get_user_data", req,  {
+      await logUserAction(prisma, user.id, "get_user_data", req, {
         targetUserId: user.id,
         targetUsername: user.username,
         identifier: identifier,
@@ -177,18 +177,23 @@ export async function searchUsers(prisma, query, paginationOptions = {}, req) {
   });
 }
 
-export async function getSuggestedUsers(prisma, userId, limit = 10, req) {
+export async function getSuggestedUsers(
+  prisma,
+  userIdentifier,
+  limit = 10,
+  req
+) {
   return await prisma.$transaction(async (tx) => {
-    const suggestions = await getSuggestedUsersRepo(tx, userId, limit);
+    const suggestions = await getSuggestedUsersRepo(tx, userIdentifier, limit);
 
     // Log suggestions access
-    if (req) {
-      await logUserAction(prisma, "get_suggested_users", req, "INFO", {
-        userId,
-        suggestionsCount: suggestions.length,
-        limit,
-      });
-    }
+    // if (req) {
+    //   await logUserAction(prisma, userId, "get_suggested_users", req, {
+    //     userId,
+    //     suggestionsCount: suggestions.length,
+    //     limit,
+    //   });
+    // }
 
     return suggestions;
   });

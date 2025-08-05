@@ -10,3 +10,16 @@ export const useUserDetail = (identifier) => {
     enabled: !!identifier,
   });
 };
+
+export const useUserSuggestions = (identifier) => {
+  return useQuery({
+    queryKey: ["suggestions", identifier],
+    queryFn: () =>
+      apiClient.get(`/api/users/suggestions`, {
+        identifier: identifier,
+      }),
+    staleTime: 1000 * 60 * 5,
+    refetchOnWindowFocus: true,
+    enabled: !!identifier,
+  });
+};

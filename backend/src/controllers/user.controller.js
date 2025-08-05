@@ -261,12 +261,13 @@ export const searchUsersHandler = async (req, reply) => {
 // Get suggested users
 export const getSuggestedUsersHandler = async (req, reply) => {
   try {
-    const userId = req.user.userId;
+    const userIdentifier = req.user.username;
+
     const { limit = 10 } = req.query;
 
     const suggestions = await getSuggestedUsers(
       req.server.prisma,
-      userId,
+      userIdentifier,
       parseInt(limit),
       req
     );
@@ -506,4 +507,3 @@ export const reactivateUserHandler = async (req, reply) => {
     return reply.status(500).send({ error: "Failed to reactivate user" });
   }
 };
-
