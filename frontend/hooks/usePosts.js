@@ -276,10 +276,113 @@ export const useLikePost = () => {
   return useMutation({
     mutationFn: (postId) => apiClient.post(`/api/posts/${postId}/like`),
     onSuccess: (data, postId) => {
-      // update the specific post in the cache
-      queryClient.setQueryData(["posts", postId], data);
-      // invalidate the posts list to update the like count
-      queryClient.invalidateQueries({ queryKey: ["posts"] });
+      queryClient.setQueryData(["posts", postId], (oldPost) => {
+        if (!oldPost) return oldPost;
+        return {
+          ...oldPost,
+          liked: true,
+          _count: {
+            ...oldPost._count,
+            likes: oldPost._count.likes + 1,
+          },
+        };
+      });
+
+      queryClient.setQueryData(["posts", "infinite"], (oldData) => {
+        if (!oldData) return oldData;
+
+        return {
+          ...oldData,
+          pages: oldData.pages.map((page) => ({
+            ...page,
+            posts: page.posts.map((post) =>
+              post.id === postId
+                ? {
+                    ...post,
+                    liked: true,
+                    _count: {
+                      ...post._count,
+                      likes: post._count.likes + 1,
+                    },
+                  }
+                : post
+            ),
+          })),
+        };
+      });
+    },
+    onError: (error) => {
+      console.error("Failed to like post:", error);
+      toast.error("Failed to like post.");
+    },
+  });
+};
+
+// for unliking the post
+export const useUnlikePost = () => {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: (postId) => apiClient.post(`/api/posts/${postId}/unlike`),
+    onSuccess: (data, postId) => {
+      queryClient.setQueryData(["posts", postId], (oldPost) => {
+        if (!oldPost) return oldPost;
+        return {
+          ...oldPost,
+          liked: false, // Changed from true
+          _count: {
+            ...oldPost._count,
+            likes: oldPost._count.likes - 1, // Changed from +1
+          },
+        };
+      });
+
+      queryClient.setQueryData(["posts", "infinite"], (oldData) => {
+        if (!oldData) return oldData;
+
+        return {
+          ...oldData,
+          pages: oldData.pages.map((page) => ({
+            ...page,
+            posts: page.posts.map((post) =>
+              post.id === postId
+                ? {
+                    ...post,
+                    liked: false, // Changed from true
+                    _count: {
+                      ...post._count,
+                      likes: post._count.likes - 1, // Changed from +1
+                    },
+                  }
+                : post
+            ),
+          })),
+        };
+      });
+    },
+    onError: (error) => {
+      console.error("Failed to unlike post:", error); // Updated message
+      toast.error("Failed to unlike post."); // Updated message
+    },
+  });
+};
+
+// FOR BOOKMARK
+export const useBookmarkPost = () => {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: (postId) => apiClient.post(`/api/posts/${postId}/bookmark`),
+    onSuccess: (data, postId) => {
+      queryClient.setQueryData(["posts"], (oldData) => {
+        if (!oldData) return oldData;
+        return {
+          ...oldData,
+          posts: oldData.posts.map((post) =>
+            post.id === postId ? { ...post, bookmarked: true } : post
+          ),
+        };
+      });
     },
   });
 };

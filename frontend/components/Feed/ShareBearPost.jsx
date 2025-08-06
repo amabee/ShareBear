@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useMemo } from "react";
+import { useEffect, useRef, useMemo, useCallback } from "react";
 import Image from "next/image";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
@@ -25,6 +25,7 @@ import {
 import { cn } from "@/lib/utils";
 import { AspectRatio } from "@/components/ui/aspect-ratio";
 import { usePostsStore } from "@/stores/usePostsStore";
+import ActionButtons from "./ActionButtons";
 
 // Memoized components for better performance
 const UserAvatar = ({ user }) => (
@@ -104,22 +105,28 @@ const CaptionWithHashtags = ({ caption }) => {
 };
 
 const MediaCarousel = ({ images, postId }) => {
-  const { getPostInteraction, setCurrentSlide } = usePostsStore();
-  const { currentSlide } = getPostInteraction(postId);
+  const currentSlide = usePostsStore(
+    (state) => state.postUIState.get(postId)?.currentSlide || 0
+  );
+  const setCurrentSlide = usePostsStore((state) => state.setCurrentSlide);
+
   const videoRef = useRef(null);
 
-  const handleCarouselChange = (api) => {
-    if (!api) return;
+  const handleCarouselChange = useCallback(
+    (api) => {
+      if (!api) return;
 
-    const updateSlide = () => {
-      setCurrentSlide(postId, api.selectedScrollSnap());
-    };
+      const updateSlide = () => {
+        setCurrentSlide(postId, api.selectedScrollSnap());
+      };
 
-    updateSlide(); // Set initial slide
-    api.on("select", updateSlide);
+      updateSlide();
+      api.on("select", updateSlide);
 
-    return () => api.off("select", updateSlide);
-  };
+      return () => api.off("select", updateSlide);
+    },
+    [postId, setCurrentSlide]
+  );
 
   if (!images || images.length === 0) return null;
 
@@ -143,7 +150,7 @@ const MediaCarousel = ({ images, postId }) => {
                       className="w-full h-full object-cover"
                       disablePictureInPicture
                       controls
-                      controlsList="nodownload nofullscreen noremoteplayback nopictureinpicture"
+                      controlsList="nodownload nofullscreen noremoteplaybook nopictureinpicture"
                       preload="metadata"
                       playsInline
                       referrerPolicy="no-referrer"
@@ -192,88 +199,22 @@ const MediaCarousel = ({ images, postId }) => {
   );
 };
 
-const ActionButtons = ({ postId }) => {
-  const { getPostInteraction, toggleLike, toggleBookmark, incrementShare } =
-    usePostsStore();
-
-  const { liked, bookmarked, allowsComments, allowsShares } =
-    getPostInteraction(postId);
-
-  return (
-    <div className="flex items-center justify-between mb-3">
-      <div className="flex items-center space-x-1 flex-1">
-        <Button
-          variant="ghost"
-          size="sm"
-          onClick={() => toggleLike(postId)}
-          className={cn(
-            "flex-1 h-9 text-sm font-medium",
-            liked ? "text-red-500" : "text-muted-foreground"
-          )}
-        >
-          <Heart className={cn("h-4 w-4 mr-2", liked && "fill-current")} />
-          Like
-        </Button>
-
-        {allowsComments && (
-          <Button
-            variant="ghost"
-            size="sm"
-            className="flex-1 h-9 text-sm font-medium text-muted-foreground"
-          >
-            <MessageCircle className="h-4 w-4 mr-2" />
-            Comment
-          </Button>
-        )}
-
-        {allowsShares && (
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={() => incrementShare(postId)}
-            className="flex-1 h-9 text-sm font-medium text-muted-foreground"
-          >
-            <Share className="h-4 w-4 mr-2" />
-            Share
-          </Button>
-        )}
-      </div>
-
-      {/* WILL PUT THE BOOKMARK LATER ON */}
-      {/* <Button
-        variant="ghost"
-        size="icon"
-        onClick={() => toggleBookmark(postId)}
-        className={cn("h-8 w-8 p-0 ml-2", bookmarked && "text-yellow-500")}
-      >
-        <Bookmark className={cn("h-5 w-5", bookmarked && "fill-current")} />
-      </Button> */}
-    </div>
-  );
-};
-
 export function ShareBearPost({ post }) {
-  const { initializePost, getPostInteraction } = usePostsStore();
-  const { likeCount, shareCount, allowsComments } = getPostInteraction(post.id);
+  const { initializePostUI } = usePostsStore();
 
+  // Initialize only UI state in Zustand
   useEffect(() => {
-    initializePost(post.id, {
-      liked: post.liked,
-      likeCount: post._count?.likes || 0,
-      bookmarked: false,
-      shareCount: post._count?.shares || 0,
-      allowsComments: post.allowsComments,
-      allowsShares: post.allowsShares,
+    initializePostUI(post.id, {
+      bookmarked: false, // This could come from server later
+      currentSlide: 0,
     });
-  }, [
-    post.id,
-    post.liked,
-    post._count?.likes,
-    post._count?.shares,
-    post.allowsComments,
-    post.allowsShares,
-    initializePost,
-  ]);
+  }, [post.id, initializePostUI]);
+
+  // Get server state directly from the post prop (which comes from React Query)
+  const likeCount = post._count?.likes || 0;
+  const commentCount = post._count?.comments || 0;
+  const shareCount = post._count?.shares || 0;
+  const allowsComments = post.allowsComments;
 
   return (
     <Card className="max-w-md mx-auto shadow-lg border-none">
@@ -308,7 +249,7 @@ export function ShareBearPost({ post }) {
         <div className="flex items-center justify-between mb-3 text-sm text-muted-foreground">
           <div className="flex items-center space-x-4">
             <span>{likeCount.toLocaleString()} likes</span>
-            <span>{post._count?.comments.toLocaleString()} comments</span>
+            <span>{commentCount.toLocaleString()} comments</span>
             <span>{shareCount.toLocaleString()} shares</span>
           </div>
         </div>
@@ -322,7 +263,7 @@ export function ShareBearPost({ post }) {
         {/* Comments Preview */}
         {allowsComments ? (
           <div className="text-sm text-muted-foreground">
-            View all {post._count?.comments.toLocaleString()} comments
+            View all {commentCount.toLocaleString()} comments
           </div>
         ) : (
           <div className="text-sm text-muted-foreground">

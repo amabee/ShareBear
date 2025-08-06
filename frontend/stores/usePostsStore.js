@@ -7,127 +7,71 @@ enableMapSet();
 
 export const usePostsStore = create(
   immer((set, get) => ({
-    // Post interactions state
-    postInteractions: new Map(),
+    // UI-only state (not synced with server)
+    postUIState: new Map(),
 
-    // Initialize post interaction state
-    initializePost: (postId, initialData) =>
+    // Initialize UI state for a post
+    initializePostUI: (postId, initialData = {}) =>
       set((state) => {
-        if (!state.postInteractions.has(postId)) {
-          state.postInteractions.set(postId, {
-            liked: initialData.liked || false,
-            likeCount: initialData.likeCount || 0,
+        if (!state.postUIState.has(postId)) {
+          state.postUIState.set(postId, {
             bookmarked: initialData.bookmarked || false,
-            shareCount: initialData.shareCount || 0,
-            allowsComments: initialData.allowsComments,
-            allowsShares: initialData.allowsShares,
-            currentSlide: 0,
+            currentSlide: initialData.currentSlide || 0,
           });
         }
       }),
 
-    // Like/unlike post
-    toggleLike: (postId) =>
-      set((state) => {
-        const interaction = state.postInteractions.get(postId);
-        if (interaction) {
-          interaction.liked = !interaction.liked;
-          interaction.likeCount += interaction.liked ? 1 : -1;
-        }
-      }),
-
-    // Toggle bookmark
+    // Toggle bookmark (UI state only - you'll need a server mutation too)
     toggleBookmark: (postId) =>
       set((state) => {
-        const interaction = state.postInteractions.get(postId);
-        if (interaction) {
-          interaction.bookmarked = !interaction.bookmarked;
-        }
+        const uiState = state.postUIState.get(postId) || {};
+        state.postUIState.set(postId, {
+          ...uiState,
+          bookmarked: !uiState.bookmarked,
+        });
       }),
 
-    // Increment share count (with permission check)
-    incrementShare: (postId) =>
-      set((state) => {
-        const interaction = state.postInteractions.get(postId);
-        if (interaction && interaction.allowedShares) {
-          interaction.shareCount += 1;
-        }
-      }),
+    // Increment share count (you might want to move this to React Query too)
+    incrementShare: (postId) => {
+      console.log("Share incremented for:", postId);
+    },
 
-    // Update current slide for carousel
+    // Update current slide for carousel (pure UI state)
     setCurrentSlide: (postId, slideIndex) =>
       set((state) => {
-        const interaction = state.postInteractions.get(postId);
-        if (interaction) {
-          interaction.currentSlide = slideIndex;
-        }
+        const uiState = state.postUIState.get(postId) || {};
+        state.postUIState.set(postId, {
+          ...uiState,
+          currentSlide: slideIndex,
+        });
       }),
 
-    // Toggle comment permissions for post owner
-    toggleCommentPermission: (postId) =>
-      set((state) => {
-        const interaction = state.postInteractions.get(postId);
-        if (interaction) {
-          interaction.allowsComments = !interaction.allowsComments;
-        }
-      }),
-
-    // Toggle share permissions for post owner
-    toggleSharePermission: (postId) =>
-      set((state) => {
-        const interaction = state.postInteractions.get(postId);
-        if (interaction) {
-          interaction.allowsShares = !interaction.allowsShares;
-        }
-      }),
-
-    // Get post interaction data
+    // Get UI state for a post - DO NOT MUTATE HERE
     getPostInteraction: (postId) => {
-      return (
-        get().postInteractions.get(postId) || {
-          liked: false,
-          likeCount: 0,
-          bookmarked: false,
-          shareCount: 0,
-          allowsComments: false,
-          allowsShares: true,
-          currentSlide: 0,
-        }
-      );
+      const state = get().postUIState.get(postId);
+      if (state) return state;
+
+      // Return default without mutating (let components handle initialization)
+      return {
+        bookmarked: false,
+        currentSlide: 0,
+      };
     },
 
-    // Check if comments are allowed for a post
-    canComment: (postId) => {
-      const interaction = get().postInteractions.get(postId);
-      return interaction ? interaction.allowsComments : false; // Changed from true to false
-    },
-
-    // Check if shares are allowed for a post
-    canShare: (postId) => {
-      const interaction = get().postInteractions.get(postId);
-      return interaction ? interaction.allowsShares : true;
-    },
-
-    // Clear all interactions (useful for logout)
-    clearInteractions: () =>
+    // Clear all UI state (useful for logout)
+    clearUIState: () =>
       set((state) => {
-        state.postInteractions.clear();
+        state.postUIState.clear();
       }),
 
-    // Batch update multiple posts (useful for server sync)
-    batchUpdateInteractions: (updates) => {
+    // Batch update UI state
+    batchUpdateUIState: (updates) => {
       if (!updates || updates.length === 0) return;
 
       set((state) => {
         updates.forEach(({ postId, data }) => {
-          const existing = state.postInteractions.get(postId) || {};
-          // Only update if data has actually changed
-          const hasChanged = Object.keys(data).some(
-            (key) => existing[key] !== data[key]
-          );
-          if (hasChanged) {
-            state.postInteractions.set(postId, { ...existing, ...data });
-          }
+          const existing = state.postUIState.get(postId) || {};
+          state.postUIState.set(postId, { ...existing, ...data });
         });
       });
     },

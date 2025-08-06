@@ -8,6 +8,8 @@ import { useUserSuggestions } from "@/hooks/useUser";
 import { useSuggestionsStore } from "@/stores/useSuggestionsStore";
 import { useSession } from "next-auth/react";
 import toast from "react-hot-toast";
+import SuggestionsSkeleton from "../Skeletons/SuggestionsSkeleton";
+import SuggestionsError from "../ErrorStates/SuggestionsError";
 
 export default function Suggestions() {
   const { data: session, status } = useSession();
@@ -60,73 +62,18 @@ export default function Suggestions() {
     }
   };
 
-  console.log("Suggestions: ", suggestionsData);
-
   const handleSeeAll = () => {
     toggleShowAllSuggestions();
   };
 
   // Loading state
   if (isLoading) {
-    return (
-      <div className="">
-        <Card>
-          <CardHeader className="pb-3">
-            <div className="flex items-center justify-between">
-              <CardTitle className="text-sm font-semibold text-muted-foreground">
-                Suggested for you
-              </CardTitle>
-            </div>
-          </CardHeader>
-          <CardContent className="p-4 pt-0">
-            <div className="space-y-3">
-              {/* Loading skeleton */}
-              {Array.from({ length: 5 }).map((_, i) => (
-                <div
-                  key={i}
-                  className="flex items-center space-x-3 animate-pulse"
-                >
-                  <div className="h-8 w-8 bg-gray-200 rounded-full"></div>
-                  <div className="flex-1 min-w-0">
-                    <div className="h-4 bg-gray-200 rounded w-20 mb-1"></div>
-                    <div className="h-3 bg-gray-200 rounded w-24"></div>
-                  </div>
-                  <div className="h-6 w-12 bg-gray-200 rounded"></div>
-                </div>
-              ))}
-            </div>
-          </CardContent>
-        </Card>
-      </div>
-    );
+    return <SuggestionsSkeleton />;
   }
 
   // Error state
   if (error) {
-    return (
-      <div className="">
-        <Card>
-          <CardHeader className="pb-3">
-            <CardTitle className="text-sm font-semibold text-muted-foreground">
-              Suggested for you
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="p-4 pt-0">
-            <div className="text-sm text-muted-foreground text-center py-4">
-              Failed to load suggestions
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={() => refetch()}
-                className="ml-2"
-              >
-                Retry
-              </Button>
-            </div>
-          </CardContent>
-        </Card>
-      </div>
-    );
+    return <SuggestionsError refetch={refetch} />;
   }
 
   // Empty state
@@ -174,10 +121,9 @@ export default function Suggestions() {
           <div className="space-y-3">
             {displayedSuggestions.map((user) => {
               const isPending = isFollowPending(user.userId);
-
               return (
                 <div key={user.userId} className="flex items-center space-x-3">
-                  <Avatar className="h-8 w-8">
+                  <Avatar className="h-12 w-12">
                     <AvatarImage
                       src={user.avatar || "/placeholder.svg"}
                       alt={user.displayName || user.username}

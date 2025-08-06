@@ -1,5 +1,5 @@
 "use client";
-import { usePosts, useInfinitePosts } from "@/hooks/usePosts";
+import { useInfinitePosts } from "@/hooks/usePosts";
 import { ShareBearFeed } from "@/components/Feed/ShareBearFeed";
 import { LoaderCircle } from "lucide-react";
 import { useEffect, useRef, useCallback } from "react";
@@ -16,8 +16,6 @@ export function ShareBearInfiniteFeedClient() {
     hasNextPage,
     isFetchingNextPage,
   } = useInfinitePosts(5);
-
-  const { batchUpdateInteractions } = usePostsStore();
 
   const observerRef = useRef();
   const lastPostRef = useCallback(
@@ -40,20 +38,6 @@ export function ShareBearInfiniteFeedClient() {
   // Flatten all posts from all pages
   const allPosts = data?.pages?.flatMap((page) => page.posts || []) || [];
 
-  useEffect(() => {
-    if (allPosts.length > 0) {
-      const updates = allPosts.map((post) => ({
-        postId: post.id,
-        data: {
-          liked: post.liked,
-          likeCount: post._count?.likes || 0,
-          shareCount: post.shares || 0,
-        },
-      }));
-      batchUpdateInteractions(updates);
-    }
-  }, [allPosts, batchUpdateInteractions]);
-
   if (isLoading)
     return (
       <div className="flex justify-center items-center h-32">
@@ -67,7 +51,6 @@ export function ShareBearInfiniteFeedClient() {
     <div>
       <ShareBearFeed posts={allPosts} lastPostRef={lastPostRef} />
 
-      {/* Loading indicator for next page */}
       {isFetchingNextPage && (
         <div className="flex justify-center items-center py-4">
           <LoaderCircle className="h-6 w-6 animate-spin" />
@@ -75,7 +58,6 @@ export function ShareBearInfiniteFeedClient() {
         </div>
       )}
 
-      {/* End of feed indicator */}
       {!hasNextPage && allPosts.length > 0 && (
         <div className="text-center py-4 text-gray-500">
           You've reached the end of the feed! 🎉
