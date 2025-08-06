@@ -4,21 +4,18 @@ import React from "react";
 import { Heart, MessageCircle, Share } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
-import { useLikePost } from "@/hooks/usePosts";
+import { useLikePost, useUnlikePost } from "@/hooks/usePosts";
 import toast from "react-hot-toast";
-import { current } from "immer";
 
 const ActionButtons = ({ postId }) => {
   const queryClient = useQueryClient();
   const likePostMutation = useLikePost();
+  const unlikePostMutation = useUnlikePost();
 
   const postsData = queryClient.getQueryData(["posts", "infinite"]);
   const currentPost = postsData?.pages
     ?.flatMap((page) => page.posts)
     ?.find((post) => post.id === postId);
-
-  console.log("postsData: ", currentPost);
-  // console.log("Current Post: ", currentPost)
 
   const liked = currentPost?.liked || false;
   const allowsComments = currentPost?.allowsComments || false;
@@ -28,7 +25,7 @@ const ActionButtons = ({ postId }) => {
 
   const handleLikeClick = () => {
     if (liked) {
-      toast.error("You already liked this post.");
+      unlikePostMutation.mutate(postId);
       return;
     }
 

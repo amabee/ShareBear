@@ -313,7 +313,6 @@ export const useLikePost = () => {
     },
     onError: (error) => {
       console.error("Failed to like post:", error);
-      toast.error("Failed to like post.");
     },
   });
 };
@@ -323,7 +322,7 @@ export const useUnlikePost = () => {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: (postId) => apiClient.post(`/api/posts/${postId}/unlike`),
+    mutationFn: (postId) => apiClient.delete(`/api/posts/${postId}/like`),
     onSuccess: (data, postId) => {
       queryClient.setQueryData(["posts", postId], (oldPost) => {
         if (!oldPost) return oldPost;
