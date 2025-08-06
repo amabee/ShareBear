@@ -21,6 +21,8 @@ const ActionButtons = ({ postId }) => {
   const allowsComments = currentPost?.allowsComments || false;
   const allowsShares = currentPost?.allowsShares || false;
 
+  const isMutating = likePostMutation.isPending || unlikePostMutation.isPending;
+
   const { incrementShare } = usePostsStore();
 
   const handleLikeClick = () => {
@@ -39,13 +41,19 @@ const ActionButtons = ({ postId }) => {
           variant="ghost"
           size="sm"
           onClick={handleLikeClick}
-          disabled={likePostMutation.isPending}
+          disabled={likePostMutation.isPending || unlikePostMutation.isPending}
           className={cn(
             "flex-1 h-9 text-sm font-medium",
             liked ? "text-red-500" : "text-muted-foreground"
           )}
         >
-          <Heart className={cn("h-4 w-4 mr-2", liked && "fill-current")} />
+          <Heart
+            className={cn(
+              "h-4 w-4 mr-2",
+              liked && "fill-current",
+              isMutating && "animate-pulse"
+            )}
+          />
           Like
         </Button>
 
