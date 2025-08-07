@@ -24,7 +24,6 @@ import {
   safeDecodeOutput,
 } from "../utils/sanitize.js";
 import { config } from "../config/index.js";
-import { broadcastToPost } from "../utils/sseManager.js";
 
 export const getPosts = async (req, rep) => {
   const currentUserId = req.user.userId;

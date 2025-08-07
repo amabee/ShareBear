@@ -38,7 +38,6 @@ import {
   unsharePostSchema,
 } from "../schema/postSchema.js";
 import { handleMultipart } from "../middleware/multer.js";
-import { addConnection, removeConnection } from "../utils/sseManager.js";
 
 export default async function postRoutes(fastify, opts) {
   fastify.addHook("preHandler", fastify.authenticate);
