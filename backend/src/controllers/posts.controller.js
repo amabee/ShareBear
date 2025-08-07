@@ -24,6 +24,7 @@ import {
   safeDecodeOutput,
 } from "../utils/sanitize.js";
 import { config } from "../config/index.js";
+import { broadcastToPost } from "../utils/sseManager.js";
 
 export const getPosts = async (req, rep) => {
   const currentUserId = req.user.userId;
@@ -304,6 +305,7 @@ export const likePost = async (req, reply) => {
 
   try {
     const like = await likePostService(req.server.prisma, postId, userId);
+
     return reply.status(201).send({
       message: "Post liked successfully",
       like,
@@ -328,6 +330,7 @@ export const unlikePost = async (req, reply) => {
 
   try {
     const result = await unlikePostService(req.server.prisma, postId, userId);
+
     return reply.send(result);
   } catch (error) {
     req.log.error(error);

@@ -2,11 +2,9 @@
 import { useInfinitePosts } from "@/hooks/usePosts";
 import { ShareBearFeed } from "@/components/Feed/ShareBearFeed";
 import { LoaderCircle } from "lucide-react";
-import { useEffect, useRef, useCallback } from "react";
+import { useRef, useCallback } from "react";
 import { Button } from "@/components/ui/button";
-import { usePostsStore } from "@/stores/usePostsStore";
 
-// NEW: Infinite scroll version
 export function ShareBearInfiniteFeedClient() {
   const {
     data,

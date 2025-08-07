@@ -3,7 +3,7 @@ import fp from "fastify-plugin";
 
 async function rateLimitPlugin(app) {
   app.register(rateLimit, {
-    max: 20,
+    max: 200,
     timeWindow: "1 minute",
     keyGenerator: (req) => {
       return (

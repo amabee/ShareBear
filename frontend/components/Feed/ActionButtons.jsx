@@ -5,7 +5,6 @@ import { Heart, MessageCircle, Share } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { useLikePost, useUnlikePost } from "@/hooks/usePosts";
-import toast from "react-hot-toast";
 
 const ActionButtons = ({ postId }) => {
   const queryClient = useQueryClient();

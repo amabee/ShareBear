@@ -48,6 +48,24 @@ enum LogLevel {
   FATAL
 }
 
+enum NotificationType {
+  LIKE
+  COMMENT
+  FOLLOW
+  SHARE
+  MENTION
+  STORY_VIEW
+  MESSAGE
+  SYSTEM
+}
+
+enum NotificationStatus {
+  UNREAD
+  READ
+  ARCHIVED
+  DISMISSED
+}
+
 model User {
   id           Int     @id @default(autoincrement())
   username     String  @unique
@@ -66,18 +84,23 @@ model User {
   isDeleted    Boolean   @default(false)
 
   // 🔗 Relations
-  userInfo      UserInfo?
-  posts         Post[]
-  comments      Comment[]
-  likes         Like[]
-  shares        Share[]
-  followers     Follow[]                  @relation("followers")
-  following     Follow[]                  @relation("following")
-  sentMessages  Message[]                 @relation("sentMessages")
-  conversations ConversationParticipant[]
-  sessions      UserSession[]
-  stories       Story[]
-  systemLogs    SystemLogs[]
+  userInfo               UserInfo?
+  posts                  Post[]
+  comments               Comment[]
+  likes                  Like[]
+  shares                 Share[]
+  followers              Follow[]                  @relation("followers")
+  following              Follow[]                  @relation("following")
+  sentMessages           Message[]                 @relation("sentMessages")
+  conversations          ConversationParticipant[]
+  sessions               UserSession[]
+  stories                Story[]
+  systemLogs             SystemLogs[]
+  Notification           Notification[]
+  receivedNotifications  Notification[]            @relation("NotificationRecipient")
+  sentNotifications      Notification[]            @relation("NotificationSender")
+  notificationPreference NotificationPreference?
+  notificationBatches    NotificationBatch[]
 }
 
 model UserInfo {
@@ -135,12 +158,14 @@ model Post {
   expiresAt DateTime?
   isDeleted Boolean   @default(false)
 
-  user     User          @relation(fields: [userId], references: [id])
-  images   PostImage[]
-  comments Comment[]
-  likes    Like[]
-  shares   Share[]
-  hashtags PostHashtag[]
+  user                User                @relation(fields: [userId], references: [id])
+  images              PostImage[]
+  comments            Comment[]
+  likes               Like[]
+  shares              Share[]
+  hashtags            PostHashtag[]
+  notifications       Notification[]
+  notificationBatches NotificationBatch[]
 }
 
 model PostImage {
@@ -172,10 +197,12 @@ model Comment {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  post          Post      @relation(fields: [postId], references: [id])
-  user          User      @relation(fields: [userId], references: [id])
-  parentComment Comment?  @relation("CommentReplies", fields: [parentCommentId], references: [id])
-  replies       Comment[] @relation("CommentReplies")
+  post                Post                @relation(fields: [postId], references: [id])
+  user                User                @relation(fields: [userId], references: [id])
+  parentComment       Comment?            @relation("CommentReplies", fields: [parentCommentId], references: [id])
+  replies             Comment[]           @relation("CommentReplies")
+  notifications       Notification[]
+  notificationBatches NotificationBatch[]
 }
 
 model Like {
@@ -210,8 +237,9 @@ model Follow {
   status      String   @default("accepted") // pending / accepted / blocked
   createdAt   DateTime @default(now())
 
-  follower  User @relation("followers", fields: [followerId], references: [id])
-  following User @relation("following", fields: [followingId], references: [id])
+  follower      User           @relation("followers", fields: [followerId], references: [id])
+  following     User           @relation("following", fields: [followingId], references: [id])
+  notifications Notification[]
 
   @@unique([followerId, followingId])
 }
@@ -254,8 +282,9 @@ model Conversation {
   lastMessageAt DateTime?
   isArchived    Boolean   @default(false)
 
-  participants ConversationParticipant[]
-  messages     Message[]
+  participants  ConversationParticipant[]
+  messages      Message[]
+  notifications Notification[]
 }
 
 model ConversationParticipant {
@@ -285,10 +314,11 @@ model Message {
   updatedAt          DateTime    @updatedAt
   isDeleted          Boolean     @default(false)
 
-  conversation Conversation @relation(fields: [conversationId], references: [id])
-  sender       User         @relation("sentMessages", fields: [senderId], references: [id])
-  replyTo      Message?     @relation("Replies", fields: [repliedToMessageId], references: [id])
-  replies      Message[]    @relation("Replies")
+  conversation  Conversation   @relation(fields: [conversationId], references: [id])
+  sender        User           @relation("sentMessages", fields: [senderId], references: [id])
+  replyTo       Message?       @relation("Replies", fields: [repliedToMessageId], references: [id])
+  replies       Message[]      @relation("Replies")
+  notifications Notification[]
 }
 
 model Story {
@@ -303,7 +333,9 @@ model Story {
   viewCount       Int      @default(0)
   allowsReplies   Boolean  @default(true)
 
-  user User @relation(fields: [userId], references: [id])
+  user                User                @relation(fields: [userId], references: [id])
+  notifications       Notification[]
+  notificationBatches NotificationBatch[]
 }
 
 // System Logs
@@ -330,4 +362,139 @@ model SystemLogs {
   @@index([userId])
   @@index([sessionId])
   @@index([requestId])
+}
+
+// Notifications
+model Notification {
+  id      Int                @id @default(autoincrement())
+  type    NotificationType
+  status  NotificationStatus @default(UNREAD)
+  title   String?            @db.VarChar(100)
+  content String             @db.VarChar(500)
+
+  // Recipients and senders
+  recipientId Int
+  senderId    Int?
+
+  // Related entities (for deep linking and context)
+  postId         String? @db.VarChar(32)
+  commentId      Int?
+  conversationId Int?
+  messageId      Int?
+  followId       Int?
+  storyId        Int?
+
+  // Metadata
+  metadata Json? // Store additional context like preview images, counts, etc.
+
+  // Timestamps
+  createdAt  DateTime  @default(now())
+  readAt     DateTime? // When user read the notification
+  archivedAt DateTime? // When user archived it
+
+  // Expiration (for temporary notifications like story views)
+  expiresAt DateTime?
+
+  // Soft delete
+  isDeleted Boolean @default(false)
+
+  // 🔗 Relations
+  recipient    User          @relation("NotificationRecipient", fields: [recipientId], references: [id], onDelete: Cascade)
+  sender       User?         @relation("NotificationSender", fields: [senderId], references: [id], onDelete: SetNull)
+  post         Post?         @relation(fields: [postId], references: [id], onDelete: Cascade)
+  comment      Comment?      @relation(fields: [commentId], references: [id], onDelete: Cascade)
+  conversation Conversation? @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+  message      Message?      @relation(fields: [messageId], references: [id], onDelete: Cascade)
+  follow       Follow?       @relation(fields: [followId], references: [id], onDelete: Cascade)
+  story        Story?        @relation(fields: [storyId], references: [id], onDelete: Cascade)
+  User         User?         @relation(fields: [userId], references: [id])
+  userId       Int?
+
+  // 🚀 Performance Indexes
+  @@index([recipientId, status, createdAt(sort: Desc)]) // Main query: get user notifications
+  @@index([recipientId, type, status]) // Filter by type
+  @@index([recipientId, status]) // Count unread
+  @@index([createdAt]) // Cleanup old notifications
+  @@index([expiresAt]) // Cleanup expired notifications
+  @@index([senderId]) // Sender's sent notifications
+  @@index([postId]) // Post-related notifications
+}
+
+// Notification preferences for users
+model NotificationPreference {
+  id     Int @id @default(autoincrement())
+  userId Int @unique
+
+  // Email preferences
+  emailOnLike    Boolean @default(false)
+  emailOnComment Boolean @default(true)
+  emailOnFollow  Boolean @default(true)
+  emailOnMessage Boolean @default(true)
+  emailOnMention Boolean @default(true)
+  emailDigest    Boolean @default(true) // Daily/weekly digest
+
+  // Push notification preferences
+  pushOnLike      Boolean @default(true)
+  pushOnComment   Boolean @default(true)
+  pushOnFollow    Boolean @default(true)
+  pushOnMessage   Boolean @default(true)
+  pushOnMention   Boolean @default(true)
+  pushOnStoryView Boolean @default(false)
+
+  // In-app preferences
+  inAppOnLike    Boolean @default(true)
+  inAppOnComment Boolean @default(true)
+  inAppOnFollow  Boolean @default(true)
+  inAppOnMessage Boolean @default(true)
+  inAppOnMention Boolean @default(true)
+  inAppOnShare   Boolean @default(true)
+
+  // Quiet hours
+  quietHoursEnabled Boolean @default(false)
+  quietHoursStart   String? // "22:00"
+  quietHoursEnd     String? // "08:00"
+  timezone          String? @default("UTC")
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // 🔗 Relation
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+// Batch notification sending (for performance)
+model NotificationBatch {
+  id       Int              @id @default(autoincrement())
+  type     NotificationType
+  senderId Int?
+  title    String?          @db.VarChar(100)
+  content  String           @db.VarChar(500)
+  metadata Json?
+
+  // Related entity
+  postId    String? @db.VarChar(32)
+  commentId Int?
+  storyId   Int?
+
+  // Batch info
+  recipientCount Int @default(0)
+  sentCount      Int @default(0)
+  failedCount    Int @default(0)
+
+  // Status
+  status String @default("pending") // pending, processing, completed, failed
+
+  // Timestamps
+  createdAt   DateTime  @default(now())
+  processedAt DateTime?
+  completedAt DateTime?
+
+  // 🔗 Relations
+  sender  User?    @relation(fields: [senderId], references: [id], onDelete: SetNull)
+  post    Post?    @relation(fields: [postId], references: [id], onDelete: Cascade)
+  comment Comment? @relation(fields: [commentId], references: [id], onDelete: Cascade)
+  story   Story?   @relation(fields: [storyId], references: [id], onDelete: Cascade)
+
+  @@index([status, createdAt])
+  @@index([type, createdAt])
 }

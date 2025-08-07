@@ -16,6 +16,8 @@ import ajvValidatorPlugin from "./plugins/ajvValidatorPlugin.js";
 import postRoutes from "./routes/posts.routes.js";
 import fastifyMultipart from "@fastify/multipart";
 import fastifyStatic from "@fastify/static";
+import websocketPlugin from "@fastify/websocket";
+import websocketRoutes from "./routes/websockets.routes.js";
 import path from "path";
 
 const app = Fastify({
@@ -37,6 +39,9 @@ app.register(antiBotPlugin);
 app.register(requestPatternPlugin);
 app.register(requestIdPlugin);
 app.register(ajvValidatorPlugin);
+
+// WEBSOCKET PLUGIN
+app.register(websocketPlugin);
 
 // Serve static files from uploads directory
 app.register(fastifyStatic, {
@@ -102,6 +107,7 @@ app.register(authRoutes, { prefix: "/api/auth" });
 app.register(followRoutes, { prefix: "/api/follow" });
 app.register(userRoutes, { prefix: "/api/users" });
 app.register(postRoutes, { prefix: "/api/posts" });
+app.register(websocketRoutes, { prefix: "/api" });
 
 app.listen({ port: config.port, host: config.host }, (err, address) => {
   if (err) {

@@ -452,7 +452,7 @@ export const getPostSchema = {
   params: {
     type: "object",
     properties: {
-      postId: { type: "string", pattern: "^[a-zA-Z0-9]{32}$" },
+      postId: { type: "string", pattern: "^[a-zA-Z0-9]{25}$" },
     },
     required: ["postId"],
   },
