@@ -17,6 +17,7 @@ import {
   unsharePost as unsharePostRepo,
   getShares as getSharesRepo,
 } from "../repositories/posts.repository.js";
+import * as notificationService from "./notifications.service.js";
 
 export const createPost = async (prisma, userId, postData) => {
   return await prisma.$transaction(async (tx) => {
@@ -77,9 +78,65 @@ export const getTrendingHashtags = async (prisma, limit) => {
 };
 
 // Like functionality
-export const likePost = async (prisma, postId, userId) => {
+// Modified to cater the fastify websocket functionality
+export const likePost = async (
+  prisma,
+  postId,
+  userId,
+  fastify = null,
+  userInfo = null
+) => {
   return await prisma.$transaction(async (tx) => {
-    return await likePostRepo(tx, postId, userId);
+    // Your existing repository call
+    const like = await likePostRepo(tx, postId, userId);
+
+    // Get post details for notification (add this query to your transaction)
+    const post = await tx.post.findFirst({
+      where: { id: postId, isDeleted: false },
+      include: {
+        user: {
+          select: {
+            id: true,
+            username: true,
+            userInfo: {
+              select: {
+                displayName: true,
+              },
+            },
+          },
+        },
+      },
+    });
+
+    // Send notification after successful like creation (outside transaction)
+    if (fastify && post && post.user.id !== userId) {
+      // Use setImmediate to ensure this runs after transaction commits
+      setImmediate(async () => {
+        try {
+          const senderDisplayName =
+            userInfo?.displayName || userInfo?.username || "Someone";
+
+          await notificationService.createSmartNotification(prisma, fastify, {
+            type: "LIKE",
+            title: "New Like",
+            content: `${senderDisplayName} liked your post`,
+            recipientId: post.user.id,
+            senderId: userId,
+            postId: postId,
+            metadata: {
+              postCaption: post.caption?.substring(0, 50) || "",
+              postThumbnail: post.thumbnailUrl,
+              likedBy: senderDisplayName,
+            },
+            // senderName: senderDisplayName,
+          });
+        } catch (notificationError) {
+          console.error("Failed to send like notification:", notificationError);
+        }
+      });
+    }
+
+    return like;
   });
 };
 

@@ -303,7 +303,14 @@ export const likePost = async (req, reply) => {
   const { postId } = req.params;
 
   try {
-    const like = await likePostService(req.server.prisma, postId, userId);
+    // Just add the extra parameters to your existing service call
+    const like = await likePostService(
+      req.server.prisma,
+      postId,
+      userId,
+      req.server, // Pass fastify instance for notifications
+      req.user // Pass user info for notification display name
+    );
 
     return reply.status(201).send({
       message: "Post liked successfully",

@@ -1,4 +1,4 @@
-import { createNotification as createNotificationRepo } from "../repositories/notification.repository";
+import * as notificationRepository from "../repositories/notification.repository.js";
 
 export const createAndSendNotification = async (
   prisma,
@@ -9,7 +9,10 @@ export const createAndSendNotification = async (
     // Use transaction for atomic operation
     const result = await prisma.$transaction(async (tx) => {
       // Create notification in database
-      const notification = await createNotificationRepo(tx, notificationData);
+      const notification = await notificationRepository.createNotification(
+        tx,
+        notificationData
+      );
 
       return notification;
     });
@@ -50,7 +53,7 @@ export const createBatchNotification = async (
       // Create notifications for all recipients
       const notifications = await Promise.all(
         recipients.map((recipientId) =>
-          notificationRepository.createNotificationWithTransaction(tx, {
+          notificationRepository.createNotification(tx, {
             ...notificationData,
             recipientId,
           })
