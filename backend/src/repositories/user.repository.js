@@ -292,7 +292,7 @@ export const getSuggestedUsers = async (prisma, userIdentifier, limit = 10) => {
       id: true,
       following: {
         select: {
-          followingId: true, 
+          followingId: true,
         },
       },
     },
@@ -305,27 +305,27 @@ export const getSuggestedUsers = async (prisma, userIdentifier, limit = 10) => {
   const currentUserId = currentUser.id;
   const followingIds = currentUser.following.map((f) => f.followingId);
 
-  console.log("Current user ID:", currentUserId);
-  console.log("USER FOLLOWINGS:", followingIds); 
-
-  // Get random suggestions excluding current user and people already followed
-  const randomUserIds = await prisma.user.findManyRandom(limit, {
+  // ✅ Manual random: Get total count
+  const totalCount = await prisma.user.count({
     where: {
       id: {
-        notIn: [currentUserId, ...followingIds], 
+        notIn: [currentUserId, ...followingIds],
       },
     },
   });
 
-  console.log(
-    "SUGGESTED USER IDs:",
-    randomUserIds.map((u) => u.id)
-  );
 
-  const userIds = randomUserIds.map((user) => user.id);
+  const skip =
+    totalCount > limit ? Math.floor(Math.random() * (totalCount - limit)) : 0;
 
-  return prisma.user.findMany({
-    where: { id: { in: userIds } },
+  const suggestions = await prisma.user.findMany({
+    where: {
+      id: {
+        notIn: [currentUserId, ...followingIds],
+      },
+    },
+    take: limit,
+    skip: skip,
     include: {
       userInfo: {
         select: {
@@ -343,4 +343,11 @@ export const getSuggestedUsers = async (prisma, userIdentifier, limit = 10) => {
       },
     },
   });
+
+  console.log(
+    "SUGGESTED USER IDs:",
+    suggestions.map((u) => u.id)
+  );
+
+  return suggestions;
 };
