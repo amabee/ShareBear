@@ -237,8 +237,13 @@ model Follow {
   status      String   @default("accepted") // pending / accepted / blocked
   createdAt   DateTime @default(now())
 
-  follower      User           @relation("followers", fields: [followerId], references: [id])
-  following     User           @relation("following", fields: [followingId], references: [id])
+  // WRONG RELATIONSHIP SHITS
+  // follower      User           @relation("followers", fields: [followerId], references: [id])
+  // following     User           @relation("following", fields: [followingId], references: [id])
+
+  follower  User @relation("following", fields: [followerId], references: [id]) // Changed from "followers"
+  following User @relation("followers", fields: [followingId], references: [id]) // Changed from "following"
+
   notifications Notification[]
 
   @@unique([followerId, followingId])

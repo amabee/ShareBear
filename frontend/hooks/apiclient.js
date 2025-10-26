@@ -40,7 +40,8 @@ apiClient.interceptors.response.use(
       error.message ||
       "An error occured";
 
-    return Promise.reject(new Error(errorMessage));
+    // return Promise.reject(new Error(errorMessage));
+    return Promise.reject(error);
   }
 );
 

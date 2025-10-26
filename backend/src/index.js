@@ -109,6 +109,7 @@ app.register(userRoutes, { prefix: "/api/users" });
 app.register(postRoutes, { prefix: "/api/posts" });
 app.register(websocketRoutes, { prefix: "/api" });
 
+
 app.listen({ port: config.port, host: config.host }, (err, address) => {
   if (err) {
     app.log.error(err);

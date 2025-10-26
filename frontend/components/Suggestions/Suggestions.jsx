@@ -4,7 +4,7 @@ import { useEffect } from "react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { useUserSuggestions } from "@/hooks/useUser";
+import { useFollowUser, useUserSuggestions } from "@/hooks/useUser";
 import { useSuggestionsStore } from "@/stores/useSuggestionsStore";
 import { useSession } from "next-auth/react";
 import toast from "react-hot-toast";
@@ -33,6 +33,8 @@ export default function Suggestions() {
     refetch,
   } = useUserSuggestions(session?.user?.username);
 
+  const followUserMutatation = useFollowUser();
+
   // Sync query data with Zustand store
   useEffect(() => {
     if (suggestionsData?.suggestions) {
@@ -49,16 +51,13 @@ export default function Suggestions() {
     : activeSuggestions.slice(0, 5);
 
   const handleFollow = async (userId) => {
+    toggleFollow(userId);
     try {
-      // toggleFollow(userId);
-      // await apiClient.post(`/api/users/${userId}/follow`);
-      // completeFollowAction(userId, true);
-      // refetch();
-      toast.error("Function not yet implemented");
+      await followUserMutatation.mutateAsync(userId, true);
+      completeFollowAction(userId, true);
+
     } catch (error) {
-      // Revert optimistic update
       completeFollowAction(userId, false);
-      console.error("Failed to follow user:", error);
     }
   };
 
@@ -120,7 +119,7 @@ export default function Suggestions() {
         <CardContent className="p-4 pt-0">
           <div className="space-y-3">
             {displayedSuggestions.map((user) => {
-              const isPending = isFollowPending(user.userId);
+              const isPending = isFollowPending(user.userId) || followUserMutatation.isPending;
               return (
                 <div key={user.userId} className="flex items-center space-x-3">
                   <Avatar className="h-12 w-12">

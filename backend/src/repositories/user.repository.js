@@ -288,7 +288,14 @@ export const searchUsers = async (prisma, query, limit = 20, offset = 0) => {
 export const getSuggestedUsers = async (prisma, userIdentifier, limit = 10) => {
   const currentUser = await prisma.user.findFirst({
     where: { username: userIdentifier },
-    select: { id: true },
+    select: {
+      id: true,
+      following: {
+        select: {
+          followingId: true, 
+        },
+      },
+    },
   });
 
   if (!currentUser) {
@@ -296,21 +303,24 @@ export const getSuggestedUsers = async (prisma, userIdentifier, limit = 10) => {
   }
 
   const currentUserId = currentUser.id;
+  const followingIds = currentUser.following.map((f) => f.followingId);
 
+  console.log("Current user ID:", currentUserId);
+  console.log("USER FOLLOWINGS:", followingIds); 
+
+  // Get random suggestions excluding current user and people already followed
   const randomUserIds = await prisma.user.findManyRandom(limit, {
     where: {
-      AND: [
-        { id: { not: currentUserId } },
-        {
-          followers: {
-            none: {
-              followerId: currentUserId,
-            },
-          },
-        },
-      ],
+      id: {
+        notIn: [currentUserId, ...followingIds], 
+      },
     },
   });
+
+  console.log(
+    "SUGGESTED USER IDs:",
+    randomUserIds.map((u) => u.id)
+  );
 
   const userIds = randomUserIds.map((user) => user.id);
 
