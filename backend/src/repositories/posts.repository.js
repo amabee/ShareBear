@@ -978,6 +978,95 @@ export const sharePost = async (tx, postId, userId, shareData = {}) => {
   return share;
 };
 
+// ─── REACTIONS ──────────────────────────────────────────────────────────────
+
+export const upsertPostReaction = async (tx, postId, userId, reaction) => {
+  return await tx.postReaction.upsert({
+    where: { userId_postId: { userId, postId } },
+    create: { postId, userId, reaction },
+    update: { reaction },
+    include: {
+      user: { select: { id: true, username: true } },
+    },
+  });
+};
+
+export const deletePostReaction = async (tx, postId, userId) => {
+  await tx.postReaction.deleteMany({ where: { postId, userId } });
+};
+
+export const getPostReactions = async (tx, postId) => {
+  const grouped = await tx.postReaction.groupBy({
+    by: ["reaction"],
+    where: { postId },
+    _count: { reaction: true },
+  });
+  return grouped.map((g) => ({ reaction: g.reaction, count: g._count.reaction }));
+};
+
+export const upsertCommentReaction = async (tx, commentId, userId, reaction) => {
+  return await tx.commentReaction.upsert({
+    where: { userId_commentId: { userId, commentId } },
+    create: { commentId, userId, reaction },
+    update: { reaction },
+    include: {
+      user: { select: { id: true, username: true } },
+    },
+  });
+};
+
+export const deleteCommentReaction = async (tx, commentId, userId) => {
+  await tx.commentReaction.deleteMany({ where: { commentId, userId } });
+};
+
+export const getCommentReactions = async (tx, commentId) => {
+  const grouped = await tx.commentReaction.groupBy({
+    by: ["reaction"],
+    where: { commentId },
+    _count: { reaction: true },
+  });
+  return grouped.map((g) => ({ reaction: g.reaction, count: g._count.reaction }));
+};
+
+// ─── REPLIES PAGINATION ──────────────────────────────────────────────────────
+
+export const getReplies = async (tx, commentId, paginationOptions = {}) => {
+  const { limit = 10, cursor } = paginationOptions;
+
+  const whereClause = {
+    parentCommentId: commentId,
+    isDeleted: false,
+    ...(cursor
+      ? { createdAt: { gt: await getCommentCreatedAt(tx, cursor) } }
+      : {}),
+  };
+
+  const replies = await tx.comment.findMany({
+    where: whereClause,
+    orderBy: { createdAt: "asc" },
+    take: limit,
+    include: {
+      user: {
+        select: {
+          id: true,
+          username: true,
+          userInfo: {
+            select: { displayName: true, profilePictureUrl: true },
+          },
+        },
+      },
+      _count: { select: { replies: true } },
+    },
+  });
+
+  const nextCursor =
+    replies.length === limit
+      ? replies[replies.length - 1].id
+      : null;
+
+  return { replies, pagination: { nextCursor, limit } };
+};
+
 export const unsharePost = async (tx, postId, userId) => {
   // Find and delete the share
   const result = await tx.share.deleteMany({

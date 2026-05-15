@@ -48,9 +48,9 @@ export function ShareBearPost({ post }) {
   };
 
   return (
-    <Card className="max-w-md mx-auto shadow-lg border-none">
+    <Card className="max-w-xl mx-auto border-none shadow-md dark:shadow-black/30 rounded-2xl overflow-hidden bg-white dark:bg-[#1E1E2F]">
       {/* Header */}
-      <div className="flex items-center justify-between p-4 pb-3">
+      <div className="flex items-center justify-between px-4 pt-4 pb-3">
         <div className="flex items-center space-x-3">
           <UserAvatar user={post.user} />
           <UserInfo
@@ -59,36 +59,44 @@ export function ShareBearPost({ post }) {
             location={post.location}
           />
         </div>
-        <Button variant="ghost" size="icon" className="h-8 w-8">
-          <MoreHorizontal className="h-4 w-4" />
+        <Button variant="ghost" size="icon" className="h-8 w-8 rounded-full text-muted-foreground hover:text-foreground">
+          <MoreHorizontal className="h-5 w-5" />
         </Button>
       </div>
 
       {/* Caption */}
-      <div className="px-4 pb-3">
-        <CaptionsWithHashtags caption={post.caption} />
-      </div>
+      {post.caption && (
+        <div className="px-4 pb-3 text-sm">
+          <CaptionsWithHashtags caption={post.caption} />
+        </div>
+      )}
 
       {/* Media */}
       <MediaCarousel images={post.images} postId={post.id} />
 
-      <CardContent className="p-4 pt-3">
+      <CardContent className="px-4 pt-3 pb-4">
         {/* Engagement Stats */}
-        <div className="flex items-center justify-between mb-3 text-sm text-muted-foreground">
-          <div className="flex items-center space-x-4">
-            <span>{likeCount.toLocaleString()} likes</span>
-            <button
-              className="hover:underline"
-              onClick={() => allowsComments && setShowComments((p) => !p)}
-            >
-              {commentCount.toLocaleString()} comments
-            </button>
-            <span>{shareCount.toLocaleString()} shares</span>
+        {(likeCount > 0 || commentCount > 0 || shareCount > 0) && (
+          <div className="flex items-center space-x-3 mb-3 text-sm text-muted-foreground">
+            {likeCount > 0 && (
+              <span className="font-medium text-foreground">{likeCount.toLocaleString()} <span className="font-normal text-muted-foreground">likes</span></span>
+            )}
+            {commentCount > 0 && (
+              <button
+                className="hover:underline hover:text-foreground transition-colors"
+                onClick={() => allowsComments && setShowComments((p) => !p)}
+              >
+                <span className="font-medium text-foreground">{commentCount.toLocaleString()}</span> comments
+              </button>
+            )}
+            {shareCount > 0 && (
+              <span><span className="font-medium text-foreground">{shareCount.toLocaleString()}</span> shares</span>
+            )}
           </div>
-        </div>
+        )}
 
         {/* Divider */}
-        <div className="border-t border-gray-200 mb-3" />
+        <div className="border-t border-border mb-2" />
 
         {/* Action Buttons */}
         <ActionButtons
@@ -99,13 +107,15 @@ export function ShareBearPost({ post }) {
 
         {/* Comment Section */}
         {showComments && allowsComments && (
-          <CommentSection postId={post.id} />
+          <div className="mt-3 border-t border-border pt-3">
+            <CommentSection postId={post.id} />
+          </div>
         )}
 
         {!allowsComments && (
-          <div className="text-xs text-muted-foreground">
+          <p className="text-xs text-muted-foreground text-center py-1">
             Comments are disabled on this post.
-          </div>
+          </p>
         )}
       </CardContent>
 

@@ -16,6 +16,13 @@ import {
   sharePost as sharePostRepo,
   unsharePost as unsharePostRepo,
   getShares as getSharesRepo,
+  upsertPostReaction as upsertPostReactionRepo,
+  deletePostReaction as deletePostReactionRepo,
+  getPostReactions as getPostReactionsRepo,
+  upsertCommentReaction as upsertCommentReactionRepo,
+  deleteCommentReaction as deleteCommentReactionRepo,
+  getCommentReactions as getCommentReactionsRepo,
+  getReplies as getRepliesRepo,
 } from "../repositories/posts.repository.js";
 import * as notificationService from "./notifications.service.js";
 
@@ -187,5 +194,51 @@ export const unsharePost = async (prisma, postId, userId) => {
 export const getShares = async (prisma, postId, paginationOptions = {}) => {
   return await prisma.$transaction(async (tx) => {
     return await getSharesRepo(tx, postId, paginationOptions);
+  });
+};
+
+// ─── REACTIONS ────────────────────────────────────────────────────────────────
+
+export const upsertPostReaction = async (prisma, postId, userId, reaction) => {
+  return await prisma.$transaction(async (tx) => {
+    return await upsertPostReactionRepo(tx, postId, userId, reaction);
+  });
+};
+
+export const deletePostReaction = async (prisma, postId, userId) => {
+  return await prisma.$transaction(async (tx) => {
+    return await deletePostReactionRepo(tx, postId, userId);
+  });
+};
+
+export const getPostReactions = async (prisma, postId) => {
+  return await prisma.$transaction(async (tx) => {
+    return await getPostReactionsRepo(tx, postId);
+  });
+};
+
+export const upsertCommentReaction = async (prisma, commentId, userId, reaction) => {
+  return await prisma.$transaction(async (tx) => {
+    return await upsertCommentReactionRepo(tx, commentId, userId, reaction);
+  });
+};
+
+export const deleteCommentReaction = async (prisma, commentId, userId) => {
+  return await prisma.$transaction(async (tx) => {
+    return await deleteCommentReactionRepo(tx, commentId, userId);
+  });
+};
+
+export const getCommentReactions = async (prisma, commentId) => {
+  return await prisma.$transaction(async (tx) => {
+    return await getCommentReactionsRepo(tx, commentId);
+  });
+};
+
+// ─── REPLIES PAGINATION ───────────────────────────────────────────────────────
+
+export const getReplies = async (prisma, commentId, paginationOptions = {}) => {
+  return await prisma.$transaction(async (tx) => {
+    return await getRepliesRepo(tx, commentId, paginationOptions);
   });
 };

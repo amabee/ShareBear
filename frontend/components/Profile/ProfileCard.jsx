@@ -16,11 +16,11 @@ export default function ProfileCard() {
     error,
   } = useUserDetail(session?.user?.username);
 
-  if (isLoading) {
+  if (isLoading || status === "loading") {
     return <ProfileCardSkeleton />;
   }
-  if (error) {
-    return <div>Error loading profile</div>;
+  if (error || !response?.user) {
+    return <ProfileCardSkeleton />;
   }
 
   const user = response.user;

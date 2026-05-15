@@ -6,7 +6,7 @@ import {
 } from "@tanstack/react-query";
 import { apiClient } from "./apiclient";
 import { useCreatePostStore, ContentType } from "@/stores/createPostStore";
-import toast from "react-hot-toast";
+import {toast} from "sonner";
 
 export const usePosts = (page = 1, limit = 5) => {
   // fetching all posts
@@ -386,7 +386,7 @@ export const useBookmarkPost = () => {
   });
 };
 
-// ─── COMMENTS ─────────────────────────────────────────────────────────────────
+// ─── COMMENTS ────────────────────────────────────────────────────────────────
 
 export const useComments = (postId) => {
   return useInfiniteQuery({
@@ -408,12 +408,11 @@ export const useCreateComment = (postId) => {
     mutationFn: ({ content, parentCommentId }) =>
       apiClient.post(`/api/posts/${postId}/comments`, {
         content,
-        parentCommentId: parentCommentId || null,
+        ...(parentCommentId ? { parentCommentId } : {}),
       }),
-
     onSuccess: () => {
-      // Invalidate comment list and refresh counts in infinite feed
       queryClient.invalidateQueries({ queryKey: ["comments", postId] });
+      // increment comment count in feed cache
       queryClient.setQueryData(["posts", "infinite"], (oldData) => {
         if (!oldData) return oldData;
         return {
@@ -426,7 +425,7 @@ export const useCreateComment = (postId) => {
                     ...post,
                     _count: {
                       ...post._count,
-                      comments: post._count.comments + 1,
+                      comments: (post._count?.comments ?? 0) + 1,
                     },
                   }
                 : post
@@ -461,7 +460,7 @@ export const useDeleteComment = (postId) => {
                     ...post,
                     _count: {
                       ...post._count,
-                      comments: Math.max(0, post._count.comments - 1),
+                      comments: Math.max(0, (post._count?.comments ?? 1) - 1),
                     },
                   }
                 : post
@@ -501,7 +500,7 @@ export const useSharePost = () => {
                     shared: true,
                     _count: {
                       ...post._count,
-                      shares: post._count.shares + 1,
+                      shares: (post._count?.shares ?? 0) + 1,
                     },
                   }
                 : post
@@ -541,7 +540,7 @@ export const useUnsharePost = () => {
                     shared: false,
                     _count: {
                       ...post._count,
-                      shares: Math.max(0, post._count.shares - 1),
+                      shares: Math.max(0, (post._count?.shares ?? 1) - 1),
                     },
                   }
                 : post
@@ -556,3 +555,84 @@ export const useUnsharePost = () => {
     },
   });
 };
+
+// ─── REACTIONS ────────────────────────────────────────────────────────────────
+
+export const useReactToPost = () => {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: ({ postId, reaction }) =>
+      apiClient.post(`/api/posts/${postId}/reactions`, { reaction }),
+    onSuccess: (_, { postId }) => {
+      queryClient.invalidateQueries({ queryKey: ["postReactions", postId] });
+    },
+    onError: () => toast.error("Failed to react."),
+  });
+};
+
+export const useRemovePostReaction = () => {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: (postId) => apiClient.delete(`/api/posts/${postId}/reactions`),
+    onSuccess: (_, postId) => {
+      queryClient.invalidateQueries({ queryKey: ["postReactions", postId] });
+    },
+    onError: () => toast.error("Failed to remove reaction."),
+  });
+};
+
+export const usePostReactions = (postId) => {
+  return useQuery({
+    queryKey: ["postReactions", postId],
+    queryFn: () => apiClient.get(`/api/posts/${postId}/reactions`),
+    enabled: !!postId,
+    staleTime: 1000 * 30,
+  });
+};
+
+export const useReactToComment = () => {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: ({ commentId, reaction }) =>
+      apiClient.post(`/api/posts/comments/${commentId}/reactions`, { reaction }),
+    onSuccess: (_, { commentId, postId }) => {
+      queryClient.invalidateQueries({ queryKey: ["commentReactions", commentId] });
+      // also refresh comment list so reaction count updates
+      if (postId) queryClient.invalidateQueries({ queryKey: ["comments", postId] });
+    },
+    onError: () => toast.error("Failed to react."),
+  });
+};
+
+export const useRemoveCommentReaction = () => {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: ({ commentId, postId }) =>
+      apiClient.delete(`/api/posts/comments/${commentId}/reactions`),
+    onSuccess: (_, { commentId, postId }) => {
+      queryClient.invalidateQueries({ queryKey: ["commentReactions", commentId] });
+      if (postId) queryClient.invalidateQueries({ queryKey: ["comments", postId] });
+    },
+    onError: () => toast.error("Failed to remove reaction."),
+  });
+};
+
+// ─── REPLIES PAGINATION ──────────────────────────────────────────────────────
+
+export const useReplies = (postId, commentId, enabled = false) => {
+  return useInfiniteQuery({
+    queryKey: ["replies", commentId],
+    queryFn: ({ pageParam }) =>
+      apiClient.get(
+        `/api/posts/${postId}/comments/${commentId}/replies?limit=10${pageParam ? `&cursor=${pageParam}` : ""}`
+      ),
+    getNextPageParam: (lastPage) => lastPage?.pagination?.nextCursor ?? undefined,
+    enabled: !!commentId && !!postId && enabled,
+    staleTime: 1000 * 30,
+  });
+};
+

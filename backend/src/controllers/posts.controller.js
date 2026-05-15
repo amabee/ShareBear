@@ -17,6 +17,13 @@ import {
   sharePost as sharePostService,
   unsharePost as unsharePostService,
   getShares as getSharesService,
+  upsertPostReaction as upsertPostReactionService,
+  deletePostReaction as deletePostReactionService,
+  getPostReactions as getPostReactionsService,
+  upsertCommentReaction as upsertCommentReactionService,
+  deleteCommentReaction as deleteCommentReactionService,
+  getCommentReactions as getCommentReactionsService,
+  getReplies as getRepliesService,
 } from "../services/posts.service.js";
 import {
   sanitizeInput,
@@ -353,7 +360,8 @@ export const unlikePost = async (req, reply) => {
 export const createComment = async (req, reply) => {
   const userId = req.user.userId;
   const { postId } = req.params;
-  const { content, parentCommentId } = req.body; // Fixed field name
+  const { content, parentCommentId } = req.body;
+
 
   // Validate required fields
   if (!content || content.trim().length === 0) {
@@ -609,3 +617,100 @@ export const getShares = async (req, reply) => {
     return reply.status(500).send({ error: "Failed to fetch shares" });
   }
 };
+
+// ─── REACTIONS ───────────────────────────────────────────────────────────────
+
+const VALID_REACTIONS = ["LIKE", "LOVE", "HAHA", "WOW", "SAD", "ANGRY"];
+
+export const reactToPost = async (req, reply) => {
+  const userId = req.user.userId;
+  const { postId } = req.params;
+  const { reaction } = req.body;
+
+  if (!VALID_REACTIONS.includes(reaction)) {
+    return reply.status(400).send({ error: "Invalid reaction type" });
+  }
+
+  try {
+    const result = await upsertPostReactionService(req.server.prisma, postId, userId, reaction);
+    return reply.status(201).send({ reaction: result });
+  } catch (error) {
+    req.log.error(error);
+    return reply.status(500).send({ error: "Failed to react to post" });
+  }
+};
+
+export const removePostReaction = async (req, reply) => {
+  const userId = req.user.userId;
+  const { postId } = req.params;
+
+  try {
+    await deletePostReactionService(req.server.prisma, postId, userId);
+    return reply.send({ message: "Reaction removed" });
+  } catch (error) {
+    req.log.error(error);
+    return reply.status(500).send({ error: "Failed to remove reaction" });
+  }
+};
+
+export const getPostReactions = async (req, reply) => {
+  const { postId } = req.params;
+
+  try {
+    const reactions = await getPostReactionsService(req.server.prisma, postId);
+    return reply.send({ reactions });
+  } catch (error) {
+    req.log.error(error);
+    return reply.status(500).send({ error: "Failed to fetch reactions" });
+  }
+};
+
+export const reactToComment = async (req, reply) => {
+  const userId = req.user.userId;
+  const { commentId } = req.params;
+  const { reaction } = req.body;
+
+  if (!VALID_REACTIONS.includes(reaction)) {
+    return reply.status(400).send({ error: "Invalid reaction type" });
+  }
+
+  try {
+    const result = await upsertCommentReactionService(req.server.prisma, parseInt(commentId), userId, reaction);
+    return reply.status(201).send({ reaction: result });
+  } catch (error) {
+    req.log.error(error);
+    return reply.status(500).send({ error: "Failed to react to comment" });
+  }
+};
+
+export const removeCommentReaction = async (req, reply) => {
+  const userId = req.user.userId;
+  const { commentId } = req.params;
+
+  try {
+    await deleteCommentReactionService(req.server.prisma, parseInt(commentId), userId);
+    return reply.send({ message: "Reaction removed" });
+  } catch (error) {
+    req.log.error(error);
+    return reply.status(500).send({ error: "Failed to remove reaction" });
+  }
+};
+
+// ─── REPLIES PAGINATION ──────────────────────────────────────────────────────
+
+export const getReplies = async (req, reply) => {
+  const { commentId } = req.params;
+  const { limit = 10, cursor } = req.query;
+
+  try {
+    const result = await getRepliesService(req.server.prisma, parseInt(commentId), {
+      limit: parseInt(limit),
+      cursor: cursor ? parseInt(cursor) : undefined,
+    });
+    return reply.send(result);
+  } catch (error) {
+    req.log.error(error);
+    return reply.status(500).send({ error: "Failed to fetch replies" });
+  }
+};
+

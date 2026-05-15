@@ -16,6 +16,12 @@ import {
   getShares,
   sharePost,
   unsharePost,
+  reactToPost,
+  removePostReaction,
+  getPostReactions,
+  reactToComment,
+  removeCommentReaction,
+  getReplies,
 } from "../controllers/posts.controller.js";
 import {
   createPostSchema,
@@ -110,4 +116,14 @@ export default async function postRoutes(fastify, opts) {
   fastify.post("/:postId/shares", { schema: sharePostSchema }, sharePost);
 
   fastify.delete("/:postId/shares", { schema: unsharePostSchema }, unsharePost);
+
+  // FOR REACTION ROUTES
+  fastify.post("/:postId/reactions", reactToPost);
+  fastify.delete("/:postId/reactions", removePostReaction);
+  fastify.get("/:postId/reactions", getPostReactions);
+
+  // FOR COMMENT REACTION + REPLY ROUTES
+  fastify.post("/comments/:commentId/reactions", reactToComment);
+  fastify.delete("/comments/:commentId/reactions", removeCommentReaction);
+  fastify.get("/:postId/comments/:commentId/replies", getReplies);
 }
