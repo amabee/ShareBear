@@ -4,7 +4,7 @@ import {
   useQueryClient,
   useInfiniteQuery,
 } from "@tanstack/react-query";
-import { apiClient } from "./apiClient";
+import { apiClient } from "./apiclient";
 import { useCreatePostStore, ContentType } from "@/stores/createPostStore";
 import toast from "react-hot-toast";
 

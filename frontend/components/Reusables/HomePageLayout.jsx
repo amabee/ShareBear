@@ -1,5 +1,5 @@
 "use client";
-import { MobileBottomNav } from "./MobileBottomNavBar";
+import { MobileBottomNav } from "./MobileBottomNavbar";
 
 export function HomePageLayout({ children }) {
   return (

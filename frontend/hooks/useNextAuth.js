@@ -1,6 +1,6 @@
 import { useSession, signIn, signOut } from "next-auth/react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { apiClient } from "./apiClient";
+import { apiClient } from "./apiclient";
 import useUserStore from "@/stores/userStore";
 
 // NextAuth session hook
