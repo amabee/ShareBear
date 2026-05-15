@@ -1,24 +1,44 @@
-import { ShareBearInfiniteFeedClient } from "@/components/Clients/ShareBearFeedClient";
+"use client";
+
 import { HomePageLayout } from "@/components/Reusables/HomePageLayout";
 import {
   FeedSkeleton,
   StoriesSkeleton,
 } from "@/components/Reusables/Skeletons";
 import ProfileCardSkeleton from "@/components/Skeletons/ProfileCardSkeleton";
-import { Stories } from "@/components/Stories/Stories";
 import dynamic from "next/dynamic";
-import React, { Suspense } from "react";
 
 const ProfileCard = dynamic(() => import("@/components/Profile/ProfileCard"), {
+  ssr: false,
   loading: () => <ProfileCardSkeleton />,
 });
 
 const Suggestions = dynamic(
   () => import("@/components/Suggestions/Suggestions"),
   {
+    ssr: false,
     loading: () => (
       <div className="h-96 bg-gray-100 animate-pulse rounded-lg" />
     ),
+  }
+);
+
+const Stories = dynamic(
+  () => import("@/components/Stories/Stories").then((m) => m.Stories),
+  {
+    ssr: false,
+    loading: () => <StoriesSkeleton />,
+  }
+);
+
+const ShareBearInfiniteFeedClient = dynamic(
+  () =>
+    import("@/components/Clients/ShareBearFeedClient").then(
+      (m) => m.ShareBearInfiniteFeedClient
+    ),
+  {
+    ssr: false,
+    loading: () => <FeedSkeleton />,
   }
 );
 
@@ -33,22 +53,12 @@ const HomePage = () => {
             </div>
           </div>
           <div className="lg:col-span-2 space-y-6">
-            <Suspense fallback={<StoriesSkeleton />}>
-              <Stories />
-            </Suspense>
-            <Suspense fallback={<FeedSkeleton />}>
-              <ShareBearInfiniteFeedClient />
-            </Suspense>
+            <Stories />
+            <ShareBearInfiniteFeedClient />
           </div>
           <div className="hidden lg:block">
             <div className="sticky top-20">
-              <Suspense
-                fallback={
-                  <div className="h-96 bg-gray-100 animate-pulse rounded-lg" />
-                }
-              >
-                <Suggestions />
-              </Suspense>
+              <Suggestions />
             </div>
           </div>
         </div>

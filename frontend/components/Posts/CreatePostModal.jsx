@@ -14,7 +14,6 @@ import {
   Share2,
   Timer,
   ChevronRight,
-  Check,
 } from "lucide-react";
 import { AspectRatio } from "../ui/aspect-ratio";
 import EmojiPicker from "emoji-picker-react";
@@ -25,7 +24,22 @@ import { useUserDetail } from "@/hooks/useUser";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { cn } from "@/lib/utils";
 
-const MOODS = ["??", "??", "??", "??", "??", "??", "??", "??", "??", "??", "??", "??"];
+// Emoji defined as unicode escapes to keep file encoding clean
+const MOODS = [
+  "😊", // 😊 smiling
+  "😂", // 😂 tears of joy
+  "🥰", // 🥰 smiling hearts
+  "😍", // 😍 heart eyes
+  "🤩", // 🤩 star struck
+  "😎", // 😎 sunglasses
+  "🥳", // 🥳 party
+  "😴", // 😴 sleeping
+  "😤", // 😤 steam from nose
+  "😢", // 😢 crying
+  "🤔", // 🤔 thinking
+  "🔥", // 🔥 fire
+];
+
 const EXPIRY_OPTIONS = [
   { label: "Never", value: null },
   { label: "24 hours", value: "24h" },
@@ -97,7 +111,6 @@ export function CreatePostModal({ open, onOpenChange }) {
     allowsShares,
     expiresIn,
     mood,
-
     setText,
     addFiles,
     removeFile,
@@ -132,8 +145,6 @@ export function CreatePostModal({ open, onOpenChange }) {
   const emojiPickerRef = useRef(null);
   const textareaRef = useRef(null);
   const [showSettings, setShowSettings] = useState(false);
-  const [showMoodPicker, setShowMoodPicker] = useState(false);
-  const [showExpiryPicker, setShowExpiryPicker] = useState(false);
 
   const sampleLocations = [
     "New York, NY", "Los Angeles, CA", "Chicago, IL", "Houston, TX",
@@ -271,14 +282,14 @@ export function CreatePostModal({ open, onOpenChange }) {
               ref={textareaRef}
               value={text}
               onChange={(e) => { setText(e.target.value); autoResize(); }}
-              placeholder="What&#39;s on your mind?"
+              placeholder="What's on your mind?"
               rows={3}
               maxLength={2000}
               className="w-full bg-transparent resize-none border-none outline-none text-[15px] leading-relaxed placeholder:text-muted-foreground/60 min-h-[80px] max-h-64"
             />
           </div>
 
-          {/* Badges row � location + mood + expiry */}
+          {/* Active badges: location / mood / expiry */}
           {(selectedLocation || mood || expiresIn) && (
             <div className="px-5 pb-2 flex flex-wrap items-center gap-2">
               {selectedLocation && (
@@ -338,7 +349,7 @@ export function CreatePostModal({ open, onOpenChange }) {
             </div>
           )}
 
-          {/* Drop zone */}
+          {/* Drop zone (shown when no files) */}
           {files.length === 0 && (
             <div
               className={cn(
@@ -358,7 +369,7 @@ export function CreatePostModal({ open, onOpenChange }) {
             </div>
           )}
 
-          {/* -- Post settings section --------------------- */}
+          {/* Post settings accordion */}
           <div className="mx-5 mb-4 rounded-2xl border border-border/60 overflow-hidden">
             <button
               type="button"
@@ -388,7 +399,7 @@ export function CreatePostModal({ open, onOpenChange }) {
                   iconClass="text-green-500"
                 />
 
-                {/* Expiry */}
+                {/* Post expiry */}
                 <div className="py-2.5">
                   <div className="flex items-center justify-between">
                     <span className="flex items-center gap-2.5 text-sm font-medium">
@@ -415,7 +426,7 @@ export function CreatePostModal({ open, onOpenChange }) {
                   </div>
                 </div>
 
-                {/* Mood */}
+                {/* Mood / feeling */}
                 <div className="py-2.5">
                   <div className="flex items-center justify-between mb-2">
                     <span className="text-sm font-medium">Feeling / mood</span>
@@ -448,11 +459,11 @@ export function CreatePostModal({ open, onOpenChange }) {
           </div>
         </div>
 
-        {/* Footer */}
+        {/* Sticky footer */}
         <div className="border-t border-border/50 px-5 py-3 bg-card dark:bg-[#1a1a2e]">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-1">
-              {/* Media */}
+              {/* Add media */}
               <button
                 onClick={() => fileInputRef.current?.click()}
                 className="h-9 w-9 rounded-full flex items-center justify-center text-green-500 hover:bg-green-500/10 transition-colors"
@@ -461,7 +472,7 @@ export function CreatePostModal({ open, onOpenChange }) {
                 <Camera className="h-5 w-5" />
               </button>
 
-              {/* Emoji */}
+              {/* Emoji picker */}
               <div className="relative">
                 <button
                   onClick={() => setShowEmojiPicker(!showEmojiPicker)}
@@ -482,7 +493,7 @@ export function CreatePostModal({ open, onOpenChange }) {
                 )}
               </div>
 
-              {/* Location */}
+              {/* Location picker */}
               <div className="relative">
                 <button
                   onClick={() => setShowLocationPicker(!showLocationPicker)}
@@ -499,7 +510,7 @@ export function CreatePostModal({ open, onOpenChange }) {
                     <div className="p-3 border-b border-border">
                       <input
                         type="text"
-                        placeholder="Search location�"
+                        placeholder="Search location..."
                         value={locationSearch}
                         onChange={(e) => setLocationSearch(e.target.value)}
                         className="w-full text-sm bg-muted rounded-xl px-3 py-2 outline-none placeholder:text-muted-foreground"
@@ -523,7 +534,7 @@ export function CreatePostModal({ open, onOpenChange }) {
             </div>
 
             <div className="flex items-center gap-3">
-              {/* Char count ring */}
+              {/* Character count ring */}
               {charCount > 0 && <CharRing count={charCount} />}
 
               {/* Post button */}
@@ -540,7 +551,7 @@ export function CreatePostModal({ open, onOpenChange }) {
                 {isSubmitting ? (
                   <span className="flex items-center gap-1.5">
                     <Loader2 className="h-3.5 w-3.5 animate-spin" />
-                    Posting�
+                    Posting...
                   </span>
                 ) : "Post"}
               </button>
