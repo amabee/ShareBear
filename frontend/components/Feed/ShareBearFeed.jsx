@@ -15,7 +15,7 @@ export function ShareBearFeed({ posts, lastPostRef }) {
     <div className="space-y-4">
       {posts.map((post, index) => (
         <div
-          key={post.id}
+          key={post.feedKey ?? post.id}
           ref={index === posts.length - 1 ? lastPostRef : null}
         >
           <ShareBearPost post={post} />

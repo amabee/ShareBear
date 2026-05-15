@@ -217,6 +217,7 @@ export const getPosts = async (tx, userId, paginationOptions = {}) => {
     liked: post.likes.length > 0,
     likes: undefined,
     isRepost: false,
+    feedKey: `post::${post.id}`,
     _feedTimestamp: post.createdAt,
   }));
 
@@ -230,20 +231,18 @@ export const getPosts = async (tx, userId, paginationOptions = {}) => {
       sharedBy: share.user,
       sharedAt: share.createdAt,
       shareCaption: share.caption ?? null,
+      // Unique key: sharer id + post id — one user can only share a post once
+      feedKey: `share::${share.user.id}::${share.post.id}`,
       _feedTimestamp: share.createdAt,
     }));
 
-  // ── 4. Merge, de-duplicate same post shown twice on the same page, sort ──
+  // ── 4. Merge, de-duplicate by feedKey, sort by timestamp desc ────────────
   const seen = new Set();
   const merged = [...postItems, ...shareItems]
     .sort((a, b) => new Date(b._feedTimestamp) - new Date(a._feedTimestamp))
     .filter((item) => {
-      // De-duplicate: a repost of a post already appearing as an original
-      // on this same page would be confusing; keep both but dedupe by
-      // (id + isRepost) so the same share isn't shown twice.
-      const key = `${item.id}::${item.isRepost ? (item.sharedBy?.id ?? "r") : "o"}`;
-      if (seen.has(key)) return false;
-      seen.add(key);
+      if (seen.has(item.feedKey)) return false;
+      seen.add(item.feedKey);
       return true;
     });
 
