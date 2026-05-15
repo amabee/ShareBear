@@ -386,3 +386,173 @@ export const useBookmarkPost = () => {
   });
 };
 
+// ─── COMMENTS ─────────────────────────────────────────────────────────────────
+
+export const useComments = (postId) => {
+  return useInfiniteQuery({
+    queryKey: ["comments", postId],
+    queryFn: ({ pageParam }) =>
+      apiClient.get(
+        `/api/posts/${postId}/comments?limit=10${pageParam ? `&cursor=${pageParam}` : ""}`
+      ),
+    getNextPageParam: (lastPage) => lastPage?.pagination?.nextCursor ?? undefined,
+    enabled: !!postId,
+    staleTime: 1000 * 30,
+  });
+};
+
+export const useCreateComment = (postId) => {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: ({ content, parentCommentId }) =>
+      apiClient.post(`/api/posts/${postId}/comments`, {
+        content,
+        parentCommentId: parentCommentId || null,
+      }),
+
+    onSuccess: () => {
+      // Invalidate comment list and refresh counts in infinite feed
+      queryClient.invalidateQueries({ queryKey: ["comments", postId] });
+      queryClient.setQueryData(["posts", "infinite"], (oldData) => {
+        if (!oldData) return oldData;
+        return {
+          ...oldData,
+          pages: oldData.pages.map((page) => ({
+            ...page,
+            posts: page.posts.map((post) =>
+              post.id === postId
+                ? {
+                    ...post,
+                    _count: {
+                      ...post._count,
+                      comments: post._count.comments + 1,
+                    },
+                  }
+                : post
+            ),
+          })),
+        };
+      });
+    },
+    onError: () => {
+      toast.error("Failed to post comment.");
+    },
+  });
+};
+
+export const useDeleteComment = (postId) => {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: (commentId) =>
+      apiClient.delete(`/api/posts/${postId}/comments/${commentId}`),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["comments", postId] });
+      queryClient.setQueryData(["posts", "infinite"], (oldData) => {
+        if (!oldData) return oldData;
+        return {
+          ...oldData,
+          pages: oldData.pages.map((page) => ({
+            ...page,
+            posts: page.posts.map((post) =>
+              post.id === postId
+                ? {
+                    ...post,
+                    _count: {
+                      ...post._count,
+                      comments: Math.max(0, post._count.comments - 1),
+                    },
+                  }
+                : post
+            ),
+          })),
+        };
+      });
+    },
+    onError: () => {
+      toast.error("Failed to delete comment.");
+    },
+  });
+};
+
+// ─── SHARES ───────────────────────────────────────────────────────────────────
+
+export const useSharePost = () => {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: ({ postId, caption, privacyLevel }) =>
+      apiClient.post(`/api/posts/${postId}/shares`, {
+        caption: caption || null,
+        privacyLevel: privacyLevel || "PUBLIC",
+      }),
+    onSuccess: (data, { postId }) => {
+      queryClient.setQueryData(["posts", "infinite"], (oldData) => {
+        if (!oldData) return oldData;
+        return {
+          ...oldData,
+          pages: oldData.pages.map((page) => ({
+            ...page,
+            posts: page.posts.map((post) =>
+              post.id === postId
+                ? {
+                    ...post,
+                    shared: true,
+                    _count: {
+                      ...post._count,
+                      shares: post._count.shares + 1,
+                    },
+                  }
+                : post
+            ),
+          })),
+        };
+      });
+      toast.success("Post shared!");
+    },
+    onError: (error) => {
+      const msg = error?.response?.data?.error;
+      if (msg?.includes("already shared")) {
+        toast.error("You already shared this post.");
+      } else {
+        toast.error("Failed to share post.");
+      }
+    },
+  });
+};
+
+export const useUnsharePost = () => {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: (postId) => apiClient.delete(`/api/posts/${postId}/shares`),
+    onSuccess: (data, postId) => {
+      queryClient.setQueryData(["posts", "infinite"], (oldData) => {
+        if (!oldData) return oldData;
+        return {
+          ...oldData,
+          pages: oldData.pages.map((page) => ({
+            ...page,
+            posts: page.posts.map((post) =>
+              post.id === postId
+                ? {
+                    ...post,
+                    shared: false,
+                    _count: {
+                      ...post._count,
+                      shares: Math.max(0, post._count.shares - 1),
+                    },
+                  }
+                : post
+            ),
+          })),
+        };
+      });
+      toast.success("Share removed.");
+    },
+    onError: () => {
+      toast.error("Failed to remove share.");
+    },
+  });
+};

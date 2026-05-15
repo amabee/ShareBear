@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { useLikePost, useUnlikePost } from "@/hooks/usePosts";
 
-const ActionButtons = ({ postId }) => {
+const ActionButtons = ({ postId, onCommentClick, showComments }) => {
   const queryClient = useQueryClient();
   const likePostMutation = useLikePost();
   const unlikePostMutation = useUnlikePost();
@@ -19,17 +19,15 @@ const ActionButtons = ({ postId }) => {
   const liked = currentPost?.liked || false;
   const allowsComments = currentPost?.allowsComments || false;
   const allowsShares = currentPost?.allowsShares || false;
+  const shared = currentPost?.shared || false;
 
   const isMutating = likePostMutation.isPending || unlikePostMutation.isPending;
-
-  const { incrementShare } = usePostsStore();
 
   const handleLikeClick = () => {
     if (liked) {
       unlikePostMutation.mutate(postId);
       return;
     }
-
     likePostMutation.mutate(postId);
   };
 
@@ -40,7 +38,7 @@ const ActionButtons = ({ postId }) => {
           variant="ghost"
           size="sm"
           onClick={handleLikeClick}
-          disabled={likePostMutation.isPending || unlikePostMutation.isPending}
+          disabled={isMutating}
           className={cn(
             "flex-1 h-9 text-sm font-medium",
             liked ? "text-red-500" : "text-muted-foreground"
@@ -60,9 +58,13 @@ const ActionButtons = ({ postId }) => {
           <Button
             variant="ghost"
             size="sm"
-            className="flex-1 h-9 text-sm font-medium text-muted-foreground"
+            onClick={onCommentClick}
+            className={cn(
+              "flex-1 h-9 text-sm font-medium",
+              showComments ? "text-primary" : "text-muted-foreground"
+            )}
           >
-            <MessageCircle className="h-4 w-4 mr-2" />
+            <MessageCircle className={cn("h-4 w-4 mr-2", showComments && "fill-current")} />
             Comment
           </Button>
         )}
@@ -71,10 +73,13 @@ const ActionButtons = ({ postId }) => {
           <Button
             variant="ghost"
             size="sm"
-            onClick={() => incrementShare(postId)}
-            className="flex-1 h-9 text-sm font-medium text-muted-foreground"
+            onClick={() => onCommentClick?.("share")}
+            className={cn(
+              "flex-1 h-9 text-sm font-medium",
+              shared ? "text-primary" : "text-muted-foreground"
+            )}
           >
-            <Share className="h-4 w-4 mr-2" />
+            <Share className={cn("h-4 w-4 mr-2", shared && "fill-current")} />
             Share
           </Button>
         )}

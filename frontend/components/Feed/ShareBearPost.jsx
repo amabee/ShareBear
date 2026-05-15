@@ -1,5 +1,5 @@
 "use client";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { MoreHorizontal } from "lucide-react";
@@ -9,9 +9,16 @@ import MediaCarousel from "./MediaCarousel";
 import CaptionsWithHashtags from "./CaptionsWithHashtags";
 import UserInfo from "./UserInfo";
 import UserAvatar from "./UserAvatar";
+import CommentSection from "./CommentSection";
+import ShareModal from "./ShareModal";
+import { useQueryClient } from "@tanstack/react-query";
 
 export function ShareBearPost({ post }) {
   const { initializePostUI } = usePostsStore();
+  const queryClient = useQueryClient();
+
+  const [showComments, setShowComments] = useState(false);
+  const [shareModalOpen, setShareModalOpen] = useState(false);
 
   useEffect(() => {
     initializePostUI(post.id, {
@@ -20,11 +27,25 @@ export function ShareBearPost({ post }) {
     });
   }, [post.id, initializePostUI]);
 
-  // Get server state directly from the post prop (which comes from React Query)
-  const likeCount = post._count?.likes || 0;
-  const commentCount = post._count?.comments || 0;
-  const shareCount = post._count?.shares || 0;
-  const allowsComments = post.allowsComments;
+  // Get latest counts from React Query cache (updated optimistically by mutations)
+  const cachedData = queryClient.getQueryData(["posts", "infinite"]);
+  const cachedPost = cachedData?.pages
+    ?.flatMap((page) => page.posts)
+    ?.find((p) => p.id === post.id);
+
+  const likeCount = cachedPost?._count?.likes ?? post._count?.likes ?? 0;
+  const commentCount = cachedPost?._count?.comments ?? post._count?.comments ?? 0;
+  const shareCount = cachedPost?._count?.shares ?? post._count?.shares ?? 0;
+  const shared = cachedPost?.shared ?? post.shared ?? false;
+  const allowsComments = cachedPost?.allowsComments ?? post.allowsComments;
+
+  const handleActionClick = (type) => {
+    if (type === "share") {
+      setShareModalOpen(true);
+    } else {
+      setShowComments((prev) => !prev);
+    }
+  };
 
   return (
     <Card className="max-w-md mx-auto shadow-lg border-none">
@@ -38,7 +59,6 @@ export function ShareBearPost({ post }) {
             location={post.location}
           />
         </div>
-
         <Button variant="ghost" size="icon" className="h-8 w-8">
           <MoreHorizontal className="h-4 w-4" />
         </Button>
@@ -46,12 +66,10 @@ export function ShareBearPost({ post }) {
 
       {/* Caption */}
       <div className="px-4 pb-3">
-        <div className="mb-2">
-          <CaptionsWithHashtags caption={post.caption} />
-        </div>
+        <CaptionsWithHashtags caption={post.caption} />
       </div>
 
-      {/* Media Carousel */}
+      {/* Media */}
       <MediaCarousel images={post.images} postId={post.id} />
 
       <CardContent className="p-4 pt-3">
@@ -59,28 +77,45 @@ export function ShareBearPost({ post }) {
         <div className="flex items-center justify-between mb-3 text-sm text-muted-foreground">
           <div className="flex items-center space-x-4">
             <span>{likeCount.toLocaleString()} likes</span>
-            <span>{commentCount.toLocaleString()} comments</span>
+            <button
+              className="hover:underline"
+              onClick={() => allowsComments && setShowComments((p) => !p)}
+            >
+              {commentCount.toLocaleString()} comments
+            </button>
             <span>{shareCount.toLocaleString()} shares</span>
           </div>
         </div>
 
         {/* Divider */}
-        <div className="border-t border-gray-200 mb-3"></div>
+        <div className="border-t border-gray-200 mb-3" />
 
         {/* Action Buttons */}
-        <ActionButtons postId={post.id} />
+        <ActionButtons
+          postId={post.id}
+          onCommentClick={handleActionClick}
+          showComments={showComments}
+        />
 
-        {/* Comments Preview */}
-        {allowsComments ? (
-          <div className="text-sm text-muted-foreground">
-            View all {commentCount.toLocaleString()} comments
-          </div>
-        ) : (
-          <div className="text-sm text-muted-foreground">
-            Comments not allowed on this post
+        {/* Comment Section */}
+        {showComments && allowsComments && (
+          <CommentSection postId={post.id} />
+        )}
+
+        {!allowsComments && (
+          <div className="text-xs text-muted-foreground">
+            Comments are disabled on this post.
           </div>
         )}
       </CardContent>
+
+      {/* Share Modal */}
+      <ShareModal
+        postId={post.id}
+        shared={shared}
+        open={shareModalOpen}
+        onOpenChange={setShareModalOpen}
+      />
     </Card>
   );
 }
