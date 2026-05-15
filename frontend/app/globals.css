@@ -544,3 +544,62 @@
   background-size: 200px 100%;
   animation: skeleton-loading 1.5s infinite;
 }
+
+/* ─── Premium Feed Animations ─────────────────────────────────────────────── */
+
+/* Double-tap heart burst overlay */
+@keyframes heartBurst {
+  0%   { transform: translate(-50%, -50%) scale(0) rotate(-15deg); opacity: 1; }
+  40%  { transform: translate(-50%, -50%) scale(1.5) rotate(-5deg); opacity: 1; }
+  70%  { transform: translate(-50%, -50%) scale(1.2) rotate(0deg);  opacity: 0.9; }
+  100% { transform: translate(-50%, -50%) scale(1.4) rotate(0deg);  opacity: 0; }
+}
+.animate-heart-burst {
+  animation: heartBurst 0.75s cubic-bezier(0.36, 0.07, 0.19, 0.97) forwards;
+}
+
+/* Like button pop */
+@keyframes likePopIn {
+  0%   { transform: scale(1); }
+  30%  { transform: scale(1.4); }
+  60%  { transform: scale(0.9); }
+  100% { transform: scale(1); }
+}
+.animate-like-pop {
+  animation: likePopIn 0.35s cubic-bezier(0.36, 0.07, 0.19, 0.97);
+}
+
+/* Post entry slide-up */
+@keyframes fadeInUp {
+  from { opacity: 0; transform: translateY(16px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+.animate-fade-in-up {
+  animation: fadeInUp 0.3s ease-out both;
+}
+
+/* Shimmer for skeletons */
+@keyframes shimmer {
+  0%   { background-position: -200% 0; }
+  100% { background-position:  200% 0; }
+}
+.skeleton-shimmer {
+  background: linear-gradient(
+    90deg,
+    oklch(0.93 0.003 264) 25%,
+    oklch(0.97 0.003 264) 50%,
+    oklch(0.93 0.003 264) 75%
+  );
+  background-size: 200% 100%;
+  animation: shimmer 1.4s ease-in-out infinite;
+}
+.dark .skeleton-shimmer {
+  background: linear-gradient(
+    90deg,
+    oklch(0.22 0.025 264) 25%,
+    oklch(0.28 0.03  264) 50%,
+    oklch(0.22 0.025 264) 75%
+  );
+  background-size: 200% 100%;
+}
+

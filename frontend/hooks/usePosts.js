@@ -410,8 +410,12 @@ export const useCreateComment = (postId) => {
         content,
         ...(parentCommentId ? { parentCommentId } : {}),
       }),
-    onSuccess: () => {
+    onSuccess: (_, variables) => {
       queryClient.invalidateQueries({ queryKey: ["comments", postId] });
+      // if it's a reply, also refresh that comment's reply thread
+      if (variables?.parentCommentId) {
+        queryClient.invalidateQueries({ queryKey: ["replies", variables.parentCommentId] });
+      }
       // increment comment count in feed cache
       queryClient.setQueryData(["posts", "infinite"], (oldData) => {
         if (!oldData) return oldData;

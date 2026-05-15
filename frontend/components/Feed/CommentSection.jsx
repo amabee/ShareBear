@@ -1,5 +1,5 @@
 ﻿"use client";
-import { useState, useRef, useCallback } from "react";
+import { useState, useRef, useCallback, useEffect } from "react";
 import {
   useComments,
   useCreateComment,
@@ -17,7 +17,7 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from "@/components/ui/popover";
-import { Trash2, Send, Loader2, Smile, CornerDownRight, X } from "lucide-react";
+import { Trash2, Send, Loader2, Smile, CornerDownRight } from "lucide-react";
 import { formatDistanceToNow } from "date-fns";
 import { cn, decodeHtmlEntities } from "@/lib/utils";
 
@@ -34,7 +34,61 @@ const REACTION_TO_EMOJI = Object.fromEntries(
 );
 const REACTIONS = Object.keys(EMOJI_TO_REACTION);
 
-function ReplyThread({ postId, commentId, currentUserId, onReply }) {
+// Inline reply input — appears right below the target comment, auto-focuses
+function InlineReplyInput({ postId, parentCommentId, replyingToUsername, onCancel, onSuccess }) {
+  const [input, setInput] = useState(`@${replyingToUsername} `);
+  const textareaRef = useRef(null);
+  const createComment = useCreateComment(postId);
+
+  useEffect(() => {
+    if (textareaRef.current) {
+      textareaRef.current.focus();
+      const len = textareaRef.current.value.length;
+      textareaRef.current.setSelectionRange(len, len);
+    }
+  }, []);
+
+  const autoResize = () => {
+    const el = textareaRef.current;
+    if (!el) return;
+    el.style.height = "auto";
+    el.style.height = `${el.scrollHeight}px`;
+  };
+
+  const handleSubmit = (e) => {
+    e?.preventDefault();
+    const trimmed = input.trim();
+    if (!trimmed || createComment.isPending) return;
+    createComment.mutate(
+      { content: trimmed, parentCommentId },
+      { onSuccess: () => { onSuccess?.(); onCancel(); } }
+    );
+  };
+
+  return (
+    <form onSubmit={handleSubmit} className="flex gap-2 items-end mt-1.5 ml-10">
+      <textarea
+        ref={textareaRef}
+        value={input}
+        onChange={(e) => { setInput(e.target.value); autoResize(); }}
+        onKeyDown={(e) => {
+          if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); handleSubmit(); }
+          if (e.key === "Escape") onCancel();
+        }}
+        placeholder={`Reply to @${replyingToUsername}\u2026`}
+        maxLength={1000}
+        rows={1}
+        className="flex-1 resize-none overflow-hidden text-sm py-1.5 px-3 rounded-2xl border border-input bg-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring leading-5 min-h-[32px] max-h-28"
+      />
+      <Button type="submit" size="icon" className="h-8 w-8 shrink-0 rounded-full" disabled={!input.trim() || createComment.isPending}>
+        {createComment.isPending ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Send className="h-3.5 w-3.5" />}
+      </Button>
+      <button type="button" onClick={onCancel} className="text-xs text-muted-foreground hover:text-foreground self-center shrink-0">Cancel</button>
+    </form>
+  );
+}
+
+function ReplyThread({ postId, commentId, currentUserId, activeReplyId, onSetActiveReply, depth = 1 }) {
   const { data, fetchNextPage, hasNextPage, isFetchingNextPage, isLoading } =
     useReplies(postId, commentId, true);
   const allReplies = data?.pages?.flatMap((p) => p.replies ?? []) ?? [];
@@ -42,7 +96,7 @@ function ReplyThread({ postId, commentId, currentUserId, onReply }) {
     <div className="space-y-1.5">
       {isLoading && <Loader2 className="h-3 w-3 animate-spin text-muted-foreground mx-auto" />}
       {allReplies.map((reply) => (
-        <CommentItem key={reply.id} comment={reply} postId={postId} currentUserId={currentUserId} onReply={onReply} depth={1} />
+        <CommentItem key={reply.id} comment={reply} postId={postId} currentUserId={currentUserId} depth={depth} activeReplyId={activeReplyId} onSetActiveReply={onSetActiveReply} />
       ))}
       {hasNextPage && (
         <button onClick={() => fetchNextPage()} disabled={isFetchingNextPage} className="flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground transition-colors">
@@ -54,7 +108,7 @@ function ReplyThread({ postId, commentId, currentUserId, onReply }) {
   );
 }
 
-function CommentItem({ comment, postId, currentUserId, onReply, depth = 0 }) {
+function CommentItem({ comment, postId, currentUserId, depth = 0, activeReplyId, onSetActiveReply }) {
   const deleteComment = useDeleteComment(postId);
   const reactToComment = useReactToComment();
   const removeReaction = useRemoveCommentReaction();
@@ -62,6 +116,15 @@ function CommentItem({ comment, postId, currentUserId, onReply, depth = 0 }) {
   const [showReplies, setShowReplies] = useState(false);
   const [myReaction, setMyReaction] = useState(null);
   const replyCount = comment._count?.replies ?? 0;
+  const isReplying = activeReplyId === comment.id;
+  const replyThreadRef = useRef(null);
+
+  // scroll newly expanded replies into view inside the scroll container
+  useEffect(() => {
+    if (showReplies && replyThreadRef.current) {
+      replyThreadRef.current.scrollIntoView({ behavior: "smooth", block: "nearest" });
+    }
+  }, [showReplies]);
 
   const handleReaction = (emoji) => {
     const reaction = EMOJI_TO_REACTION[emoji];
@@ -111,7 +174,7 @@ function CommentItem({ comment, postId, currentUserId, onReply, depth = 0 }) {
                 </div>
               </PopoverContent>
             </Popover>
-            <button onClick={() => onReply(comment)} className="text-xs font-semibold text-muted-foreground hover:text-foreground opacity-0 group-hover:opacity-100 transition-opacity">Reply</button>
+            <button onClick={() => onSetActiveReply(isReplying ? null : comment.id)} className="text-xs font-semibold text-muted-foreground hover:text-foreground opacity-0 group-hover:opacity-100 transition-opacity">{isReplying ? "Cancel" : "Reply"}</button>
             {isOwner && (
               <button onClick={() => deleteComment.mutate(comment.id)} disabled={deleteComment.isPending} className="opacity-0 group-hover:opacity-100 transition-opacity text-muted-foreground hover:text-destructive">
                 {deleteComment.isPending ? <Loader2 className="h-3 w-3 animate-spin" /> : <Trash2 className="h-3 w-3" />}
@@ -120,8 +183,20 @@ function CommentItem({ comment, postId, currentUserId, onReply, depth = 0 }) {
           </div>
         </div>
       </div>
+      {/* Inline reply input — right below this comment */}
+      {isReplying && (
+        <InlineReplyInput
+          postId={postId}
+          parentCommentId={comment.id}
+          replyingToUsername={comment.user?.username}
+          onCancel={() => onSetActiveReply(null)}
+          onSuccess={() => setShowReplies(true)}
+        />
+      )}
+
       {replyCount > 0 && (
-        <div className="pl-10 space-y-1.5">
+        // cap visual indentation at depth 2 so deep threads don't get too narrow
+        <div className={cn("space-y-1.5", depth < 2 ? "pl-10" : "pl-4")} ref={replyThreadRef}>
           {!showReplies ? (
             <button onClick={() => setShowReplies(true)} className="flex items-center gap-1 text-xs font-semibold text-muted-foreground hover:text-foreground transition-colors">
               <CornerDownRight className="h-3 w-3" />
@@ -129,7 +204,7 @@ function CommentItem({ comment, postId, currentUserId, onReply, depth = 0 }) {
             </button>
           ) : (
             <>
-              <ReplyThread postId={postId} commentId={comment.id} currentUserId={currentUserId} onReply={onReply} />
+              <ReplyThread postId={postId} commentId={comment.id} currentUserId={currentUserId} activeReplyId={activeReplyId} onSetActiveReply={onSetActiveReply} depth={depth + 1} />
               <button onClick={() => setShowReplies(false)} className="text-xs text-muted-foreground hover:text-foreground transition-colors">Hide replies</button>
             </>
           )}
@@ -144,7 +219,7 @@ export default function CommentSection({ postId }) {
   const { data: profileData } = useUserDetail(user?.username);
   const avatarUrl = profileData?.user?.userInfo?.profilePictureUrl;
   const [input, setInput] = useState("");
-  const [replyingTo, setReplyingTo] = useState(null);
+  const [activeReplyId, setActiveReplyId] = useState(null);
   const textareaRef = useRef(null);
   const { data, fetchNextPage, hasNextPage, isFetchingNextPage, isLoading } = useComments(postId);
   const createComment = useCreateComment(postId);
@@ -162,18 +237,13 @@ export default function CommentSection({ postId }) {
     const trimmed = input.trim();
     if (!trimmed || createComment.isPending) return;
     createComment.mutate(
-      { content: trimmed, parentCommentId: replyingTo?.id ?? null },
-      { onSuccess: () => { setInput(""); setReplyingTo(null); if (textareaRef.current) textareaRef.current.style.height = "auto"; } }
+      { content: trimmed, parentCommentId: null },
+      { onSuccess: () => { setInput(""); if (textareaRef.current) textareaRef.current.style.height = "auto"; } }
     );
   };
 
   const handleKeyDown = (e) => {
     if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); handleSubmit(); }
-  };
-
-  const handleReply = (comment) => {
-    setReplyingTo({ id: comment.id, username: comment.user?.username });
-    textareaRef.current?.focus();
   };
 
   return (
@@ -182,7 +252,7 @@ export default function CommentSection({ postId }) {
         {isLoading && <div className="flex justify-center py-2"><Loader2 className="h-4 w-4 animate-spin text-muted-foreground" /></div>}
         {!isLoading && allComments.length === 0 && <p className="text-xs text-muted-foreground text-center py-2">No comments yet. Be the first!</p>}
         {allComments.map((comment) => (
-          <CommentItem key={comment.id} comment={comment} postId={postId} currentUserId={user?.id} onReply={handleReply} />
+          <CommentItem key={comment.id} comment={comment} postId={postId} currentUserId={user?.id} activeReplyId={activeReplyId} onSetActiveReply={setActiveReplyId} />
         ))}
         {hasNextPage && (
           <Button variant="ghost" size="sm" className="w-full text-xs text-muted-foreground" onClick={() => fetchNextPage()} disabled={isFetchingNextPage}>
@@ -191,15 +261,7 @@ export default function CommentSection({ postId }) {
           </Button>
         )}
       </div>
-      {replyingTo && (
-        <div className="flex items-center justify-between bg-muted/60 rounded-xl px-3 py-1.5 text-xs">
-          <span className="flex items-center gap-1.5 text-muted-foreground">
-            <CornerDownRight className="h-3 w-3" />
-            Replying to <span className="font-semibold text-foreground">@{replyingTo.username}</span>
-          </span>
-          <button onClick={() => setReplyingTo(null)} className="text-muted-foreground hover:text-foreground transition-colors"><X className="h-3 w-3" /></button>
-        </div>
-      )}
+      {/* Bottom input — top-level new comments only */}
       <form onSubmit={handleSubmit} className="flex gap-2 items-end">
         <Avatar className="h-7 w-7 shrink-0 mb-1">
           <AvatarImage src={avatarUrl} />

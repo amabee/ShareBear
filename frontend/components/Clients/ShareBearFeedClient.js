@@ -50,15 +50,17 @@ export function ShareBearInfiniteFeedClient() {
       <ShareBearFeed posts={allPosts} lastPostRef={lastPostRef} />
 
       {isFetchingNextPage && (
-        <div className="flex justify-center items-center py-4">
-          <LoaderCircle className="h-6 w-6 animate-spin" />
-          <span className="ml-2">Loading more posts...</span>
+        <div className="flex justify-center items-center py-6 text-muted-foreground">
+          <LoaderCircle className="h-5 w-5 animate-spin" />
         </div>
       )}
 
       {!hasNextPage && allPosts.length > 0 && (
-        <div className="text-center py-4 text-gray-500">
-          You've reached the end of the feed! 🎉
+        <div className="flex flex-col items-center py-10 text-muted-foreground">
+          <div className="h-px w-40 bg-gradient-to-r from-transparent via-border to-transparent mb-6" />
+          <span className="text-3xl mb-2">🐻</span>
+          <p className="text-sm font-medium">You&#39;re all caught up!</p>
+          <p className="text-xs mt-1 text-muted-foreground/70">Check back later for more</p>
         </div>
       )}
     </div>
