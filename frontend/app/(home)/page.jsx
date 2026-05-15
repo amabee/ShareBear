@@ -4,7 +4,6 @@ import {
   FeedSkeleton,
   StoriesSkeleton,
 } from "@/components/Reusables/Skeletons";
-import TopNavBar from "@/components/Reusables/TopNavBar";
 import ProfileCardSkeleton from "@/components/Skeletons/ProfileCardSkeleton";
 import { Stories } from "@/components/Stories/Stories";
 import dynamic from "next/dynamic";
@@ -26,7 +25,6 @@ const Suggestions = dynamic(
 const HomePage = () => {
   return (
     <HomePageLayout>
-      <TopNavBar />
       <div className="max-w-7xl mx-auto px-4 py-6">
         <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
           <div className="hidden lg:block">
