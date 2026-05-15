@@ -218,11 +218,12 @@ model Like {
 }
 
 model Share {
-  id        Int      @id @default(autoincrement())
-  userId    Int
-  postId    String   @db.VarChar(32)
-  caption   String? // Optional caption when sharing
-  createdAt DateTime @default(now())
+  id           Int            @id @default(autoincrement())
+  userId       Int
+  postId       String         @db.VarChar(32)
+  caption      String? // Optional caption when sharing
+  privacyLevel PrivacySetting @default(PUBLIC)
+  createdAt    DateTime       @default(now())
 
   user User @relation(fields: [userId], references: [id])
   post Post @relation(fields: [postId], references: [id])
