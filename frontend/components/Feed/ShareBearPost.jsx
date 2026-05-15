@@ -1,6 +1,6 @@
 "use client";
 import { useEffect, useState, useRef, useCallback } from "react";
-import { MoreHorizontal, Bookmark } from "lucide-react";
+import { MoreHorizontal, Bookmark, Repeat2 } from "lucide-react";
 import { usePostsStore } from "@/stores/usePostsStore";
 import ActionButtons from "./ActionButtons";
 import MediaCarousel from "./MediaCarousel";
@@ -66,9 +66,30 @@ export function ShareBearPost({ post }) {
 
   const hasMedia = post.images && post.images.length > 0;
 
+  const sharerName =
+    post.sharedBy?.userInfo?.displayName ??
+    [post.sharedBy?.userInfo?.firstName, post.sharedBy?.userInfo?.lastName]
+      .filter(Boolean)
+      .join(" ") ??
+    post.sharedBy?.username;
+
   return (
     <article className="animate-fade-in-up">
       <div className="bg-card dark:bg-[#141420] rounded-2xl overflow-hidden shadow-sm hover:shadow-lg transition-shadow duration-300">
+
+        {/* ── Repost banner ──────────────────────────── */}
+        {post.isRepost && sharerName && (
+          <div className="flex items-center gap-1.5 px-4 pt-3 pb-1 text-xs text-muted-foreground">
+            <Repeat2 className="h-3.5 w-3.5 text-green-500" />
+            <span>
+              <span className="font-semibold text-foreground">{sharerName}</span>
+              {" reposted"}
+            </span>
+            {post.shareCaption && (
+              <span className="ml-1 italic truncate max-w-[180px]">&#8220;{post.shareCaption}&#8221;</span>
+            )}
+          </div>
+        )}
 
         {/* ── Header ─────────────────────────────────── */}
         <div className="flex items-center justify-between px-4 pt-4 pb-3">

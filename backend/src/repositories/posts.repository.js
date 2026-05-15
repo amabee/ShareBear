@@ -133,58 +133,65 @@ export const restorePost = async (tx, postId, userId) => {
   return await tx.post.findUnique({ where: { id: postId } });
 };
 
+// Shared include fragment for a post nested inside a Share
+const postInclude = (userId) => ({
+  user: {
+    select: {
+      id: true,
+      username: true,
+      userInfo: {
+        select: {
+          firstName: true,
+          middleName: true,
+          lastName: true,
+          displayName: true,
+          profilePictureUrl: true,
+          coverPhotoUrl: true,
+          bio: true,
+          location: true,
+        },
+      },
+    },
+  },
+  images: { orderBy: { displayOrder: "asc" } },
+  _count: { select: { likes: true, comments: true, shares: true } },
+  likes: { where: { userId }, select: { id: true } },
+  hashtags: {
+    include: {
+      hashtag: { select: { id: true, name: true, usageCount: true } },
+    },
+  },
+});
+
 export const getPosts = async (tx, userId, paginationOptions = {}) => {
-  const { page = 1, limit = 10, cursor } = paginationOptions;
+  const { page = 1, limit = 10 } = paginationOptions;
 
   const following = await tx.follow.findMany({
-    where: {
-      followerId: userId,
-    },
-    select: {
-      followingId: true,
-    },
+    where: { followerId: userId },
+    select: { followingId: true },
   });
 
-  // get the ids of users that the current user is following eg: john doe -> sam clarke, john doe -> Abby Cowin
-  const followingIds = following.map((follow) => follow.followingId);
-
-  // Include the own post of the current user here....
+  const followingIds = following.map((f) => f.followingId);
+  // Current user's own content + everyone they follow
   const userIds = [...followingIds, userId];
 
-  // Build the where clause
-  const whereClause = {
-    userId: { in: userIds },
-    isDeleted: false,
-  };
+  // How many items to prefetch from each source so the current page is covered
+  // Worst case: all items on pages 1..page come from one source
+  const prefetchLimit = page * limit + limit;
 
-  // Add cursor-based pagination if cursor is provided
-  if (cursor) {
-    whereClause.createdAt = {
-      lt: await getPostCreatedAt(tx, cursor),
-    };
-  }
-
-  // Get total count for pagination metadata
-  const totalPosts = await tx.post.count({
-    where: {
-      userId: { in: userIds },
-      isDeleted: false,
-    },
+  // ── 1. Fetch original posts ──────────────────────────────────────────────
+  const rawPosts = await tx.post.findMany({
+    where: { userId: { in: userIds }, isDeleted: false },
+    orderBy: { createdAt: "desc" },
+    take: prefetchLimit,
+    include: postInclude(userId),
   });
 
-  // Calculate pagination metadata
-  const totalPages = Math.ceil(totalPosts / limit);
-  const hasNextPage = page < totalPages;
-  const hasPreviousPage = page > 1;
-
-  // Get posts with pagination
-  const posts = await tx.post.findMany({
-    where: whereClause,
-    orderBy: {
-      createdAt: "desc",
-    },
-    take: limit,
-    skip: cursor ? 0 : (page - 1) * limit,
+  // ── 2. Fetch shares by the same user-set ────────────────────────────────
+  const rawShares = await tx.share.findMany({
+    where: { userId: { in: userIds } },
+    orderBy: { createdAt: "desc" },
+    take: prefetchLimit,
     include: {
       user: {
         select: {
@@ -193,109 +200,68 @@ export const getPosts = async (tx, userId, paginationOptions = {}) => {
           userInfo: {
             select: {
               firstName: true,
-              middleName: true,
               lastName: true,
               displayName: true,
               profilePictureUrl: true,
-              coverPhotoUrl: true,
-              bio: true,
-              location: true,
             },
           },
         },
       },
-      images: {
-        orderBy: {
-          displayOrder: "asc",
-        },
-      },
-      _count: {
-        select: {
-          likes: true,
-          comments: true,
-          shares: true,
-        },
-      },
-      // Add this to check if current user liked the post
-      likes: {
-        where: {
-          userId: userId,
-        },
-        select: {
-          id: true,
-        },
-      },
-      hashtags: {
-        include: {
-          hashtag: {
-            select: {
-              id: true,
-              name: true,
-              usageCount: true,
-            },
-          },
-        },
-      },
+      post: { include: postInclude(userId) },
     },
   });
 
-  // Transform posts to include liked boolean
-  const postsWithLikedStatus = posts.map((post) => ({
+  // ── 3. Transform into unified feed items ────────────────────────────────
+  const postItems = rawPosts.map((post) => ({
     ...post,
-    liked: post.likes.length > 0, // true if user has liked this post
-    likes: undefined, // Remove the likes array since we only needed it for checking
+    liked: post.likes.length > 0,
+    likes: undefined,
+    isRepost: false,
+    _feedTimestamp: post.createdAt,
   }));
 
-  // Get cursors for next and previous pages
-  let nextCursor = null;
-  let previousCursor = null;
+  const shareItems = rawShares
+    .filter((share) => share.post && !share.post.isDeleted)
+    .map((share) => ({
+      ...share.post,
+      liked: share.post.likes.length > 0,
+      likes: undefined,
+      isRepost: true,
+      sharedBy: share.user,
+      sharedAt: share.createdAt,
+      shareCaption: share.caption ?? null,
+      _feedTimestamp: share.createdAt,
+    }));
 
-  if (posts.length > 0) {
-    const lastPost = posts[posts.length - 1];
-    const firstPost = posts[0];
-
-    // Check if there are more posts after the last one
-    const hasMoreAfterLast = await tx.post.findFirst({
-      where: {
-        userId: { in: userIds },
-        isDeleted: false,
-        createdAt: {
-          lt: lastPost.createdAt,
-        },
-      },
+  // ── 4. Merge, de-duplicate same post shown twice on the same page, sort ──
+  const seen = new Set();
+  const merged = [...postItems, ...shareItems]
+    .sort((a, b) => new Date(b._feedTimestamp) - new Date(a._feedTimestamp))
+    .filter((item) => {
+      // De-duplicate: a repost of a post already appearing as an original
+      // on this same page would be confusing; keep both but dedupe by
+      // (id + isRepost) so the same share isn't shown twice.
+      const key = `${item.id}::${item.isRepost ? (item.sharedBy?.id ?? "r") : "o"}`;
+      if (seen.has(key)) return false;
+      seen.add(key);
+      return true;
     });
 
-    if (hasMoreAfterLast) {
-      nextCursor = lastPost.id;
-    }
-
-    // Check if there are posts before the first one
-    const hasMoreBeforeFirst = await tx.post.findFirst({
-      where: {
-        userId: { in: userIds },
-        isDeleted: false,
-        createdAt: {
-          gt: firstPost.createdAt,
-        },
-      },
-    });
-
-    if (hasMoreBeforeFirst) {
-      previousCursor = firstPost.id;
-    }
-  }
+  // ── 5. Page slice ────────────────────────────────────────────────────────
+  const totalItems = merged.length;
+  const totalPages = Math.ceil(totalItems / limit) || 1;
+  const start = (page - 1) * limit;
+  const paginated = merged.slice(start, start + limit);
 
   return {
-    posts: postsWithLikedStatus,
+    posts: paginated,
     pagination: {
       page,
       limit,
-      totalPosts,
+      totalPosts: totalItems,
       totalPages,
-      hasNextPage,
-      hasPreviousPage,
-      nextCursor,
-      previousCursor,
+      hasNextPage: page < totalPages,
+      hasPreviousPage: page > 1,
     },
   };
 };
