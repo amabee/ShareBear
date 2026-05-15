@@ -484,7 +484,7 @@ export const useSharePost = () => {
   return useMutation({
     mutationFn: ({ postId, caption, privacyLevel }) =>
       apiClient.post(`/api/posts/${postId}/shares`, {
-        caption: caption || null,
+        ...(caption ? { caption } : {}),
         privacyLevel: privacyLevel || "PUBLIC",
       }),
     onSuccess: (data, { postId }) => {

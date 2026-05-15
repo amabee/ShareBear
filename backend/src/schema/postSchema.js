@@ -1122,9 +1122,8 @@ export const sharePostSchema = {
     type: "object",
     properties: {
       caption: {
-        type: "string",
+        type: ["string", "null"],
         maxLength: 500,
-        nullable: true,
       },
       privacyLevel: {
         type: "string",
