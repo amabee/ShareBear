@@ -32,6 +32,12 @@ export const useCreatePostStore = create(
     locationSearch: "",
     isDragging: false,
 
+    // Post settings
+    allowsComments: true,
+    allowsShares: true,
+    expiresIn: null,   // null | "24h" | "7d"
+    mood: null,        // null | emoji string
+
     // Submission state (for optimistic updates)
     isSubmitting: false,
     lastSubmittedPost: null,
@@ -56,6 +62,12 @@ export const useCreatePostStore = create(
     setFontSize: (size) => set({ fontSize: size }),
     setIsBold: (bold) => set({ isBold: bold }),
     setIsItalic: (italic) => set({ isItalic: italic }),
+
+    // Settings toggles
+    setAllowsComments: (v) => set({ allowsComments: v }),
+    setAllowsShares: (v) => set({ allowsShares: v }),
+    setExpiresIn: (v) => set({ expiresIn: v }),
+    setMood: (v) => set({ mood: v }),
 
     setActiveTab: (tab) => set({ activeTab: tab }),
     setShowEmojiPicker: (show) => set({ showEmojiPicker: show }),
@@ -90,6 +102,10 @@ export const useCreatePostStore = create(
         locationSearch: "",
         isDragging: false,
         isSubmitting: false,
+        allowsComments: true,
+        allowsShares: true,
+        expiresIn: null,
+        mood: null,
       }),
 
     // Helper function to determine content type
@@ -140,15 +156,18 @@ export const useCreatePostStore = create(
       const contentType = state.getContentType();
 
       const postData = {
-        userId: 39, // You might want to get this from auth context/store
-        caption: state.text.trim() || undefined, // Use caption instead of text
-        thumbnailUrl: undefined, // You might generate this for videos
+        userId: 39,
+        caption: state.text.trim() || undefined,
+        thumbnailUrl: undefined,
         location: state.selectedLocation || "",
-        taggedUsers: undefined, // You can add tagging functionality later
-        privacyLevel: undefined, // You can add privacy settings later
-        allowsComments: false, // You can make this configurable
-        allowsShares: false, // You can make this configurable
-        expiresAt: null, // You can add expiration functionality later
+        taggedUsers: undefined,
+        privacyLevel: undefined,
+        allowsComments: state.allowsComments,
+        allowsShares: state.allowsShares,
+        expiresAt: state.expiresIn
+          ? new Date(Date.now() + (state.expiresIn === "24h" ? 86400000 : 604800000)).toISOString()
+          : null,
+        mood: state.mood || null,
         contentType: contentType,
 
         // Additional data for your component (not sent to API)
