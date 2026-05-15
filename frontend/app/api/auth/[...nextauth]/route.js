@@ -54,60 +54,47 @@ export const authOptions = {
       //   hasUser: !!user,
       // });
 
-      // Ensure token is a valid object - initialize if null/undefined
+      // Ensure token is a valid object
       if (!token || typeof token !== "object") {
-        console.error("Invalid token object:", token);
-        token = {}; // Initialize as empty object instead of returning {}
+        token = {};
       }
 
       // Initial sign in
       if (account && user) {
-        console.log("Initial sign in");
         return {
           ...token,
           accessToken: user.accessToken,
           refreshToken: user.refreshToken,
           username: user.username,
-          email: user.email, // Make sure to include email
-          sub: user.id, // Make sure to include sub (user ID)
-          accessTokenExpires: Date.now() + 5 * 60 * 1000,
+          email: user.email,
+          sub: user.id,
+          accessTokenExpires: Date.now() + 15 * 60 * 1000, // 15 minutes
         };
       }
 
-      // Add a small buffer to prevent edge case race conditions
-      const bufferTime = 30 * 1000; // 30 seconds buffer
+      // 60-second buffer before actual expiry to avoid edge races
+      const bufferTime = 60 * 1000;
       const isExpired =
         token.accessTokenExpires &&
         Date.now() > token.accessTokenExpires - bufferTime;
 
-      // Return previous token if still valid
       if (!isExpired) {
-        console.log("Token still valid");
         return token;
       }
 
-      // Only refresh if we have a refresh token and no existing error
       if (token.refreshToken && !token.error) {
-        console.log("Token expired, refreshing...");
-
         try {
           const refreshedToken = await refreshAccessToken(token);
-
-          // If refresh failed, return a token with error instead of null
           if (refreshedToken.error) {
-            console.log("Refresh failed, marking token as expired");
             return {
               ...token,
               error: "RefreshAccessTokenError",
-              accessToken: null, // Clear the access token
-              accessTokenExpires: 0, // Mark as expired
+              accessToken: null,
+              accessTokenExpires: 0,
             };
           }
-
           return refreshedToken;
-        } catch (error) {
-          console.error("Refresh error:", error);
-          // Return error token instead of null
+        } catch {
           return {
             ...token,
             error: "RefreshAccessTokenError",
@@ -117,8 +104,6 @@ export const authOptions = {
         }
       }
 
-      console.log("No valid refresh token available");
-      // Return error token instead of null
       return {
         ...token,
         error: "RefreshAccessTokenError",
@@ -128,10 +113,8 @@ export const authOptions = {
     },
 
     async session({ session, token }) {
-      // If token is null/undefined or has an error, return null to force re-authentication
       if (!token || token.error === "RefreshAccessTokenError") {
-        console.log("Token error detected, forcing re-authentication");
-        return null; // This will redirect to sign-in page
+        return null;
       }
 
       // Ensure session.user exists
@@ -164,135 +147,60 @@ const handler = NextAuth(authOptions);
 const refreshPromises = new Map();
 
 async function refreshAccessToken(token) {
-  console.log("=== REFRESH TOKEN DEBUG START ===");
-  console.log("Input token object:", {
-    hasRefreshToken: !!token.refreshToken,
-    refreshTokenLength: token.refreshToken?.length,
-    refreshTokenStart: token.refreshToken?.substring(0, 20) + "...",
-    hasAccessToken: !!token.accessToken,
-    tokenKeys: Object.keys(token),
-  });
+  if (!token.refreshToken) {
+    return { ...token, error: "RefreshAccessTokenError" };
+  }
 
-  // Create a unique key for this refresh token
   const refreshKey = token.refreshToken;
 
-  // If there's already a refresh in progress for this token, wait for it
+  // Deduplicate concurrent refresh calls for the same token
   if (refreshPromises.has(refreshKey)) {
-    console.log(
-      "⏳ Refresh already in progress, waiting for existing promise..."
-    );
     try {
-      const result = await refreshPromises.get(refreshKey);
-      console.log("✅ Using result from concurrent refresh");
-      return result;
-    } catch (error) {
-      console.log("❌ Concurrent refresh failed, will try again");
+      return await refreshPromises.get(refreshKey);
+    } catch {
       refreshPromises.delete(refreshKey);
     }
   }
 
-  // Validate refresh token exists
-  if (!token.refreshToken) {
-    console.error("❌ No refresh token available");
-    return {
-      ...token,
-      error: "RefreshAccessTokenError",
-    };
-  }
-
-  // Create the refresh promise
   const refreshPromise = performRefresh(token);
   refreshPromises.set(refreshKey, refreshPromise);
 
   try {
     const result = await refreshPromise;
-    refreshPromises.delete(refreshKey); // Clear the promise on success
+    refreshPromises.delete(refreshKey);
     return result;
   } catch (error) {
-    refreshPromises.delete(refreshKey); // Clear the promise on error
+    refreshPromises.delete(refreshKey);
     throw error;
   }
 }
 
 async function performRefresh(token) {
   try {
-    const apiUrl = process.env.NEXT_PUBLIC_API_URL;
-    const endpoint = `${apiUrl}/api/auth/refresh`;
-
-    const requestBody = {
-      refreshToken: token.refreshToken,
-    };
-
-    console.log("🔄 Making refresh request:", {
-      url: endpoint,
-      refreshTokenPreview: token.refreshToken.substring(0, 20) + "...",
-      timestamp: new Date().toISOString(),
-    });
-
-    const response = await fetch(endpoint, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify(requestBody),
-    });
-
-    console.log("Response status:", response.status);
-
-    let refreshedTokens;
-    try {
-      refreshedTokens = await response.json();
-    } catch (parseError) {
-      console.error("❌ Failed to parse response JSON:", parseError);
-      throw new Error("Invalid JSON response");
-    }
-
-    console.log("Parsed response:", {
-      hasToken: !!refreshedTokens.token,
-      hasRefreshToken: !!refreshedTokens.refreshToken,
-      error: refreshedTokens.error,
-    });
-
-    if (!response.ok) {
-      console.error("❌ Refresh failed with status:", response.status);
-      console.error("❌ Error response:", refreshedTokens);
-      throw new Error(
-        refreshedTokens.message || refreshedTokens.error || "Refresh failed"
-      );
-    }
-
-    // Validate response structure
-    if (!refreshedTokens.token || !refreshedTokens.refreshToken) {
-      console.error("❌ Invalid response structure");
-      throw new Error("Invalid token response structure");
-    }
-
-    const newTokenObject = {
-      ...token,
-      accessToken: refreshedTokens.token,
-      refreshToken: refreshedTokens.refreshToken,
-      accessTokenExpires: Date.now() + 5 * 60 * 1000,
-      error: undefined,
-    };
-
-    console.log("✅ Token refresh successful!");
-    console.log(
-      "✅ New token expires at:",
-      new Date(newTokenObject.accessTokenExpires).toISOString()
+    const response = await fetch(
+      `${process.env.NEXT_PUBLIC_API_URL}/api/auth/refresh`,
+      {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ refreshToken: token.refreshToken }),
+      }
     );
-    console.log("=== REFRESH TOKEN DEBUG END ===");
 
-    return newTokenObject;
-  } catch (error) {
-    console.error("=== REFRESH TOKEN ERROR ===");
-    console.error("Error message:", error?.message);
-    console.error("Full error:", error);
-    console.error("=== END ERROR ===");
+    const refreshedTokens = await response.json();
+
+    if (!response.ok || !refreshedTokens.token || !refreshedTokens.refreshToken) {
+      throw new Error(refreshedTokens.message || refreshedTokens.error || "Refresh failed");
+    }
 
     return {
       ...token,
-      error: "RefreshAccessTokenError",
+      accessToken: refreshedTokens.token,
+      refreshToken: refreshedTokens.refreshToken,
+      accessTokenExpires: Date.now() + 15 * 60 * 1000, // 15 minutes
+      error: undefined,
     };
+  } catch {
+    return { ...token, error: "RefreshAccessTokenError" };
   }
 }
 
