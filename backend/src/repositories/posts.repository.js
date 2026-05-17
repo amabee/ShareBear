@@ -156,6 +156,8 @@ const postInclude = (userId) => ({
   images: { orderBy: { displayOrder: "asc" } },
   _count: { select: { likes: true, comments: true, shares: true } },
   likes: { where: { userId }, select: { id: true } },
+  savedPosts: { where: { userId }, select: { id: true } },
+  postReactions: { where: { userId }, select: { reaction: true }, take: 1 },
   hashtags: {
     include: {
       hashtag: { select: { id: true, name: true, usageCount: true } },
@@ -217,7 +219,11 @@ export const getPosts = async (tx, userId, paginationOptions = {}) => {
   const postItems = rawPosts.map((post) => ({
     ...post,
     liked: post.likes.length > 0,
+    bookmarked: post.savedPosts?.length > 0,
+    myReaction: post.postReactions?.[0]?.reaction ?? null,
     likes: undefined,
+    savedPosts: undefined,
+    postReactions: undefined,
     isRepost: false,
     feedKey: `post::${post.id}`,
     _feedTimestamp: post.createdAt,
@@ -228,7 +234,11 @@ export const getPosts = async (tx, userId, paginationOptions = {}) => {
     .map((share) => ({
       ...share.post,
       liked: share.post.likes.length > 0,
+      bookmarked: share.post.savedPosts?.length > 0,
+      myReaction: share.post.postReactions?.[0]?.reaction ?? null,
       likes: undefined,
+      savedPosts: undefined,
+      postReactions: undefined,
       isRepost: true,
       sharedBy: share.user,
       sharedAt: share.createdAt,
@@ -988,6 +998,20 @@ export const upsertCommentReaction = async (tx, commentId, userId, reaction) => 
 
 export const deleteCommentReaction = async (tx, commentId, userId) => {
   await tx.commentReaction.deleteMany({ where: { commentId, userId } });
+};
+
+// ─── SAVED POSTS ─────────────────────────────────────────────────────────────
+
+export const savePost = async (tx, postId, userId) => {
+  return await tx.savedPost.upsert({
+    where: { userId_postId: { userId, postId } },
+    create: { userId, postId },
+    update: {},
+  });
+};
+
+export const unsavePost = async (tx, postId, userId) => {
+  await tx.savedPost.deleteMany({ where: { userId, postId } });
 };
 
 export const getCommentReactions = async (tx, commentId) => {

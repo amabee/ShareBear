@@ -24,6 +24,8 @@ import {
   deleteCommentReaction as deleteCommentReactionService,
   getCommentReactions as getCommentReactionsService,
   getReplies as getRepliesService,
+  savePost as savePostService,
+  unsavePost as unsavePostService,
 } from "../services/posts.service.js";
 import {
   sanitizeInput,
@@ -721,6 +723,32 @@ export const getReplies = async (req, reply) => {
   } catch (error) {
     req.log.error(error);
     return reply.status(500).send({ error: "Failed to fetch replies" });
+  }
+};
+
+// ─── SAVED POSTS ─────────────────────────────────────────────────────────────
+
+export const savePost = async (req, reply) => {
+  const userId = req.user.userId;
+  const { postId } = req.params;
+  try {
+    await savePostService(req.server.prisma, postId, userId);
+    return reply.status(201).send({ bookmarked: true });
+  } catch (error) {
+    req.log.error(error);
+    return reply.status(500).send({ error: "Failed to save post" });
+  }
+};
+
+export const unsavePost = async (req, reply) => {
+  const userId = req.user.userId;
+  const { postId } = req.params;
+  try {
+    await unsavePostService(req.server.prisma, postId, userId);
+    return reply.send({ bookmarked: false });
+  } catch (error) {
+    req.log.error(error);
+    return reply.status(500).send({ error: "Failed to unsave post" });
   }
 };
 

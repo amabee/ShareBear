@@ -22,6 +22,8 @@ import {
   reactToComment,
   removeCommentReaction,
   getReplies,
+  savePost,
+  unsavePost,
 } from "../controllers/posts.controller.js";
 import {
   createPostSchema,
@@ -42,6 +44,8 @@ import {
   getSharesSchema,
   sharePostSchema,
   unsharePostSchema,
+  savePostSchema,
+  unsavePostSchemaRoute,
 } from "../schema/postSchema.js";
 import { handleMultipart } from "../middleware/multer.js";
 
@@ -121,6 +125,10 @@ export default async function postRoutes(fastify, opts) {
   fastify.post("/:postId/reactions", reactToPost);
   fastify.delete("/:postId/reactions", removePostReaction);
   fastify.get("/:postId/reactions", getPostReactions);
+
+  // FOR SAVE / BOOKMARK ROUTES
+  fastify.post("/:postId/save", { schema: savePostSchema }, savePost);
+  fastify.delete("/:postId/save", { schema: unsavePostSchemaRoute }, unsavePost);
 
   // FOR COMMENT REACTION + REPLY ROUTES
   fastify.post("/comments/:commentId/reactions", reactToComment);

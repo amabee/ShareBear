@@ -366,23 +366,89 @@ export const useUnlikePost = () => {
   });
 };
 
-// FOR BOOKMARK
+// ─── BOOKMARK / SAVE ────────────────────────────────────────────────────────
+
 export const useBookmarkPost = () => {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: (postId) => apiClient.post(`/api/posts/${postId}/bookmark`),
-    onSuccess: (data, postId) => {
-      queryClient.setQueryData(["posts"], (oldData) => {
-        if (!oldData) return oldData;
+    mutationFn: (postId) => apiClient.post(`/api/posts/${postId}/save`),
+    onMutate: async (postId) => {
+      await queryClient.cancelQueries({ queryKey: ["posts", "infinite"] });
+      const prev = queryClient.getQueryData(["posts", "infinite"]);
+      queryClient.setQueryData(["posts", "infinite"], (old) => {
+        if (!old) return old;
         return {
-          ...oldData,
-          posts: oldData.posts.map((post) =>
-            post.id === postId ? { ...post, bookmarked: true } : post
-          ),
+          ...old,
+          pages: old.pages.map((page) => ({
+            ...page,
+            posts: page.posts.map((post) =>
+              post.id === postId ? { ...post, bookmarked: true } : post
+            ),
+          })),
         };
       });
+      return { prev };
     },
+    onError: (_, __, context) => {
+      if (context?.prev) queryClient.setQueryData(["posts", "infinite"], context.prev);
+      toast.error("Failed to save post.");
+    },
+    onSuccess: () => toast.success("Post saved!"),
+  });
+};
+
+export const useUnbookmarkPost = () => {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: (postId) => apiClient.delete(`/api/posts/${postId}/save`),
+    onMutate: async (postId) => {
+      await queryClient.cancelQueries({ queryKey: ["posts", "infinite"] });
+      const prev = queryClient.getQueryData(["posts", "infinite"]);
+      queryClient.setQueryData(["posts", "infinite"], (old) => {
+        if (!old) return old;
+        return {
+          ...old,
+          pages: old.pages.map((page) => ({
+            ...page,
+            posts: page.posts.map((post) =>
+              post.id === postId ? { ...post, bookmarked: false } : post
+            ),
+          })),
+        };
+      });
+      return { prev };
+    },
+    onError: (_, __, context) => {
+      if (context?.prev) queryClient.setQueryData(["posts", "infinite"], context.prev);
+      toast.error("Failed to unsave post.");
+    },
+    onSuccess: () => toast.success("Post removed from saved."),
+  });
+};
+
+// ─── DELETE POST ─────────────────────────────────────────────────────────────
+
+export const useDeletePost = () => {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: (postId) => apiClient.delete(`/api/posts/${postId}`),
+    onSuccess: (_, postId) => {
+      queryClient.setQueryData(["posts", "infinite"], (old) => {
+        if (!old) return old;
+        return {
+          ...old,
+          pages: old.pages.map((page) => ({
+            ...page,
+            posts: page.posts.filter((post) => post.id !== postId),
+          })),
+        };
+      });
+      toast.success("Post deleted.");
+    },
+    onError: () => toast.error("Failed to delete post."),
   });
 };
 
@@ -566,10 +632,27 @@ export const useReactToPost = () => {
   return useMutation({
     mutationFn: ({ postId, reaction }) =>
       apiClient.post(`/api/posts/${postId}/reactions`, { reaction }),
-    onSuccess: (_, { postId }) => {
-      queryClient.invalidateQueries({ queryKey: ["postReactions", postId] });
+    onMutate: async ({ postId, reaction }) => {
+      await queryClient.cancelQueries({ queryKey: ["posts", "infinite"] });
+      const prev = queryClient.getQueryData(["posts", "infinite"]);
+      queryClient.setQueryData(["posts", "infinite"], (old) => {
+        if (!old) return old;
+        return {
+          ...old,
+          pages: old.pages.map((page) => ({
+            ...page,
+            posts: page.posts.map((post) =>
+              post.id === postId ? { ...post, myReaction: reaction } : post
+            ),
+          })),
+        };
+      });
+      return { prev };
     },
-    onError: () => toast.error("Failed to react."),
+    onError: (_, __, context) => {
+      if (context?.prev) queryClient.setQueryData(["posts", "infinite"], context.prev);
+      toast.error("Failed to react.");
+    },
   });
 };
 
@@ -578,10 +661,27 @@ export const useRemovePostReaction = () => {
 
   return useMutation({
     mutationFn: (postId) => apiClient.delete(`/api/posts/${postId}/reactions`),
-    onSuccess: (_, postId) => {
-      queryClient.invalidateQueries({ queryKey: ["postReactions", postId] });
+    onMutate: async (postId) => {
+      await queryClient.cancelQueries({ queryKey: ["posts", "infinite"] });
+      const prev = queryClient.getQueryData(["posts", "infinite"]);
+      queryClient.setQueryData(["posts", "infinite"], (old) => {
+        if (!old) return old;
+        return {
+          ...old,
+          pages: old.pages.map((page) => ({
+            ...page,
+            posts: page.posts.map((post) =>
+              post.id === postId ? { ...post, myReaction: null } : post
+            ),
+          })),
+        };
+      });
+      return { prev };
     },
-    onError: () => toast.error("Failed to remove reaction."),
+    onError: (_, __, context) => {
+      if (context?.prev) queryClient.setQueryData(["posts", "infinite"], context.prev);
+      toast.error("Failed to remove reaction.");
+    },
   });
 };
 

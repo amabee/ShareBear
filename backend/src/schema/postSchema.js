@@ -381,6 +381,8 @@ export const getPostsSchema = {
               expiresAt: { type: "string" },
               isDeleted: { type: "boolean" },
               liked: { type: "boolean" }, // Added this field
+              bookmarked: { type: "boolean" },
+              myReaction: { type: "string", nullable: true },
               hashtags: {
                 type: "array",
                 items: {
@@ -1321,6 +1323,30 @@ export const getSharesSchema = {
         },
       },
     },
+    500: { type: "object", properties: { error: { type: "string" } } },
+  },
+};
+
+export const savePostSchema = {
+  params: {
+    type: "object",
+    properties: { postId: { type: "string" } },
+    required: ["postId"],
+  },
+  response: {
+    201: { type: "object", properties: { bookmarked: { type: "boolean" } } },
+    500: { type: "object", properties: { error: { type: "string" } } },
+  },
+};
+
+export const unsavePostSchemaRoute = {
+  params: {
+    type: "object",
+    properties: { postId: { type: "string" } },
+    required: ["postId"],
+  },
+  response: {
+    200: { type: "object", properties: { bookmarked: { type: "boolean" } } },
     500: { type: "object", properties: { error: { type: "string" } } },
   },
 };

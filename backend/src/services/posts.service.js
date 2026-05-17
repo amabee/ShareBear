@@ -23,6 +23,8 @@ import {
   deleteCommentReaction as deleteCommentReactionRepo,
   getCommentReactions as getCommentReactionsRepo,
   getReplies as getRepliesRepo,
+  savePost as savePostRepo,
+  unsavePost as unsavePostRepo,
 } from "../repositories/posts.repository.js";
 import * as notificationService from "./notifications.service.js";
 
@@ -240,5 +242,19 @@ export const getCommentReactions = async (prisma, commentId) => {
 export const getReplies = async (prisma, commentId, paginationOptions = {}) => {
   return await prisma.$transaction(async (tx) => {
     return await getRepliesRepo(tx, commentId, paginationOptions);
+  });
+};
+
+// ─── SAVED POSTS ─────────────────────────────────────────────────────────────
+
+export const savePost = async (prisma, postId, userId) => {
+  return await prisma.$transaction(async (tx) => {
+    return await savePostRepo(tx, postId, userId);
+  });
+};
+
+export const unsavePost = async (prisma, postId, userId) => {
+  return await prisma.$transaction(async (tx) => {
+    return await unsavePostRepo(tx, postId, userId);
   });
 };
