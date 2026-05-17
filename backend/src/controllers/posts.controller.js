@@ -565,6 +565,7 @@ export const sharePost = async (req, reply) => {
     if (error.message.includes("Shares are not allowed")) {
       return reply.status(403).send({ error: error.message });
     }
+    // "already shared" is no longer thrown; left as dead-code guard just in case
     if (error.message.includes("already shared")) {
       return reply.status(409).send({ error: error.message });
     }

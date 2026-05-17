@@ -890,14 +890,9 @@ export const sharePost = async (tx, postId, userId, shareData = {}) => {
     throw new Error("Shares are not allowed on this post");
   }
 
-  // Check if user already shared this post
-  const existingShare = await tx.share.findFirst({
-    where: { postId, userId },
-  });
-
-  if (existingShare) {
-    throw new Error("Post already shared by user");
-  }
+  // If user already shared this post, delete it first so the new share
+  // gets a fresh createdAt (re-share always bubbles to the top of the feed)
+  await tx.share.deleteMany({ where: { postId, userId } });
 
   // Create the share
   const share = await tx.share.create({

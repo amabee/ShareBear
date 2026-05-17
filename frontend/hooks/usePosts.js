@@ -491,6 +491,7 @@ export const useSharePost = () => {
         privacyLevel: privacyLevel || "PUBLIC",
       }),
     onSuccess: (data, { postId }) => {
+      // Optimistically bump the share count on the original post
       queryClient.setQueryData(["posts", "infinite"], (oldData) => {
         if (!oldData) return oldData;
         return {
@@ -512,15 +513,12 @@ export const useSharePost = () => {
           })),
         };
       });
+      // Refetch so the new repost card appears at the top of the feed
+      queryClient.invalidateQueries({ queryKey: ["posts", "infinite"] });
       toast.success("Post shared!");
     },
     onError: (error) => {
-      const msg = error?.response?.data?.error;
-      if (msg?.includes("already shared")) {
-        toast.error("You already shared this post.");
-      } else {
-        toast.error("Failed to share post.");
-      }
+      toast.error("Failed to share post.");
     },
   });
 };
