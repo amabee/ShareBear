@@ -425,6 +425,30 @@ export const getPostsSchema = {
                   shares: { type: "number" },
                 },
               },
+              // Repost / share fields
+              isRepost: { type: "boolean" },
+              feedKey: { type: "string" },
+              shared: { type: "boolean" },
+              sharedAt: { type: "string" },
+              shareCaption: { type: "string", nullable: true },
+              sharedBy: {
+                type: "object",
+                nullable: true,
+                properties: {
+                  id: { type: "number" },
+                  username: { type: "string" },
+                  userInfo: {
+                    type: "object",
+                    nullable: true,
+                    properties: {
+                      firstName: { type: "string" },
+                      lastName: { type: "string" },
+                      displayName: { type: "string" },
+                      profilePictureUrl: { type: "string" },
+                    },
+                  },
+                },
+              },
             },
           },
         },
