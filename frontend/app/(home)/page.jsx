@@ -53,7 +53,7 @@ const HomePage = () => {
 
           {/* ── Left Sidebar ─────────────────────────────────── */}
           <aside className="hidden lg:flex flex-col w-[280px] xl:w-[300px] shrink-0">
-            <div className="sticky top-6 space-y-4 overflow-y-auto max-h-[calc(100vh-3rem)] pb-8">
+            <div className="sidebar-scroll sticky top-6 space-y-4 overflow-y-auto max-h-[calc(100vh-3rem)] pb-24">
               <ProfileCard />
               <SidebarNav />
             </div>
