@@ -31,7 +31,7 @@ export default function ProfileCard() {
     rounded-2xl bg-white border-none shadow-lg shadow-primary/15 dark:bg-[#1E1E2F] text-gray-900 dark:text-white p-0"
     >
       {/* Cover Photo */}
-      <div className="relative w-full h-36">
+      <div className="relative w-full h-28">
         <img
           src={
             `${
@@ -44,7 +44,7 @@ export default function ProfileCard() {
         />
       </div>
 
-      <CardContent className="relative pt-0 px-6 pb-6">
+      <CardContent className="relative pt-0 px-5 pb-4">
         {/* Avatar */}
         <div className="absolute left-1/2 -top-18 transform -translate-x-1/2">
           <Avatar className="h-22 w-22 shadow-md">

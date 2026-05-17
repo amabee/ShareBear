@@ -1,59 +1,14 @@
 "use client";
-import Link from "next/link";
-import { usePathname } from "next/navigation";
-import { cn } from "@/lib/utils";
-import {
-  Home,
-  Search,
-  Heart,
-  MessageCircle,
-  PlaySquare,
-  BarChart3,
-  MessageSquare,
-} from "lucide-react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { MessageSquare } from "lucide-react";
 import { useSuggestionsStore } from "@/stores/useSuggestionsStore";
 
-const NAV_ITEMS = [
-  { href: "/", icon: Home, label: "Home" },
-  { href: "/search", icon: Search, label: "Explore" },
-  { href: "/notifications", icon: Heart, label: "Favorites" },
-  { href: "/messages", icon: MessageCircle, label: "Messages" },
-  { href: "/reels", icon: PlaySquare, label: "Reels" },
-  { href: "/stats", icon: BarChart3, label: "Stats" },
-];
-
 export function SidebarNav() {
-  const pathname = usePathname();
   const { getActiveSuggestions } = useSuggestionsStore();
   const contacts = getActiveSuggestions().slice(0, 6);
 
   return (
-    <div className="space-y-5">
-      {/* Navigation links */}
-      <nav className="space-y-0.5">
-        {NAV_ITEMS.map(({ href, icon: Icon, label }) => {
-          const isActive =
-            href === "/" ? pathname === "/" : pathname.startsWith(href);
-          return (
-            <Link
-              key={href}
-              href={href}
-              className={cn(
-                "flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-sm font-medium transition-all duration-150",
-                isActive
-                  ? "bg-foreground text-background"
-                  : "text-muted-foreground hover:text-foreground hover:bg-muted"
-              )}
-            >
-              <Icon className="h-[18px] w-[18px] shrink-0" />
-              {label}
-            </Link>
-          );
-        })}
-
-      </nav>
-
+    <div>
       {/* Contacts — populated once Suggestions loads */}
       {contacts.length > 0 && (
         <div className="space-y-2">
