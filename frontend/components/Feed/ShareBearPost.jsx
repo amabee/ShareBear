@@ -204,8 +204,8 @@ export function ShareBearPost({ post }) {
     <article className="animate-fade-in-up">
       <div className="bg-card dark:bg-[#141420] rounded-2xl overflow-hidden shadow-sm hover:shadow-lg transition-shadow duration-300">
 
-        <div className="flex items-center justify-between px-4 pt-4 pb-3">
-          <div className="flex items-center gap-3">
+        <div className="flex items-center justify-between px-3 pt-3 pb-2">
+          <div className="flex items-center gap-2.5">
             <UserAvatar user={post.user} />
             <UserInfo user={post.user} timestamp={post.timestamp} location={post.location} />
           </div>
@@ -220,7 +220,7 @@ export function ShareBearPost({ post }) {
         </div>
 
         {post.caption && !hasMedia && (
-          <div className="px-4 pb-5 pt-1">
+          <div className="px-3 pb-3 pt-0.5">
             <CaptionsWithHashtags caption={post.caption} expandable />
           </div>
         )}
@@ -244,12 +244,12 @@ export function ShareBearPost({ post }) {
         )}
 
         {post.caption && hasMedia && (
-          <div className="px-4 pt-3">
+          <div className="px-3 pt-2">
             <CaptionsWithHashtags caption={post.caption} expandable />
           </div>
         )}
 
-        <div className="px-2 pt-1">
+        <div className="px-1">
           <ActionButtons
             postId={post.id}
             onCommentClick={handleActionClick}
@@ -261,12 +261,12 @@ export function ShareBearPost({ post }) {
         </div>
 
         {showComments && allowsComments && (
-          <div className="px-4 pb-4 pt-1 border-t border-border/50">
+          <div className="px-3 pb-3 pt-1 border-t border-border/50">
             <CommentSection postId={post.id} />
           </div>
         )}
         {!allowsComments && (
-          <p className="text-xs text-muted-foreground text-center pb-3">Comments are disabled.</p>
+          <p className="text-xs text-muted-foreground text-center pb-2">Comments are disabled.</p>
         )}
       </div>
 

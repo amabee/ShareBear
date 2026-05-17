@@ -33,25 +33,25 @@ const ActionButtons = ({ postId, onCommentClick, showComments, likeCount = 0, co
   };
 
   return (
-    <div className="flex items-center gap-0.5 py-1">
+    <div className="flex items-center gap-0.5 py-0.5">
       {/* Like */}
       <button
         onClick={handleLikeClick}
         disabled={isMutating}
         className={cn(
-          "flex items-center gap-1.5 px-3 py-2 rounded-xl transition-all duration-200 hover:bg-muted active:scale-95",
+          "flex items-center gap-1 px-2.5 py-1.5 rounded-xl transition-all duration-200 hover:bg-muted active:scale-95",
           liked ? "text-rose-500" : "text-muted-foreground hover:text-foreground"
         )}
       >
         <Heart
           className={cn(
-            "h-[22px] w-[22px] transition-all",
+            "h-[20px] w-[20px] transition-all cursor-pointer",
             liked && "fill-rose-500",
             likeAnimating && "animate-like-pop"
           )}
         />
         {likeCount > 0 && (
-          <span className="text-[13px] font-semibold tabular-nums">{formatCount(likeCount)}</span>
+          <span className="text-xs font-semibold tabular-nums">{formatCount(likeCount)}</span>
         )}
       </button>
 
@@ -60,13 +60,13 @@ const ActionButtons = ({ postId, onCommentClick, showComments, likeCount = 0, co
         <button
           onClick={onCommentClick}
           className={cn(
-            "flex items-center gap-1.5 px-3 py-2 rounded-xl transition-all duration-200 hover:bg-muted active:scale-95",
+            "flex items-center gap-1 px-2.5 py-1.5 rounded-xl transition-all duration-200 hover:bg-muted active:scale-95",
             showComments ? "text-blue-500" : "text-muted-foreground hover:text-foreground"
           )}
         >
-          <MessageCircle className={cn("h-[22px] w-[22px]", showComments && "fill-blue-500/20 stroke-blue-500")} />
+          <MessageCircle className={cn("h-[20px] w-[20px]", showComments && "fill-blue-500/20 stroke-blue-500")} />
           {commentCount > 0 && (
-            <span className="text-[13px] font-semibold tabular-nums">{formatCount(commentCount)}</span>
+            <span className="text-xs font-semibold tabular-nums">{formatCount(commentCount)}</span>
           )}
         </button>
       )}
@@ -75,11 +75,11 @@ const ActionButtons = ({ postId, onCommentClick, showComments, likeCount = 0, co
       {allowsShares && (
         <button
           onClick={() => onCommentClick?.("share")}
-          className="flex items-center gap-1.5 px-3 py-2 rounded-xl text-muted-foreground hover:text-foreground hover:bg-muted transition-all duration-200 active:scale-95"
+          className="flex items-center gap-1 px-2.5 py-1.5 rounded-xl text-muted-foreground hover:text-foreground hover:bg-muted transition-all duration-200 active:scale-95"
         >
-          <Share2 className="h-[22px] w-[22px]" />
+          <Share2 className="h-[20px] w-[20px]" />
           {shareCount > 0 && (
-            <span className="text-[13px] font-semibold tabular-nums">{formatCount(shareCount)}</span>
+            <span className="text-xs font-semibold tabular-nums">{formatCount(shareCount)}</span>
           )}
         </button>
       )}

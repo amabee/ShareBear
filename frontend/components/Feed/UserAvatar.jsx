@@ -3,7 +3,7 @@ import { Avatar, AvatarImage, AvatarFallback } from "../ui/avatar";
 
 const UserAvatar = ({ user }) => {
   return (
-    <Avatar className="h-11 w-11 ring-2 ring-background">
+    <Avatar className="h-9 w-9 ring-2 ring-background">
       <AvatarImage
         src={user?.avatar || "/placeholder.svg"}
         alt={user?.displayName}
