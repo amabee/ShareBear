@@ -43,6 +43,12 @@ export const getPosts = async (req, rep) => {
       cursor,
     });
 
+    // DEBUG: log feed composition so we can verify reposts are included
+    const reposts = result.posts.filter((p) => p.isRepost);
+    req.log.info(
+      `[getPosts] userId=${currentUserId} page=${page} total=${result.posts.length} reposts=${reposts.length} repostKeys=${JSON.stringify(reposts.map((p) => p.feedKey))}`
+    );
+
     const encodedPosts = result.posts.map((post) => ({
       ...post,
       caption: safeDecodeOutput(post.caption),

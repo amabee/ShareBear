@@ -211,6 +211,8 @@ export const getPosts = async (tx, userId, paginationOptions = {}) => {
     },
   });
 
+  console.log(`[getPosts] userId=${userId} followingIds=${JSON.stringify(followingIds)} rawPosts=${rawPosts.length} rawShares=${rawShares.length}`);
+
   // ── 3. Transform into unified feed items ────────────────────────────────
   const postItems = rawPosts.map((post) => ({
     ...post,
