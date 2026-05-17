@@ -1111,6 +1111,7 @@ export const getCommentsSchema = {
                   replies: { type: "integer" },
                 },
               },
+              myReaction: { type: "string", nullable: true },
             },
           },
         },

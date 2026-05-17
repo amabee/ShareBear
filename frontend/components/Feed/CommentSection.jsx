@@ -114,7 +114,7 @@ function CommentItem({ comment, postId, currentUserId, depth = 0, activeReplyId,
   const removeReaction = useRemoveCommentReaction();
   const isOwner = comment.userId === currentUserId;
   const [showReplies, setShowReplies] = useState(false);
-  const [myReaction, setMyReaction] = useState(null);
+  const [myReaction, setMyReaction] = useState(comment.myReaction ?? null);
   const replyCount = comment._count?.replies ?? 0;
   const isReplying = activeReplyId === comment.id;
   const replyThreadRef = useRef(null);

@@ -172,9 +172,9 @@ export const deleteComment = async (prisma, commentId, userId) => {
   });
 };
 
-export const getComments = async (prisma, postId, paginationOptions = {}) => {
+export const getComments = async (prisma, postId, paginationOptions = {}, userId = null) => {
   return await prisma.$transaction(async (tx) => {
-    return await getCommentsRepo(tx, postId, paginationOptions);
+    return await getCommentsRepo(tx, postId, paginationOptions, userId);
   });
 };
 

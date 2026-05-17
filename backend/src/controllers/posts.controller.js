@@ -495,6 +495,7 @@ export const deleteComment = async (req, reply) => {
 };
 
 export const getComments = async (req, reply) => {
+  const currentUserId = req.user?.userId ?? null;
   const { postId } = req.params;
   const { page = 1, limit = 20, cursor } = req.query;
 
@@ -502,13 +503,15 @@ export const getComments = async (req, reply) => {
     const result = await getCommentsService(req.server.prisma, postId, {
       page: parseInt(page),
       limit: parseInt(limit),
-      cursor: cursor ? parseInt(cursor) : undefined, // Convert cursor to integer
-    });
+      cursor: cursor ? parseInt(cursor) : undefined,
+    }, currentUserId);
 
     // Encode output for all comments and replies
     const encodedComments = result.comments.map((comment) => ({
       ...comment,
       content: encodeOutput(comment.content),
+      myReaction: comment.reactions?.[0]?.reaction ?? null,
+      reactions: undefined,
       replies: comment.replies?.map((reply) => ({
         ...reply,
         content: encodeOutput(reply.content),

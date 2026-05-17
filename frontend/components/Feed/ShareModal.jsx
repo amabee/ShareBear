@@ -1,7 +1,7 @@
 "use client";
 import { useState, useRef } from "react";
 import { useSharePost, useUnsharePost } from "@/hooks/usePosts";
-import { Dialog, DialogContent } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -38,7 +38,10 @@ function PostPreviewCard({ post }) {
   const timeAgo = post.createdAt
     ? formatDistanceToNow(new Date(post.createdAt), { addSuffix: true })
     : null;
-  const firstImage = post.images?.[0]?.imageUrl;
+  const rawFirstImage = post.images?.[0]?.imageUrl;
+  const firstImage = rawFirstImage
+    ? `${process.env.NEXT_PUBLIC_IMAGE_HOSTING_URL}/posts/${rawFirstImage.split("/").pop()}`
+    : null;
   const moreImages = (post.images?.length ?? 0) - 1;
 
   return (
@@ -125,6 +128,9 @@ export default function ShareModal({ postId, post, shared, open, onOpenChange })
         showCloseButton={false}
         className="max-w-md p-0 overflow-hidden gap-0 rounded-2xl"
       >
+        <DialogTitle className="sr-only">
+          {shared ? "Manage Share" : "Share Post"}
+        </DialogTitle>
         {/* ── Header ────────────────────────────────────────────── */}
         <div className="flex items-center justify-between px-5 pt-5 pb-4 border-b border-border/50">
           <div className="flex items-center gap-3">

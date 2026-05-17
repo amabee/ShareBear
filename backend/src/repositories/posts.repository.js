@@ -734,7 +734,7 @@ export const deleteComment = async (tx, commentId, userId) => {
   return { success: true, message: "Comment deleted successfully" };
 };
 
-export const getComments = async (tx, postId, paginationOptions = {}) => {
+export const getComments = async (tx, postId, paginationOptions = {}, userId = null) => {
   const { page = 1, limit = 20, cursor } = paginationOptions;
 
   // Build the where clause
@@ -810,6 +810,15 @@ export const getComments = async (tx, postId, paginationOptions = {}) => {
           replies: true,
         },
       },
+      ...(userId
+        ? {
+            reactions: {
+              where: { userId },
+              select: { reaction: true },
+              take: 1,
+            },
+          }
+        : {}),
     },
   });
 
