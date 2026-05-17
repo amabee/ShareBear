@@ -15,7 +15,7 @@ import { cn } from "@/lib/utils";
 import { formatDistanceToNow } from "date-fns";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 
-// â”€â”€ Nested original-post card used inside a repost â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// Nested original-post card shown inside a repost
 function OriginalPostCard({ post }) {
   const hasMedia = post.images && post.images.length > 0;
   const authorName =
@@ -25,15 +25,13 @@ function OriginalPostCard({ post }) {
       .join(" ") ??
     post.user?.username ??
     "Unknown";
-  const avatarSrc =
-    post.user?.userInfo?.profilePictureUrl || post.user?.avatar;
+  const avatarSrc = post.user?.userInfo?.profilePictureUrl || post.user?.avatar;
   const timeAgo = post.createdAt
     ? formatDistanceToNow(new Date(post.createdAt), { addSuffix: true })
     : null;
 
   return (
     <div className="mx-3 mb-3 rounded-xl border border-border/60 bg-muted/30 overflow-hidden">
-      {/* Original author header */}
       <div className="flex items-center gap-2.5 px-3 pt-3 pb-2">
         <Avatar className="h-8 w-8 ring-1 ring-background">
           <AvatarImage src={avatarSrc} className="object-cover" />
@@ -45,19 +43,17 @@ function OriginalPostCard({ post }) {
           <p className="text-sm font-semibold leading-tight truncate">{authorName}</p>
           <p className="text-xs text-muted-foreground leading-tight">
             {post.user?.username ? `@${post.user.username}` : ""}
-            {timeAgo ? ` Â· ${timeAgo}` : ""}
+            {timeAgo ? ` · ${timeAgo}` : ""}
           </p>
         </div>
       </div>
 
-      {/* Original caption */}
       {post.caption && (
         <div className={cn("px-3", hasMedia ? "pb-2" : "pb-3")}>
           <CaptionsWithHashtags caption={post.caption} expandable />
         </div>
       )}
 
-      {/* Original media */}
       {hasMedia && (
         <div className="rounded-b-xl overflow-hidden">
           <MediaCarousel images={post.images} postId={post.id} />
@@ -67,7 +63,6 @@ function OriginalPostCard({ post }) {
   );
 }
 
-// â”€â”€ Main post component â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 export function ShareBearPost({ post }) {
   const { initializePostUI } = usePostsStore();
   const queryClient = useQueryClient();
@@ -120,7 +115,6 @@ export function ShareBearPost({ post }) {
 
   const hasMedia = post.images && post.images.length > 0;
 
-  // â”€â”€ Sharer info (used when this is a repost) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
   const sharerName =
     post.sharedBy?.userInfo?.displayName ??
     [post.sharedBy?.userInfo?.firstName, post.sharedBy?.userInfo?.lastName]
@@ -131,7 +125,7 @@ export function ShareBearPost({ post }) {
     ? formatDistanceToNow(new Date(post.sharedAt), { addSuffix: true })
     : null;
 
-  // â”€â”€ Repost layout â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+  // Repost layout
   if (post.isRepost) {
     return (
       <article className="animate-fade-in-up">
@@ -147,15 +141,14 @@ export function ShareBearPost({ post }) {
                     {sharerName?.[0]?.toUpperCase() ?? "?"}
                   </AvatarFallback>
                 </Avatar>
-                {/* Repost badge */}
                 <div className="absolute -bottom-0.5 -right-0.5 h-4 w-4 rounded-full bg-green-500 flex items-center justify-center ring-1 ring-background">
                   <Repeat2 className="h-2.5 w-2.5 text-white" />
                 </div>
               </div>
               <div>
-                <p className="text-sm font-semibold leading-tight">{sharerName}</p>
+                <p className="text-sm font-semibold leading-tight">{sharerName ?? "Someone"}</p>
                 <p className="text-xs text-muted-foreground leading-tight">
-                  shared a post{sharedTimeAgo ? ` Â· ${sharedTimeAgo}` : ""}
+                  shared a post{sharedTimeAgo ? ` · ${sharedTimeAgo}` : ""}
                 </p>
               </div>
             </div>
@@ -164,17 +157,16 @@ export function ShareBearPost({ post }) {
             </button>
           </div>
 
-          {/* Sharer's optional caption */}
+          {/* Sharer optional caption */}
           {post.shareCaption && (
             <div className="px-4 pb-3 -mt-1">
-              <p className="text-sm text-foreground">{post.shareCaption}</p>
+              <p className="text-sm">{post.shareCaption}</p>
             </div>
           )}
 
-          {/* Original post card */}
+          {/* Original post nested card */}
           <OriginalPostCard post={post} />
 
-          {/* Action bar â€” operates on the original post's counts */}
           <div className="px-2 pt-1">
             <ActionButtons
               postId={post.id}
@@ -192,9 +184,7 @@ export function ShareBearPost({ post }) {
             </div>
           )}
           {!allowsComments && (
-            <p className="text-xs text-muted-foreground text-center pb-3">
-              Comments are disabled.
-            </p>
+            <p className="text-xs text-muted-foreground text-center pb-3">Comments are disabled.</p>
           )}
         </div>
 
@@ -208,12 +198,11 @@ export function ShareBearPost({ post }) {
     );
   }
 
-  // â”€â”€ Regular post layout â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+  // Regular post layout
   return (
     <article className="animate-fade-in-up">
       <div className="bg-card dark:bg-[#141420] rounded-2xl overflow-hidden shadow-sm hover:shadow-lg transition-shadow duration-300">
 
-        {/* Header */}
         <div className="flex items-center justify-between px-4 pt-4 pb-3">
           <div className="flex items-center gap-3">
             <UserAvatar user={post.user} />
@@ -229,14 +218,12 @@ export function ShareBearPost({ post }) {
           </div>
         </div>
 
-        {/* Text-only caption */}
         {post.caption && !hasMedia && (
           <div className="px-4 pb-5 pt-1">
             <CaptionsWithHashtags caption={post.caption} expandable />
           </div>
         )}
 
-        {/* Media with double-tap */}
         {hasMedia && (
           <div
             className="relative"
@@ -249,20 +236,18 @@ export function ShareBearPost({ post }) {
                 className="pointer-events-none absolute z-10"
                 style={{ left: heartPos.x, top: heartPos.y }}
               >
-                <span className="text-7xl animate-heart-burst block drop-shadow-lg">â¤ï¸</span>
+                <span className="text-7xl animate-heart-burst block drop-shadow-lg">❤️</span>
               </div>
             )}
           </div>
         )}
 
-        {/* Caption below media */}
         {post.caption && hasMedia && (
           <div className="px-4 pt-3">
             <CaptionsWithHashtags caption={post.caption} expandable />
           </div>
         )}
 
-        {/* Action bar */}
         <div className="px-2 pt-1">
           <ActionButtons
             postId={post.id}
@@ -280,9 +265,7 @@ export function ShareBearPost({ post }) {
           </div>
         )}
         {!allowsComments && (
-          <p className="text-xs text-muted-foreground text-center pb-3">
-            Comments are disabled.
-          </p>
+          <p className="text-xs text-muted-foreground text-center pb-3">Comments are disabled.</p>
         )}
       </div>
 
@@ -295,4 +278,3 @@ export function ShareBearPost({ post }) {
     </article>
   );
 }
-

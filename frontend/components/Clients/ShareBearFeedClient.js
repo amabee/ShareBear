@@ -45,6 +45,15 @@ export function ShareBearInfiniteFeedClient() {
     });
   })();
 
+  // DEV: log feed composition to browser console
+  if (process.env.NODE_ENV === "development" && allPosts.length > 0) {
+    const reposts = allPosts.filter((p) => p.isRepost);
+    console.log(
+      `[Feed] ${allPosts.length} posts total, ${reposts.length} reposts`,
+      reposts.map((p) => ({ feedKey: p.feedKey, sharedBy: p.sharedBy?.username }))
+    );
+  }
+
   if (isLoading)
     return (
       <div className="flex justify-center items-center h-32">
