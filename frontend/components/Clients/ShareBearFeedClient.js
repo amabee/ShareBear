@@ -33,8 +33,17 @@ export function ShareBearInfiniteFeedClient() {
     [isLoading, hasNextPage, isFetchingNextPage, fetchNextPage]
   );
 
-  // Flatten all posts from all pages
-  const allPosts = data?.pages?.flatMap((page) => page.posts || []) || [];
+  // Flatten and deduplicate by feedKey (falls back to id).
+  // Deduplication guards against offset drift when new content arrives between page fetches.
+  const allPosts = (() => {
+    const seen = new Set();
+    return (data?.pages?.flatMap((page) => page.posts || []) || []).filter((post) => {
+      const key = post.feedKey ?? post.id;
+      if (seen.has(key)) return false;
+      seen.add(key);
+      return true;
+    });
+  })();
 
   if (isLoading)
     return (
