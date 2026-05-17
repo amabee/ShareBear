@@ -6,6 +6,9 @@ import {
   StoriesSkeleton,
 } from "@/components/Reusables/Skeletons";
 import ProfileCardSkeleton from "@/components/Skeletons/ProfileCardSkeleton";
+import { SidebarNav } from "@/components/Reusables/SidebarNav";
+import { Search, Camera } from "lucide-react";
+import Link from "next/link";
 import dynamic from "next/dynamic";
 
 const ProfileCard = dynamic(() => import("@/components/Profile/ProfileCard"), {
@@ -18,7 +21,7 @@ const Suggestions = dynamic(
   {
     ssr: false,
     loading: () => (
-      <div className="h-96 bg-gray-100 animate-pulse rounded-lg" />
+      <div className="h-64 bg-muted animate-pulse rounded-2xl" />
     ),
   }
 );
@@ -45,22 +48,41 @@ const ShareBearInfiniteFeedClient = dynamic(
 const HomePage = () => {
   return (
     <HomePageLayout>
-      <div className="max-w-7xl mx-auto px-4 py-6">
-        <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
-          <div className="hidden lg:block">
-            <div className="sticky top-24">
+      <div className="max-w-[1400px] mx-auto px-4 lg:px-6 py-4">
+        <div className="flex gap-6">
+
+          {/* ── Left Sidebar ─────────────────────────────────── */}
+          <aside className="hidden lg:flex flex-col w-[220px] xl:w-[240px] shrink-0">
+            <div className="sticky top-6 space-y-4 overflow-y-auto max-h-[calc(100vh-3rem)] pb-8">
               <ProfileCard />
+              <SidebarNav />
             </div>
-          </div>
-          <div className="lg:col-span-2 space-y-6">
+          </aside>
+
+          {/* ── Center Feed ──────────────────────────────────── */}
+          <main className="flex-1 min-w-0 space-y-4">
+            {/* Search bar — links to /search */}
+            <Link href="/search" className="block">
+              <div className="flex items-center gap-3 px-4 py-3 rounded-2xl bg-muted/60 border border-border/40 hover:border-border hover:bg-muted/80 transition-all cursor-pointer">
+                <Search className="h-4 w-4 text-muted-foreground shrink-0" />
+                <span className="text-sm text-muted-foreground flex-1 select-none">
+                  Search ShareBear…
+                </span>
+                <Camera className="h-4 w-4 text-muted-foreground shrink-0" />
+              </div>
+            </Link>
+
             <Stories />
             <ShareBearInfiniteFeedClient />
-          </div>
-          <div className="hidden lg:block">
-            <div className="sticky top-20">
+          </main>
+
+          {/* ── Right Sidebar ────────────────────────────────── */}
+          <aside className="hidden xl:flex flex-col w-[260px] shrink-0">
+            <div className="sticky top-6 space-y-4 overflow-y-auto max-h-[calc(100vh-3rem)] pb-8">
               <Suggestions />
             </div>
-          </div>
+          </aside>
+
         </div>
       </div>
     </HomePageLayout>
