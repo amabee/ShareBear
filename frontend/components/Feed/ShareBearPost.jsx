@@ -190,6 +190,7 @@ export function ShareBearPost({ post }) {
 
         <ShareModal
           postId={post.id}
+          post={post}
           shared={shared}
           open={shareModalOpen}
           onOpenChange={setShareModalOpen}
@@ -271,6 +272,7 @@ export function ShareBearPost({ post }) {
 
       <ShareModal
         postId={post.id}
+        post={post}
         shared={shared}
         open={shareModalOpen}
         onOpenChange={setShareModalOpen}
