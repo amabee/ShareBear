@@ -1,3 +1,5 @@
+import { randomUUID } from "crypto";
+
 // FOR CREATING LOGS
 export const logEvent = async (
   prisma,
@@ -19,6 +21,7 @@ export const logEvent = async (
   try {
     return await prisma.systemLogs.create({
       data: {
+        id: randomUUID(),
         level,
         source,
         message,

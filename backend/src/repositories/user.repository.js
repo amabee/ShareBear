@@ -290,7 +290,7 @@ export const getSuggestedUsers = async (prisma, userIdentifier, limit = 10) => {
     where: { username: userIdentifier },
     select: {
       id: true,
-      following: {
+      follow_follow_followerIdTouser: {
         select: {
           followingId: true,
         },
@@ -303,7 +303,7 @@ export const getSuggestedUsers = async (prisma, userIdentifier, limit = 10) => {
   }
 
   const currentUserId = currentUser.id;
-  const followingIds = currentUser.following.map((f) => f.followingId);
+  const followingIds = currentUser.follow_follow_followerIdTouser.map((f) => f.followingId);
 
   // ✅ Manual random: Get total count
   const totalCount = await prisma.user.count({
