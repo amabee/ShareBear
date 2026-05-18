@@ -8,9 +8,14 @@ const getPostCreatedAt = async (prisma, postId) => {
 };
 
 export const createPost = async (tx, userId, postData) => {
+  // Generate a unique post ID
+  const { randomBytes } = await import("crypto");
+  const id = "cmb" + randomBytes(14).toString("base64url").slice(0, 29);
+
   // Create the post first
   const post = await tx.post.create({
     data: {
+      id,
       userId,
       contentType: postData.contentType,
       caption: postData.caption,
@@ -21,6 +26,7 @@ export const createPost = async (tx, userId, postData) => {
       allowsComments: postData.allowsComments,
       allowsShares: postData.allowsShares,
       expiresAt: postData.expiresAt,
+      updatedAt: new Date(),
     },
   });
 
@@ -344,6 +350,12 @@ export const getPost = async (tx, postId, userId) => {
           shares: true,
         },
       },
+      ...(userId
+        ? {
+            savedPosts: { where: { userId }, select: { id: true } },
+            postReactions: { where: { userId }, select: { reaction: true }, take: 1 },
+          }
+        : {}),
       hashtags: {
         include: {
           hashtag: {
@@ -366,6 +378,11 @@ export const getPost = async (tx, postId, userId) => {
   return {
     ...post,
     liked: !!userLike,
+    bookmarked: post.savedPosts?.length > 0,
+    myReaction: post.postReactions?.[0]?.reaction ?? null,
+    // Clean up internal arrays from response
+    savedPosts: undefined,
+    postReactions: undefined,
   };
 };
 

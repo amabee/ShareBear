@@ -81,9 +81,9 @@ export const getPost = async (req, rep) => {
 
     const encodedPost = {
       ...post,
-      caption: encodeOutput(safeDecodeOutput(post.caption)),
-      location: encodeOutput(safeDecodeOutput(post.location)),
-      taggedUsers: encodeOutput(safeDecodeOutput(post.taggedUsers)),
+      caption: safeDecodeOutput(post.caption),
+      location: safeDecodeOutput(post.location),
+      taggedUsers: post.taggedUsers,
     };
 
     return rep.send({ post: encodedPost });
