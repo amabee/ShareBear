@@ -1,5 +1,6 @@
 import { CheckCircle } from "lucide-react";
 import { useMemo } from "react";
+import Link from "next/link";
 
 const UserInfo = ({ user, timestamp, location }) => {
   const displayName = useMemo(() => {
@@ -16,17 +17,21 @@ const UserInfo = ({ user, timestamp, location }) => {
 
   return (
     <div>
-      <div className="flex items-center space-x-1">
-        <span className="font-semibold text-sm">{displayName}</span>
-        {user?.verified && (
-          <CheckCircle className="h-3 w-3 text-blue-500 fill-current" />
-        )}
-      </div>
+      <Link href={`/profile/${user?.id}`} className="hover:underline">
+        <div className="flex items-center space-x-1">
+          <span className="font-semibold text-sm">{displayName}</span>
+          {user?.verified && (
+            <CheckCircle className="h-3 w-3 text-blue-500 fill-current" />
+          )}
+        </div>
+      </Link>
 
       {user?.username && (
-        <div className="text-xs text-muted-foreground leading-none mt-1">
-          @{user.username}
-        </div>
+        <Link href={`/profile/${user?.id}`}>
+          <div className="text-xs text-muted-foreground leading-none mt-1 hover:underline">
+            @{user.username}
+          </div>
+        </Link>
       )}
 
       <div className="flex items-center space-x-2 text-xs text-muted-foreground mt-1">

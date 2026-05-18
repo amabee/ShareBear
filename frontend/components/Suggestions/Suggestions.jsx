@@ -7,6 +7,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { useFollowUser, useUserSuggestions } from "@/hooks/useUser";
 import { useSuggestionsStore } from "@/stores/useSuggestionsStore";
 import { useSession } from "next-auth/react";
+import Link from "next/link";
 import toast from "react-hot-toast";
 import SuggestionsSkeleton from "../Skeletons/SuggestionsSkeleton";
 import SuggestionsError from "../ErrorStates/SuggestionsError";
@@ -134,9 +135,11 @@ export default function Suggestions() {
                     </AvatarFallback>
                   </Avatar>
                   <div className="flex-1 min-w-0">
-                    <p className="font-semibold text-sm truncate">
-                      {user.userInfo?.firstName} {user.userInfo?.lastName}
-                    </p>
+                    <Link href={`/profile/${user.userId}`} className="hover:underline">
+                      <p className="font-semibold text-sm truncate">
+                        {user.userInfo?.firstName} {user.userInfo?.lastName}
+                      </p>
+                    </Link>
                     <p className="text-xs text-muted-foreground">
                       Followed by {user.mutualFollowers} others
                     </p>

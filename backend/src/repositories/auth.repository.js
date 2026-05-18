@@ -105,6 +105,11 @@ export const storeRefreshToken = async (
   refreshToken,
   refreshTokenExpiry
 ) => {
+
+  if(!prisma){
+    return console.log("PRISMA UNKNOWN")
+  }
+
   return prisma.userSession.create({
     data: {
       userId: userId,
@@ -161,7 +166,7 @@ export const cleanupExpiredPreviousTokens = async (prisma) => {
 
 // FOR DELETING THE SESSION WITH THE GIVEN REFRESH TOKEN
 
-export const deleteUserSession = async (prisma, sessionId) => {0
+export const deleteUserSession = async (prisma, sessionId) => {
   return prisma.userSession.delete({ where: { id: sessionId } });
 };
 

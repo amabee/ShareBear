@@ -16,11 +16,11 @@ model Comment {
   isDeleted         Boolean           @default(false)
   createdAt         DateTime          @default(now())
   updatedAt         DateTime
-  comment           Comment?          @relation("commentTocomment", fields: [parentCommentId], references: [id], map: "Comment_parentCommentId_fkey")
-  other_comment     Comment[]         @relation("commentTocomment")
+  parent            Comment?          @relation("commentTocomment", fields: [parentCommentId], references: [id], map: "Comment_parentCommentId_fkey")
+  replies           Comment[]         @relation("commentTocomment")
   post              Post              @relation(fields: [postId], references: [id], map: "Comment_postId_fkey")
   user              User              @relation(fields: [userId], references: [id], map: "Comment_userId_fkey")
-  commentReactions  CommentReaction[]
+  reactions         CommentReaction[]
   notifications     Notification[]
   notificationBatch NotificationBatch[]
 

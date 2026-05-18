@@ -1,6 +1,7 @@
 "use client";
 import { useEffect, useState, useRef, useCallback } from "react";
 import { MoreHorizontal, Bookmark, BookmarkCheck, Repeat2, Link2, Trash2, Flag } from "lucide-react";
+import Link from "next/link";
 import { usePostsStore } from "@/stores/usePostsStore";
 import ActionButtons from "./ActionButtons";
 import MediaCarousel from "./MediaCarousel";
@@ -49,7 +50,9 @@ function OriginalPostCard({ post }) {
           </AvatarFallback>
         </Avatar>
         <div className="min-w-0">
-          <p className="text-sm font-semibold leading-tight truncate">{authorName}</p>
+          <Link href={`/profile/${post.user?.id}`} className="hover:underline">
+            <p className="text-sm font-semibold leading-tight truncate">{authorName}</p>
+          </Link>
           <p className="text-xs text-muted-foreground leading-tight">
             {post.user?.username ? `@${post.user.username}` : ""}
             {timeAgo ? ` · ${timeAgo}` : ""}
@@ -179,7 +182,9 @@ export function ShareBearPost({ post }) {
                 </div>
               </div>
               <div>
-                <p className="text-sm font-semibold leading-tight">{sharerName ?? "Someone"}</p>
+                <Link href={`/profile/${post.sharedBy?.id}`} className="hover:underline">
+                  <p className="text-sm font-semibold leading-tight">{sharerName ?? "Someone"}</p>
+                </Link>
                 <p className="text-xs text-muted-foreground leading-tight">
                   shared a post{sharedTimeAgo ? ` · ${sharedTimeAgo}` : ""}
                 </p>
@@ -364,4 +369,4 @@ export function ShareBearPost({ post }) {
       />
     </article>
   );
-}
+}
