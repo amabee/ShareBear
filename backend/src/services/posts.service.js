@@ -99,6 +99,9 @@ export const likePost = async (
     // Your existing repository call
     const like = await likePostRepo(tx, postId, userId);
 
+    // Already liked — skip notification, return early
+    if (like.alreadyLiked) return like;
+
     // Get post details for notification (add this query to your transaction)
     const post = await tx.post.findFirst({
       where: { id: postId, isDeleted: false },

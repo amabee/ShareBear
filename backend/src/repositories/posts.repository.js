@@ -588,7 +588,8 @@ export const likePost = async (tx, postId, userId) => {
   });
 
   if (existingLike) {
-    throw new Error("Post already liked by user");
+    // Idempotent: already liked, return without error
+    return { id: existingLike.id, alreadyLiked: true };
   }
 
   // Create the like
@@ -622,10 +623,7 @@ export const unlikePost = async (tx, postId, userId) => {
     where: { postId, userId },
   });
 
-  if (result.count === 0) {
-    throw new Error("Like not found");
-  }
-
+  // Idempotent: already unliked is fine
   return { success: true, message: "Post unliked successfully" };
 };
 
