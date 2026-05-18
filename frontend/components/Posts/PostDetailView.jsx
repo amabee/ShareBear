@@ -72,7 +72,7 @@ export default function PostDetailView({ postId }) {
   const deletePostMutation = useDeletePost();
   const [shareModalOpen, setShareModalOpen] = useState(false);
 
-  // Seed this post into the infinite feed cache so ActionButtons can read
+  // Seed/update this post in the infinite feed cache so ActionButtons reads
   // the correct liked/bookmarked/myReaction state even on a direct URL visit.
   useEffect(() => {
     if (!data?.post) return;
@@ -84,16 +84,26 @@ export default function PostDetailView({ postId }) {
           pageParams: [1],
         };
       }
-      const alreadyPresent = old.pages.some((page) =>
-        page.posts?.some((p) => p.id === post.id)
-      );
-      if (alreadyPresent) return old;
-      return {
+      // Always update the post with fresh data from getPost
+      let found = false;
+      const updated = {
         ...old,
-        pages: old.pages.map((page, i) =>
-          i === 0 ? { ...page, posts: [post, ...(page.posts ?? [])] } : page
-        ),
+        pages: old.pages.map((page) => ({
+          ...page,
+          posts: page.posts?.map((p) => {
+            if (p.id === post.id) {
+              found = true;
+              return { ...p, liked: post.liked, bookmarked: post.bookmarked, myReaction: post.myReaction, _count: post._count };
+            }
+            return p;
+          }),
+        })),
       };
+      if (!found) {
+        // Insert into first page if not present
+        updated.pages[0] = { ...updated.pages[0], posts: [post, ...(updated.pages[0].posts ?? [])] };
+      }
+      return updated;
     });
   }, [data?.post?.id, queryClient]);
 
@@ -231,135 +241,166 @@ export default function PostDetailView({ postId }) {
         </div>
       </div>
 
-      {/* Two-column layout on desktop */}
-      <div className="max-w-5xl mx-auto lg:flex lg:h-[calc(100vh-56px)]">
+      {/* Two-column layout on desktop — only for posts with media */}
+      {hasMedia ? (
+        <div className="max-w-5xl mx-auto lg:flex lg:h-[calc(100vh-56px)]">
 
-        {/* LEFT — media */}
-        {hasMedia && (
+          {/* LEFT — media */}
           <div className="lg:flex-1 lg:border-r border-border/60 lg:flex lg:items-center lg:justify-center bg-black/5 dark:bg-black/20">
             <div className="w-full">
               <MediaCarousel images={post.images} postId={post.id} />
             </div>
           </div>
-        )}
 
-        {/* RIGHT — info + comments */}
-        <div
-          className={cn(
-            "flex flex-col",
-            hasMedia ? "lg:w-[400px] lg:shrink-0" : "w-full max-w-2xl mx-auto"
-          )}
-        >
-          <div className="flex-1 overflow-y-auto">
-
-            {/* Text-only caption block */}
-            {!hasMedia && post.caption && (
-              <div className="px-5 pt-5 pb-3">
-                <div className="rounded-xl border border-border/60 bg-muted/30 p-5">
-                  <CaptionsWithHashtags caption={post.caption} expandable={false} />
+          {/* RIGHT — info + comments (scrollable) */}
+          <div className="lg:w-[400px] lg:shrink-0 flex flex-col lg:h-[calc(100vh-56px)]">
+            <div className="flex-1 overflow-y-auto">
+              {/* User info */}
+              <div className="px-4 pt-4 pb-3 flex items-center gap-3 border-b border-border/60">
+                <Link href={`/profile/${post.user?.id}`}>
+                  <Avatar className="h-10 w-10 ring-2 ring-background shrink-0">
+                    <AvatarImage src={avatarSrc} className="object-cover" />
+                    <AvatarFallback className="text-sm font-semibold">{avatarFallback}</AvatarFallback>
+                  </Avatar>
+                </Link>
+                <div className="min-w-0">
+                  <Link href={`/profile/${post.user?.id}`} className="font-semibold text-sm hover:underline leading-tight block">
+                    {displayName}
+                  </Link>
+                  {post.user?.username && (
+                    <p className="text-xs text-muted-foreground leading-tight mt-0.5">@{post.user.username}</p>
+                  )}
                 </div>
               </div>
-            )}
 
-            {/* User info */}
-            <div className="px-4 pt-4 pb-3 flex items-center gap-3">
-              <Link href={`/profile/${post.user?.id}`}>
-                <Avatar className="h-10 w-10 ring-2 ring-background shrink-0">
-                  <AvatarImage src={avatarSrc} className="object-cover" />
-                  <AvatarFallback className="text-sm font-semibold">
-                    {avatarFallback}
-                  </AvatarFallback>
-                </Avatar>
-              </Link>
-              <div className="min-w-0">
-                <Link
-                  href={`/profile/${post.user?.id}`}
-                  className="font-semibold text-sm hover:underline leading-tight block"
-                >
-                  {displayName}
-                </Link>
-                {post.user?.username && (
-                  <p className="text-xs text-muted-foreground leading-tight mt-0.5">
-                    @{post.user.username}
-                  </p>
-                )}
+              {/* Caption */}
+              {post.caption && (
+                <div className="px-4 py-3 border-b border-border/60">
+                  <CaptionsWithHashtags caption={post.caption} expandable={false} />
+                </div>
+              )}
+
+              {/* Location */}
+              {post.location && (
+                <div className="px-4 py-2 flex items-center gap-1 text-xs text-muted-foreground border-b border-border/60">
+                  <MapPin className="h-3 w-3 shrink-0" />
+                  <span>{post.location}</span>
+                </div>
+              )}
+
+              {/* Action buttons */}
+              <div className="px-2 border-b border-border/60">
+                <ActionButtons
+                  postId={post.id}
+                  onCommentClick={() => {}}
+                  showComments={false}
+                  likeCount={likeCount}
+                  commentCount={commentCount}
+                  shareCount={shareCount}
+                  myReaction={myReaction}
+                />
               </div>
+
+              {/* Stats + timestamp */}
+              <div className="px-4 py-2 border-b border-border/60 space-y-0.5">
+                {(likeCount > 0 || commentCount > 0 || shareCount > 0) && (
+                  <div className="flex items-center gap-3 text-xs text-muted-foreground">
+                    {likeCount > 0 && <span><strong className="text-foreground font-semibold">{formatCount(likeCount)}</strong> {likeCount === 1 ? "like" : "likes"}</span>}
+                    {commentCount > 0 && <span><strong className="text-foreground font-semibold">{formatCount(commentCount)}</strong> {commentCount === 1 ? "comment" : "comments"}</span>}
+                    {shareCount > 0 && <span><strong className="text-foreground font-semibold">{formatCount(shareCount)}</strong> {shareCount === 1 ? "share" : "shares"}</span>}
+                  </div>
+                )}
+                {fullDate && <p className="text-xs text-muted-foreground/60">{fullDate}</p>}
+              </div>
+
+              {/* Comments */}
+              {allowsComments ? (
+                <div className="px-4 pt-3 pb-8">
+                  <CommentSection postId={post.id} />
+                </div>
+              ) : (
+                <p className="text-xs text-muted-foreground text-center py-6">
+                  Comments are disabled on this post.
+                </p>
+              )}
             </div>
-
-            {/* Caption below media */}
-            {hasMedia && post.caption && (
-              <div className="px-4 pb-3">
-                <CaptionsWithHashtags caption={post.caption} expandable={false} />
-              </div>
-            )}
-
-            {/* Location */}
-            {post.location && (
-              <div className="px-4 pb-2 flex items-center gap-1 text-xs text-muted-foreground">
-                <MapPin className="h-3 w-3 shrink-0" />
-                <span>{post.location}</span>
-              </div>
-            )}
-
-            <div className="mx-4 border-t border-border/60" />
-
-            {/* Action buttons */}
-            <div className="px-2">
-              <ActionButtons
-                postId={post.id}
-                onCommentClick={() => {}}
-                showComments={false}
-                likeCount={likeCount}
-                commentCount={commentCount}
-                shareCount={shareCount}
-                myReaction={myReaction}
-              />
-            </div>
-
-            {/* Stats line */}
-            {(likeCount > 0 || commentCount > 0 || shareCount > 0) && (
-              <div className="px-4 pb-2 flex items-center gap-3 text-xs text-muted-foreground">
-                {likeCount > 0 && (
-                  <span>
-                    <strong className="text-foreground font-semibold">{formatCount(likeCount)}</strong>{" "}
-                    {likeCount === 1 ? "like" : "likes"}
-                  </span>
-                )}
-                {commentCount > 0 && (
-                  <span>
-                    <strong className="text-foreground font-semibold">{formatCount(commentCount)}</strong>{" "}
-                    {commentCount === 1 ? "comment" : "comments"}
-                  </span>
-                )}
-                {shareCount > 0 && (
-                  <span>
-                    <strong className="text-foreground font-semibold">{formatCount(shareCount)}</strong>{" "}
-                    {shareCount === 1 ? "share" : "shares"}
-                  </span>
-                )}
-              </div>
-            )}
-
-            {/* Full timestamp */}
-            {fullDate && (
-              <p className="px-4 pb-3 text-xs text-muted-foreground/70">{fullDate}</p>
-            )}
-
-            <div className="mx-4 border-t border-border/60" />
-
-            {/* Comments */}
-            {allowsComments ? (
-              <div className="px-4 pt-3 pb-8">
-                <CommentSection postId={post.id} />
-              </div>
-            ) : (
-              <p className="text-xs text-muted-foreground text-center py-6">
-                Comments are disabled on this post.
-              </p>
-            )}
           </div>
         </div>
-      </div>
+      ) : (
+        /* ── TEXT-ONLY POST — single centered column ── */
+        <div className="max-w-2xl mx-auto px-4 pb-10">
+          {/* Author card */}
+          <div className="flex items-center gap-3 py-5">
+            <Link href={`/profile/${post.user?.id}`}>
+              <Avatar className="h-11 w-11 ring-2 ring-background shrink-0">
+                <AvatarImage src={avatarSrc} className="object-cover" />
+                <AvatarFallback className="text-sm font-semibold">{avatarFallback}</AvatarFallback>
+              </Avatar>
+            </Link>
+            <div className="min-w-0 flex-1">
+              <Link href={`/profile/${post.user?.id}`} className="font-semibold text-sm hover:underline leading-tight block">
+                {displayName}
+              </Link>
+              <p className="text-xs text-muted-foreground mt-0.5">
+                {post.user?.username ? `@${post.user.username}` : ""}
+                {fullDate ? ` · ${fullDate}` : ""}
+              </p>
+            </div>
+          </div>
+
+          {/* Caption — large, prominent */}
+          {post.caption && (
+            <div className="pb-5 text-base leading-relaxed">
+              <CaptionsWithHashtags caption={post.caption} expandable={false} />
+            </div>
+          )}
+
+          {/* Location */}
+          {post.location && (
+            <div className="pb-4 flex items-center gap-1 text-xs text-muted-foreground">
+              <MapPin className="h-3 w-3 shrink-0" />
+              <span>{post.location}</span>
+            </div>
+          )}
+
+          <div className="border-t border-border/60" />
+
+          {/* Action buttons */}
+          <div className="px-1">
+            <ActionButtons
+              postId={post.id}
+              onCommentClick={() => {}}
+              showComments={false}
+              likeCount={likeCount}
+              commentCount={commentCount}
+              shareCount={shareCount}
+              myReaction={myReaction}
+            />
+          </div>
+
+          {/* Stats */}
+          {(likeCount > 0 || commentCount > 0 || shareCount > 0) && (
+            <div className="pb-3 flex items-center gap-3 text-xs text-muted-foreground">
+              {likeCount > 0 && <span><strong className="text-foreground font-semibold">{formatCount(likeCount)}</strong> {likeCount === 1 ? "like" : "likes"}</span>}
+              {commentCount > 0 && <span><strong className="text-foreground font-semibold">{formatCount(commentCount)}</strong> {commentCount === 1 ? "comment" : "comments"}</span>}
+              {shareCount > 0 && <span><strong className="text-foreground font-semibold">{formatCount(shareCount)}</strong> {shareCount === 1 ? "share" : "shares"}</span>}
+            </div>
+          )}
+
+          <div className="border-t border-border/60" />
+
+          {/* Comments */}
+          {allowsComments ? (
+            <div className="pt-4">
+              <CommentSection postId={post.id} />
+            </div>
+          ) : (
+            <p className="text-xs text-muted-foreground text-center py-6">
+              Comments are disabled on this post.
+            </p>
+          )}
+        </div>
+      )}
 
       <ShareModal
         postId={post.id}

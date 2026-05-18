@@ -276,14 +276,17 @@ export const useLikePost = () => {
   return useMutation({
     mutationFn: (postId) => apiClient.post(`/api/posts/${postId}/like`),
     onSuccess: (data, postId) => {
-      queryClient.setQueryData(["posts", postId], (oldPost) => {
-        if (!oldPost) return oldPost;
+      queryClient.setQueryData(["posts", postId], (oldData) => {
+        if (!oldData?.post) return oldData;
         return {
-          ...oldPost,
-          liked: true,
-          _count: {
-            ...oldPost._count,
-            likes: oldPost._count.likes + 1,
+          ...oldData,
+          post: {
+            ...oldData.post,
+            liked: true,
+            _count: {
+              ...oldData.post._count,
+              likes: (oldData.post._count?.likes ?? 0) + 1,
+            },
           },
         };
       });
@@ -324,14 +327,17 @@ export const useUnlikePost = () => {
   return useMutation({
     mutationFn: (postId) => apiClient.delete(`/api/posts/${postId}/like`),
     onSuccess: (data, postId) => {
-      queryClient.setQueryData(["posts", postId], (oldPost) => {
-        if (!oldPost) return oldPost;
+      queryClient.setQueryData(["posts", postId], (oldData) => {
+        if (!oldData?.post) return oldData;
         return {
-          ...oldPost,
-          liked: false, // Changed from true
-          _count: {
-            ...oldPost._count,
-            likes: oldPost._count.likes - 1, // Changed from +1
+          ...oldData,
+          post: {
+            ...oldData.post,
+            liked: false,
+            _count: {
+              ...oldData.post._count,
+              likes: Math.max(0, (oldData.post._count?.likes ?? 1) - 1),
+            },
           },
         };
       });
