@@ -651,6 +651,7 @@ export const createComment = async (tx, postId, userId, commentData) => {
       userId,
       content: commentData.content,
       parentCommentId: commentData.parentCommentId || null, // Fixed field name
+      updatedAt: new Date(),
     },
     include: {
       user: {
