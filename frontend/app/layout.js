@@ -1,10 +1,11 @@
 import { Poppins } from "next/font/google";
-import { Toaster } from "react-hot-toast";
+
 import "./globals.css";
 import QueryProvider from "@/providers/QueryProvider";
 import SessionProvider from "@/providers/SessionProvider";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/app/api/auth/[...nextauth]/route";
+import { Toaster } from "sonner";
 
 const poppins = Poppins({
   variable: "--font-poppins",
@@ -43,16 +44,16 @@ export const viewport = {
 
 export default async function RootLayout({ children }) {
   let session = null;
-  
+
   try {
     session = await getServerSession(authOptions);
   } catch (error) {
     console.error("Error getting server session:", error);
     // Continue with null session if there's an error
   }
-  
+
   return (
-    <html lang="en" className={poppins.variable}>
+    <html lang="en" className={poppins.variable} suppressHydrationWarning>
       <head>
         <link rel="preconnect" href="https://fonts.googleapis.com" />
         <link
@@ -65,7 +66,10 @@ export default async function RootLayout({ children }) {
         <QueryProvider>
           <SessionProvider session={session}>
             {children}
-            <Toaster />
+            {/* <Toaster 
+            position="bottom-left"
+             /> */}
+             <Toaster position="top-right"/>
           </SessionProvider>
         </QueryProvider>
       </body>

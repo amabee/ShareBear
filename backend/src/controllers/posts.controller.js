@@ -17,6 +17,15 @@ import {
   sharePost as sharePostService,
   unsharePost as unsharePostService,
   getShares as getSharesService,
+  upsertPostReaction as upsertPostReactionService,
+  deletePostReaction as deletePostReactionService,
+  getPostReactions as getPostReactionsService,
+  upsertCommentReaction as upsertCommentReactionService,
+  deleteCommentReaction as deleteCommentReactionService,
+  getCommentReactions as getCommentReactionsService,
+  getReplies as getRepliesService,
+  savePost as savePostService,
+  unsavePost as unsavePostService,
 } from "../services/posts.service.js";
 import {
   sanitizeInput,
@@ -35,6 +44,12 @@ export const getPosts = async (req, rep) => {
       limit: parseInt(limit),
       cursor,
     });
+
+    // DEBUG: log feed composition so we can verify reposts are included
+    const reposts = result.posts.filter((p) => p.isRepost);
+    req.log.info(
+      `[getPosts] userId=${currentUserId} page=${page} total=${result.posts.length} reposts=${reposts.length} repostKeys=${JSON.stringify(reposts.map((p) => p.feedKey))}`
+    );
 
     const encodedPosts = result.posts.map((post) => ({
       ...post,
@@ -353,7 +368,8 @@ export const unlikePost = async (req, reply) => {
 export const createComment = async (req, reply) => {
   const userId = req.user.userId;
   const { postId } = req.params;
-  const { content, parentCommentId } = req.body; // Fixed field name
+  const { content, parentCommentId } = req.body;
+
 
   // Validate required fields
   if (!content || content.trim().length === 0) {
@@ -481,6 +497,7 @@ export const deleteComment = async (req, reply) => {
 };
 
 export const getComments = async (req, reply) => {
+  const currentUserId = req.user?.userId ?? null;
   const { postId } = req.params;
   const { page = 1, limit = 20, cursor } = req.query;
 
@@ -488,13 +505,15 @@ export const getComments = async (req, reply) => {
     const result = await getCommentsService(req.server.prisma, postId, {
       page: parseInt(page),
       limit: parseInt(limit),
-      cursor: cursor ? parseInt(cursor) : undefined, // Convert cursor to integer
-    });
+      cursor: cursor ? parseInt(cursor) : undefined,
+    }, currentUserId);
 
     // Encode output for all comments and replies
     const encodedComments = result.comments.map((comment) => ({
       ...comment,
       content: encodeOutput(comment.content),
+      myReaction: comment.reactions?.[0]?.reaction ?? null,
+      reactions: undefined,
       replies: comment.replies?.map((reply) => ({
         ...reply,
         content: encodeOutput(reply.content),
@@ -557,6 +576,7 @@ export const sharePost = async (req, reply) => {
     if (error.message.includes("Shares are not allowed")) {
       return reply.status(403).send({ error: error.message });
     }
+    // "already shared" is no longer thrown; left as dead-code guard just in case
     if (error.message.includes("already shared")) {
       return reply.status(409).send({ error: error.message });
     }
@@ -609,3 +629,126 @@ export const getShares = async (req, reply) => {
     return reply.status(500).send({ error: "Failed to fetch shares" });
   }
 };
+
+// ─── REACTIONS ───────────────────────────────────────────────────────────────
+
+const VALID_REACTIONS = ["LIKE", "LOVE", "HAHA", "WOW", "SAD", "ANGRY"];
+
+export const reactToPost = async (req, reply) => {
+  const userId = req.user.userId;
+  const { postId } = req.params;
+  const { reaction } = req.body;
+
+  if (!VALID_REACTIONS.includes(reaction)) {
+    return reply.status(400).send({ error: "Invalid reaction type" });
+  }
+
+  try {
+    const result = await upsertPostReactionService(req.server.prisma, postId, userId, reaction);
+    return reply.status(201).send({ reaction: result });
+  } catch (error) {
+    req.log.error(error);
+    return reply.status(500).send({ error: "Failed to react to post" });
+  }
+};
+
+export const removePostReaction = async (req, reply) => {
+  const userId = req.user.userId;
+  const { postId } = req.params;
+
+  try {
+    await deletePostReactionService(req.server.prisma, postId, userId);
+    return reply.send({ message: "Reaction removed" });
+  } catch (error) {
+    req.log.error(error);
+    return reply.status(500).send({ error: "Failed to remove reaction" });
+  }
+};
+
+export const getPostReactions = async (req, reply) => {
+  const { postId } = req.params;
+
+  try {
+    const reactions = await getPostReactionsService(req.server.prisma, postId);
+    return reply.send({ reactions });
+  } catch (error) {
+    req.log.error(error);
+    return reply.status(500).send({ error: "Failed to fetch reactions" });
+  }
+};
+
+export const reactToComment = async (req, reply) => {
+  const userId = req.user.userId;
+  const { commentId } = req.params;
+  const { reaction } = req.body;
+
+  if (!VALID_REACTIONS.includes(reaction)) {
+    return reply.status(400).send({ error: "Invalid reaction type" });
+  }
+
+  try {
+    const result = await upsertCommentReactionService(req.server.prisma, parseInt(commentId), userId, reaction);
+    return reply.status(201).send({ reaction: result });
+  } catch (error) {
+    req.log.error(error);
+    return reply.status(500).send({ error: "Failed to react to comment" });
+  }
+};
+
+export const removeCommentReaction = async (req, reply) => {
+  const userId = req.user.userId;
+  const { commentId } = req.params;
+
+  try {
+    await deleteCommentReactionService(req.server.prisma, parseInt(commentId), userId);
+    return reply.send({ message: "Reaction removed" });
+  } catch (error) {
+    req.log.error(error);
+    return reply.status(500).send({ error: "Failed to remove reaction" });
+  }
+};
+
+// ─── REPLIES PAGINATION ──────────────────────────────────────────────────────
+
+export const getReplies = async (req, reply) => {
+  const { commentId } = req.params;
+  const { limit = 10, cursor } = req.query;
+
+  try {
+    const result = await getRepliesService(req.server.prisma, parseInt(commentId), {
+      limit: parseInt(limit),
+      cursor: cursor ? parseInt(cursor) : undefined,
+    });
+    return reply.send(result);
+  } catch (error) {
+    req.log.error(error);
+    return reply.status(500).send({ error: "Failed to fetch replies" });
+  }
+};
+
+// ─── SAVED POSTS ─────────────────────────────────────────────────────────────
+
+export const savePost = async (req, reply) => {
+  const userId = req.user.userId;
+  const { postId } = req.params;
+  try {
+    await savePostService(req.server.prisma, postId, userId);
+    return reply.status(201).send({ bookmarked: true });
+  } catch (error) {
+    req.log.error(error);
+    return reply.status(500).send({ error: "Failed to save post" });
+  }
+};
+
+export const unsavePost = async (req, reply) => {
+  const userId = req.user.userId;
+  const { postId } = req.params;
+  try {
+    await unsavePostService(req.server.prisma, postId, userId);
+    return reply.send({ bookmarked: false });
+  } catch (error) {
+    req.log.error(error);
+    return reply.status(500).send({ error: "Failed to unsave post" });
+  }
+};
+

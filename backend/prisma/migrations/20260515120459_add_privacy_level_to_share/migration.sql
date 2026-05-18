@@ -1,0 +1,2 @@
+-- AlterTable
+ALTER TABLE `share` ADD COLUMN `privacyLevel` ENUM('PUBLIC', 'PRIVATE', 'FRIENDS') NOT NULL DEFAULT 'PUBLIC';

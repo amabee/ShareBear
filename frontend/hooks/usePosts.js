@@ -4,9 +4,9 @@ import {
   useQueryClient,
   useInfiniteQuery,
 } from "@tanstack/react-query";
-import { apiClient } from "./apiClient";
+import { apiClient } from "./apiclient";
 import { useCreatePostStore, ContentType } from "@/stores/createPostStore";
-import toast from "react-hot-toast";
+import {toast} from "sonner";
 
 export const usePosts = (page = 1, limit = 5) => {
   // fetching all posts
@@ -366,23 +366,375 @@ export const useUnlikePost = () => {
   });
 };
 
-// FOR BOOKMARK
+// ─── BOOKMARK / SAVE ────────────────────────────────────────────────────────
+
 export const useBookmarkPost = () => {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: (postId) => apiClient.post(`/api/posts/${postId}/bookmark`),
-    onSuccess: (data, postId) => {
-      queryClient.setQueryData(["posts"], (oldData) => {
+    mutationFn: (postId) => apiClient.post(`/api/posts/${postId}/save`),
+    onMutate: async (postId) => {
+      await queryClient.cancelQueries({ queryKey: ["posts", "infinite"] });
+      const prev = queryClient.getQueryData(["posts", "infinite"]);
+      queryClient.setQueryData(["posts", "infinite"], (old) => {
+        if (!old) return old;
+        return {
+          ...old,
+          pages: old.pages.map((page) => ({
+            ...page,
+            posts: page.posts.map((post) =>
+              post.id === postId ? { ...post, bookmarked: true } : post
+            ),
+          })),
+        };
+      });
+      return { prev };
+    },
+    onError: (_, __, context) => {
+      if (context?.prev) queryClient.setQueryData(["posts", "infinite"], context.prev);
+      toast.error("Failed to save post.");
+    },
+    onSuccess: () => toast.success("Post saved!"),
+  });
+};
+
+export const useUnbookmarkPost = () => {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: (postId) => apiClient.delete(`/api/posts/${postId}/save`),
+    onMutate: async (postId) => {
+      await queryClient.cancelQueries({ queryKey: ["posts", "infinite"] });
+      const prev = queryClient.getQueryData(["posts", "infinite"]);
+      queryClient.setQueryData(["posts", "infinite"], (old) => {
+        if (!old) return old;
+        return {
+          ...old,
+          pages: old.pages.map((page) => ({
+            ...page,
+            posts: page.posts.map((post) =>
+              post.id === postId ? { ...post, bookmarked: false } : post
+            ),
+          })),
+        };
+      });
+      return { prev };
+    },
+    onError: (_, __, context) => {
+      if (context?.prev) queryClient.setQueryData(["posts", "infinite"], context.prev);
+      toast.error("Failed to unsave post.");
+    },
+    onSuccess: () => toast.success("Post removed from saved."),
+  });
+};
+
+// ─── DELETE POST ─────────────────────────────────────────────────────────────
+
+export const useDeletePost = () => {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: (postId) => apiClient.delete(`/api/posts/${postId}`),
+    onSuccess: (_, postId) => {
+      queryClient.setQueryData(["posts", "infinite"], (old) => {
+        if (!old) return old;
+        return {
+          ...old,
+          pages: old.pages.map((page) => ({
+            ...page,
+            posts: page.posts.filter((post) => post.id !== postId),
+          })),
+        };
+      });
+      toast.success("Post deleted.");
+    },
+    onError: () => toast.error("Failed to delete post."),
+  });
+};
+
+// ─── COMMENTS ────────────────────────────────────────────────────────────────
+
+export const useComments = (postId) => {
+  return useInfiniteQuery({
+    queryKey: ["comments", postId],
+    queryFn: ({ pageParam }) =>
+      apiClient.get(
+        `/api/posts/${postId}/comments?limit=10${pageParam ? `&cursor=${pageParam}` : ""}`
+      ),
+    getNextPageParam: (lastPage) => lastPage?.pagination?.nextCursor ?? undefined,
+    enabled: !!postId,
+    staleTime: 1000 * 30,
+  });
+};
+
+export const useCreateComment = (postId) => {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: ({ content, parentCommentId }) =>
+      apiClient.post(`/api/posts/${postId}/comments`, {
+        content,
+        ...(parentCommentId ? { parentCommentId } : {}),
+      }),
+    onSuccess: (_, variables) => {
+      queryClient.invalidateQueries({ queryKey: ["comments", postId] });
+      // if it's a reply, also refresh that comment's reply thread
+      if (variables?.parentCommentId) {
+        queryClient.invalidateQueries({ queryKey: ["replies", variables.parentCommentId] });
+      }
+      // increment comment count in feed cache
+      queryClient.setQueryData(["posts", "infinite"], (oldData) => {
         if (!oldData) return oldData;
         return {
           ...oldData,
-          posts: oldData.posts.map((post) =>
-            post.id === postId ? { ...post, bookmarked: true } : post
-          ),
+          pages: oldData.pages.map((page) => ({
+            ...page,
+            posts: page.posts.map((post) =>
+              post.id === postId
+                ? {
+                    ...post,
+                    _count: {
+                      ...post._count,
+                      comments: (post._count?.comments ?? 0) + 1,
+                    },
+                  }
+                : post
+            ),
+          })),
         };
       });
     },
+    onError: () => {
+      toast.error("Failed to post comment.");
+    },
+  });
+};
+
+export const useDeleteComment = (postId) => {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: (commentId) =>
+      apiClient.delete(`/api/posts/${postId}/comments/${commentId}`),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["comments", postId] });
+      queryClient.setQueryData(["posts", "infinite"], (oldData) => {
+        if (!oldData) return oldData;
+        return {
+          ...oldData,
+          pages: oldData.pages.map((page) => ({
+            ...page,
+            posts: page.posts.map((post) =>
+              post.id === postId
+                ? {
+                    ...post,
+                    _count: {
+                      ...post._count,
+                      comments: Math.max(0, (post._count?.comments ?? 1) - 1),
+                    },
+                  }
+                : post
+            ),
+          })),
+        };
+      });
+    },
+    onError: () => {
+      toast.error("Failed to delete comment.");
+    },
+  });
+};
+
+// ─── SHARES ───────────────────────────────────────────────────────────────────
+
+export const useSharePost = () => {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: ({ postId, caption, privacyLevel }) =>
+      apiClient.post(`/api/posts/${postId}/shares`, {
+        ...(caption ? { caption } : {}),
+        privacyLevel: privacyLevel || "PUBLIC",
+      }),
+    onSuccess: (data, { postId }) => {
+      // Optimistically bump the share count on the original post
+      queryClient.setQueryData(["posts", "infinite"], (oldData) => {
+        if (!oldData) return oldData;
+        return {
+          ...oldData,
+          pages: oldData.pages.map((page) => ({
+            ...page,
+            posts: page.posts.map((post) =>
+              post.id === postId
+                ? {
+                    ...post,
+                    shared: true,
+                    _count: {
+                      ...post._count,
+                      shares: (post._count?.shares ?? 0) + 1,
+                    },
+                  }
+                : post
+            ),
+          })),
+        };
+      });
+      // Refetch so the new repost card appears at the top of the feed
+      queryClient.invalidateQueries({ queryKey: ["posts", "infinite"] });
+      toast.success("Post shared!");
+    },
+    onError: (error) => {
+      toast.error("Failed to share post.");
+    },
+  });
+};
+
+export const useUnsharePost = () => {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: (postId) => apiClient.delete(`/api/posts/${postId}/shares`),
+    onSuccess: (data, postId) => {
+      queryClient.setQueryData(["posts", "infinite"], (oldData) => {
+        if (!oldData) return oldData;
+        return {
+          ...oldData,
+          pages: oldData.pages.map((page) => ({
+            ...page,
+            posts: page.posts.map((post) =>
+              post.id === postId
+                ? {
+                    ...post,
+                    shared: false,
+                    _count: {
+                      ...post._count,
+                      shares: Math.max(0, (post._count?.shares ?? 1) - 1),
+                    },
+                  }
+                : post
+            ),
+          })),
+        };
+      });
+      toast.success("Share removed.");
+    },
+    onError: () => {
+      toast.error("Failed to remove share.");
+    },
+  });
+};
+
+// ─── REACTIONS ────────────────────────────────────────────────────────────────
+
+export const useReactToPost = () => {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: ({ postId, reaction }) =>
+      apiClient.post(`/api/posts/${postId}/reactions`, { reaction }),
+    onMutate: async ({ postId, reaction }) => {
+      await queryClient.cancelQueries({ queryKey: ["posts", "infinite"] });
+      const prev = queryClient.getQueryData(["posts", "infinite"]);
+      queryClient.setQueryData(["posts", "infinite"], (old) => {
+        if (!old) return old;
+        return {
+          ...old,
+          pages: old.pages.map((page) => ({
+            ...page,
+            posts: page.posts.map((post) =>
+              post.id === postId ? { ...post, myReaction: reaction } : post
+            ),
+          })),
+        };
+      });
+      return { prev };
+    },
+    onError: (_, __, context) => {
+      if (context?.prev) queryClient.setQueryData(["posts", "infinite"], context.prev);
+      toast.error("Failed to react.");
+    },
+  });
+};
+
+export const useRemovePostReaction = () => {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: (postId) => apiClient.delete(`/api/posts/${postId}/reactions`),
+    onMutate: async (postId) => {
+      await queryClient.cancelQueries({ queryKey: ["posts", "infinite"] });
+      const prev = queryClient.getQueryData(["posts", "infinite"]);
+      queryClient.setQueryData(["posts", "infinite"], (old) => {
+        if (!old) return old;
+        return {
+          ...old,
+          pages: old.pages.map((page) => ({
+            ...page,
+            posts: page.posts.map((post) =>
+              post.id === postId ? { ...post, myReaction: null } : post
+            ),
+          })),
+        };
+      });
+      return { prev };
+    },
+    onError: (_, __, context) => {
+      if (context?.prev) queryClient.setQueryData(["posts", "infinite"], context.prev);
+      toast.error("Failed to remove reaction.");
+    },
+  });
+};
+
+export const usePostReactions = (postId) => {
+  return useQuery({
+    queryKey: ["postReactions", postId],
+    queryFn: () => apiClient.get(`/api/posts/${postId}/reactions`),
+    enabled: !!postId,
+    staleTime: 1000 * 30,
+  });
+};
+
+export const useReactToComment = () => {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: ({ commentId, reaction }) =>
+      apiClient.post(`/api/posts/comments/${commentId}/reactions`, { reaction }),
+    onSuccess: (_, { commentId, postId }) => {
+      queryClient.invalidateQueries({ queryKey: ["commentReactions", commentId] });
+      // also refresh comment list so reaction count updates
+      if (postId) queryClient.invalidateQueries({ queryKey: ["comments", postId] });
+    },
+    onError: () => toast.error("Failed to react."),
+  });
+};
+
+export const useRemoveCommentReaction = () => {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: ({ commentId, postId }) =>
+      apiClient.delete(`/api/posts/comments/${commentId}/reactions`),
+    onSuccess: (_, { commentId, postId }) => {
+      queryClient.invalidateQueries({ queryKey: ["commentReactions", commentId] });
+      if (postId) queryClient.invalidateQueries({ queryKey: ["comments", postId] });
+    },
+    onError: () => toast.error("Failed to remove reaction."),
+  });
+};
+
+// ─── REPLIES PAGINATION ──────────────────────────────────────────────────────
+
+export const useReplies = (postId, commentId, enabled = false) => {
+  return useInfiniteQuery({
+    queryKey: ["replies", commentId],
+    queryFn: ({ pageParam }) =>
+      apiClient.get(
+        `/api/posts/${postId}/comments/${commentId}/replies?limit=10${pageParam ? `&cursor=${pageParam}` : ""}`
+      ),
+    getNextPageParam: (lastPage) => lastPage?.pagination?.nextCursor ?? undefined,
+    enabled: !!commentId && !!postId && enabled,
+    staleTime: 1000 * 30,
   });
 };
 

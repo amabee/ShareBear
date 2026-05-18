@@ -344,10 +344,5 @@ export const getSuggestedUsers = async (prisma, userIdentifier, limit = 10) => {
     },
   });
 
-  console.log(
-    "SUGGESTED USER IDs:",
-    suggestions.map((u) => u.id)
-  );
-
   return suggestions;
 };

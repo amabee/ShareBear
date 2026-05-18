@@ -1,5 +1,5 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { apiClient } from "./apiClient";
+import { apiClient } from "./apiclient";
 import toast from "react-hot-toast";
 
 export const useUserDetail = (identifier) => {

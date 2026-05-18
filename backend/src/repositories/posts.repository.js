@@ -133,58 +133,67 @@ export const restorePost = async (tx, postId, userId) => {
   return await tx.post.findUnique({ where: { id: postId } });
 };
 
+// Shared include fragment for a post nested inside a Share
+const postInclude = (userId) => ({
+  user: {
+    select: {
+      id: true,
+      username: true,
+      userInfo: {
+        select: {
+          firstName: true,
+          middleName: true,
+          lastName: true,
+          displayName: true,
+          profilePictureUrl: true,
+          coverPhotoUrl: true,
+          bio: true,
+          location: true,
+        },
+      },
+    },
+  },
+  images: { orderBy: { displayOrder: "asc" } },
+  _count: { select: { likes: true, comments: true, shares: true } },
+  likes: { where: { userId }, select: { id: true } },
+  savedPosts: { where: { userId }, select: { id: true } },
+  postReactions: { where: { userId }, select: { reaction: true }, take: 1 },
+  hashtags: {
+    include: {
+      hashtag: { select: { id: true, name: true, usageCount: true } },
+    },
+  },
+});
+
 export const getPosts = async (tx, userId, paginationOptions = {}) => {
-  const { page = 1, limit = 10, cursor } = paginationOptions;
+  const { page = 1, limit = 10 } = paginationOptions;
 
   const following = await tx.follow.findMany({
-    where: {
-      followerId: userId,
-    },
-    select: {
-      followingId: true,
-    },
+    where: { followerId: userId },
+    select: { followingId: true },
   });
 
-  // get the ids of users that the current user is following eg: john doe -> sam clarke, john doe -> Abby Cowin
-  const followingIds = following.map((follow) => follow.followingId);
-
-  // Include the own post of the current user here....
+  const followingIds = following.map((f) => f.followingId);
+  // Current user's own content + everyone they follow
   const userIds = [...followingIds, userId];
 
-  // Build the where clause
-  const whereClause = {
-    userId: { in: userIds },
-    isDeleted: false,
-  };
+  // How many items to prefetch from each source so the current page is covered
+  // Worst case: all items on pages 1..page come from one source
+  const prefetchLimit = page * limit + limit;
 
-  // Add cursor-based pagination if cursor is provided
-  if (cursor) {
-    whereClause.createdAt = {
-      lt: await getPostCreatedAt(tx, cursor),
-    };
-  }
-
-  // Get total count for pagination metadata
-  const totalPosts = await tx.post.count({
-    where: {
-      userId: { in: userIds },
-      isDeleted: false,
-    },
+  // ── 1. Fetch original posts ──────────────────────────────────────────────
+  const rawPosts = await tx.post.findMany({
+    where: { userId: { in: userIds }, isDeleted: false },
+    orderBy: { createdAt: "desc" },
+    take: prefetchLimit,
+    include: postInclude(userId),
   });
 
-  // Calculate pagination metadata
-  const totalPages = Math.ceil(totalPosts / limit);
-  const hasNextPage = page < totalPages;
-  const hasPreviousPage = page > 1;
-
-  // Get posts with pagination
-  const posts = await tx.post.findMany({
-    where: whereClause,
-    orderBy: {
-      createdAt: "desc",
-    },
-    take: limit,
-    skip: cursor ? 0 : (page - 1) * limit,
+  // ── 2. Fetch shares by the same user-set ────────────────────────────────
+  const rawShares = await tx.share.findMany({
+    where: { userId: { in: userIds } },
+    orderBy: { createdAt: "desc" },
+    take: prefetchLimit,
     include: {
       user: {
         select: {
@@ -193,109 +202,77 @@ export const getPosts = async (tx, userId, paginationOptions = {}) => {
           userInfo: {
             select: {
               firstName: true,
-              middleName: true,
               lastName: true,
               displayName: true,
               profilePictureUrl: true,
-              coverPhotoUrl: true,
-              bio: true,
-              location: true,
             },
           },
         },
       },
-      images: {
-        orderBy: {
-          displayOrder: "asc",
-        },
-      },
-      _count: {
-        select: {
-          likes: true,
-          comments: true,
-          shares: true,
-        },
-      },
-      // Add this to check if current user liked the post
-      likes: {
-        where: {
-          userId: userId,
-        },
-        select: {
-          id: true,
-        },
-      },
-      hashtags: {
-        include: {
-          hashtag: {
-            select: {
-              id: true,
-              name: true,
-              usageCount: true,
-            },
-          },
-        },
-      },
+      post: { include: postInclude(userId) },
     },
   });
 
-  // Transform posts to include liked boolean
-  const postsWithLikedStatus = posts.map((post) => ({
+  console.log(`[getPosts] userId=${userId} followingIds=${JSON.stringify(followingIds)} rawPosts=${rawPosts.length} rawShares=${rawShares.length}`);
+
+  // ── 3. Transform into unified feed items ────────────────────────────────
+  const postItems = rawPosts.map((post) => ({
     ...post,
-    liked: post.likes.length > 0, // true if user has liked this post
-    likes: undefined, // Remove the likes array since we only needed it for checking
+    liked: post.likes.length > 0,
+    bookmarked: post.savedPosts?.length > 0,
+    myReaction: post.postReactions?.[0]?.reaction ?? null,
+    likes: undefined,
+    savedPosts: undefined,
+    postReactions: undefined,
+    isRepost: false,
+    feedKey: `post::${post.id}`,
+    _feedTimestamp: post.createdAt,
   }));
 
-  // Get cursors for next and previous pages
-  let nextCursor = null;
-  let previousCursor = null;
+  const shareItems = rawShares
+    .filter((share) => share.post && !share.post.isDeleted)
+    .map((share) => ({
+      ...share.post,
+      liked: share.post.likes.length > 0,
+      bookmarked: share.post.savedPosts?.length > 0,
+      myReaction: share.post.postReactions?.[0]?.reaction ?? null,
+      likes: undefined,
+      savedPosts: undefined,
+      postReactions: undefined,
+      isRepost: true,
+      sharedBy: share.user,
+      sharedAt: share.createdAt,
+      shareCaption: share.caption ?? null,
+      // Unique key: sharer id + post id — one user can only share a post once
+      feedKey: `share::${share.user.id}::${share.post.id}`,
+      _feedTimestamp: share.createdAt,
+    }));
 
-  if (posts.length > 0) {
-    const lastPost = posts[posts.length - 1];
-    const firstPost = posts[0];
-
-    // Check if there are more posts after the last one
-    const hasMoreAfterLast = await tx.post.findFirst({
-      where: {
-        userId: { in: userIds },
-        isDeleted: false,
-        createdAt: {
-          lt: lastPost.createdAt,
-        },
-      },
+  // ── 4. Merge, de-duplicate by feedKey, sort by timestamp desc ────────────
+  const seen = new Set();
+  const merged = [...postItems, ...shareItems]
+    .sort((a, b) => new Date(b._feedTimestamp) - new Date(a._feedTimestamp))
+    .filter((item) => {
+      if (seen.has(item.feedKey)) return false;
+      seen.add(item.feedKey);
+      return true;
     });
 
-    if (hasMoreAfterLast) {
-      nextCursor = lastPost.id;
-    }
-
-    // Check if there are posts before the first one
-    const hasMoreBeforeFirst = await tx.post.findFirst({
-      where: {
-        userId: { in: userIds },
-        isDeleted: false,
-        createdAt: {
-          gt: firstPost.createdAt,
-        },
-      },
-    });
-
-    if (hasMoreBeforeFirst) {
-      previousCursor = firstPost.id;
-    }
-  }
+  // ── 5. Page slice ────────────────────────────────────────────────────────
+  const totalItems = merged.length;
+  const totalPages = Math.ceil(totalItems / limit) || 1;
+  const start = (page - 1) * limit;
+  const paginated = merged.slice(start, start + limit);
 
   return {
-    posts: postsWithLikedStatus,
+    posts: paginated,
     pagination: {
       page,
       limit,
-      totalPosts,
+      totalPosts: totalItems,
       totalPages,
-      hasNextPage,
-      hasPreviousPage,
-      nextCursor,
-      previousCursor,
+      hasNextPage: page < totalPages,
+      hasPreviousPage: page > 1,
     },
   };
 };
@@ -767,7 +744,7 @@ export const deleteComment = async (tx, commentId, userId) => {
   return { success: true, message: "Comment deleted successfully" };
 };
 
-export const getComments = async (tx, postId, paginationOptions = {}) => {
+export const getComments = async (tx, postId, paginationOptions = {}, userId = null) => {
   const { page = 1, limit = 20, cursor } = paginationOptions;
 
   // Build the where clause
@@ -843,6 +820,15 @@ export const getComments = async (tx, postId, paginationOptions = {}) => {
           replies: true,
         },
       },
+      ...(userId
+        ? {
+            reactions: {
+              where: { userId },
+              select: { reaction: true },
+              take: 1,
+            },
+          }
+        : {}),
     },
   });
 
@@ -925,14 +911,9 @@ export const sharePost = async (tx, postId, userId, shareData = {}) => {
     throw new Error("Shares are not allowed on this post");
   }
 
-  // Check if user already shared this post
-  const existingShare = await tx.share.findFirst({
-    where: { postId, userId },
-  });
-
-  if (existingShare) {
-    throw new Error("Post already shared by user");
-  }
+  // If user already shared this post, delete it first so the new share
+  // gets a fresh createdAt (re-share always bubbles to the top of the feed)
+  await tx.share.deleteMany({ where: { postId, userId } });
 
   // Create the share
   const share = await tx.share.create({
@@ -976,6 +957,109 @@ export const sharePost = async (tx, postId, userId, shareData = {}) => {
   });
 
   return share;
+};
+
+// ─── REACTIONS ──────────────────────────────────────────────────────────────
+
+export const upsertPostReaction = async (tx, postId, userId, reaction) => {
+  return await tx.postReaction.upsert({
+    where: { userId_postId: { userId, postId } },
+    create: { postId, userId, reaction },
+    update: { reaction },
+    include: {
+      user: { select: { id: true, username: true } },
+    },
+  });
+};
+
+export const deletePostReaction = async (tx, postId, userId) => {
+  await tx.postReaction.deleteMany({ where: { postId, userId } });
+};
+
+export const getPostReactions = async (tx, postId) => {
+  const grouped = await tx.postReaction.groupBy({
+    by: ["reaction"],
+    where: { postId },
+    _count: { reaction: true },
+  });
+  return grouped.map((g) => ({ reaction: g.reaction, count: g._count.reaction }));
+};
+
+export const upsertCommentReaction = async (tx, commentId, userId, reaction) => {
+  return await tx.commentReaction.upsert({
+    where: { userId_commentId: { userId, commentId } },
+    create: { commentId, userId, reaction },
+    update: { reaction },
+    include: {
+      user: { select: { id: true, username: true } },
+    },
+  });
+};
+
+export const deleteCommentReaction = async (tx, commentId, userId) => {
+  await tx.commentReaction.deleteMany({ where: { commentId, userId } });
+};
+
+// ─── SAVED POSTS ─────────────────────────────────────────────────────────────
+
+export const savePost = async (tx, postId, userId) => {
+  return await tx.savedPost.upsert({
+    where: { userId_postId: { userId, postId } },
+    create: { userId, postId },
+    update: {},
+  });
+};
+
+export const unsavePost = async (tx, postId, userId) => {
+  await tx.savedPost.deleteMany({ where: { userId, postId } });
+};
+
+export const getCommentReactions = async (tx, commentId) => {
+  const grouped = await tx.commentReaction.groupBy({
+    by: ["reaction"],
+    where: { commentId },
+    _count: { reaction: true },
+  });
+  return grouped.map((g) => ({ reaction: g.reaction, count: g._count.reaction }));
+};
+
+// ─── REPLIES PAGINATION ──────────────────────────────────────────────────────
+
+export const getReplies = async (tx, commentId, paginationOptions = {}) => {
+  const { limit = 10, cursor } = paginationOptions;
+
+  const whereClause = {
+    parentCommentId: commentId,
+    isDeleted: false,
+    ...(cursor
+      ? { createdAt: { gt: await getCommentCreatedAt(tx, cursor) } }
+      : {}),
+  };
+
+  const replies = await tx.comment.findMany({
+    where: whereClause,
+    orderBy: { createdAt: "asc" },
+    take: limit,
+    include: {
+      user: {
+        select: {
+          id: true,
+          username: true,
+          userInfo: {
+            select: { displayName: true, profilePictureUrl: true },
+          },
+        },
+      },
+      _count: { select: { replies: true } },
+    },
+  });
+
+  const nextCursor =
+    replies.length === limit
+      ? replies[replies.length - 1].id
+      : null;
+
+  return { replies, pagination: { nextCursor, limit } };
 };
 
 export const unsharePost = async (tx, postId, userId) => {

@@ -381,6 +381,8 @@ export const getPostsSchema = {
               expiresAt: { type: "string" },
               isDeleted: { type: "boolean" },
               liked: { type: "boolean" }, // Added this field
+              bookmarked: { type: "boolean" },
+              myReaction: { type: "string", nullable: true },
               hashtags: {
                 type: "array",
                 items: {
@@ -423,6 +425,30 @@ export const getPostsSchema = {
                   likes: { type: "number" },
                   comments: { type: "number" },
                   shares: { type: "number" },
+                },
+              },
+              // Repost / share fields
+              isRepost: { type: "boolean" },
+              feedKey: { type: "string" },
+              shared: { type: "boolean" },
+              sharedAt: { type: "string" },
+              shareCaption: { type: "string", nullable: true },
+              sharedBy: {
+                type: "object",
+                nullable: true,
+                properties: {
+                  id: { type: "number" },
+                  username: { type: "string" },
+                  userInfo: {
+                    type: "object",
+                    nullable: true,
+                    properties: {
+                      firstName: { type: "string" },
+                      lastName: { type: "string" },
+                      displayName: { type: "string" },
+                      profilePictureUrl: { type: "string" },
+                    },
+                  },
                 },
               },
             },
@@ -1087,6 +1113,7 @@ export const getCommentsSchema = {
                   replies: { type: "integer" },
                 },
               },
+              myReaction: { type: "string", nullable: true },
             },
           },
         },
@@ -1122,9 +1149,8 @@ export const sharePostSchema = {
     type: "object",
     properties: {
       caption: {
-        type: "string",
+        type: ["string", "null"],
         maxLength: 500,
-        nullable: true,
       },
       privacyLevel: {
         type: "string",
@@ -1297,6 +1323,30 @@ export const getSharesSchema = {
         },
       },
     },
+    500: { type: "object", properties: { error: { type: "string" } } },
+  },
+};
+
+export const savePostSchema = {
+  params: {
+    type: "object",
+    properties: { postId: { type: "string" } },
+    required: ["postId"],
+  },
+  response: {
+    201: { type: "object", properties: { bookmarked: { type: "boolean" } } },
+    500: { type: "object", properties: { error: { type: "string" } } },
+  },
+};
+
+export const unsavePostSchemaRoute = {
+  params: {
+    type: "object",
+    properties: { postId: { type: "string" } },
+    required: ["postId"],
+  },
+  response: {
+    200: { type: "object", properties: { bookmarked: { type: "boolean" } } },
     500: { type: "object", properties: { error: { type: "string" } } },
   },
 };

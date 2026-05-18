@@ -89,15 +89,17 @@ const MediaCarousel = ({ images, postId }) => {
         )}
       </Carousel>
 
-      {/* Dots Indicator */}
+      {/* Pill-style slide indicators */}
       {images.length > 1 && (
-        <div className="absolute bottom-3 left-1/2 transform -translate-x-1/2 flex space-x-2">
+        <div className="absolute bottom-3 left-1/2 -translate-x-1/2 flex items-center gap-1.5">
           {images.map((_, index) => (
             <div
               key={index}
               className={cn(
-                "w-2 h-2 rounded-full transition-colors",
-                index === currentSlide ? "bg-white" : "bg-white/50"
+                "h-1.5 rounded-full transition-all duration-300",
+                index === currentSlide
+                  ? "w-5 bg-white shadow-sm"
+                  : "w-1.5 bg-white/50"
               )}
             />
           ))}
