@@ -7,132 +7,132 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
-model comment {
-  id                Int                 @id @default(autoincrement())
-  postId            String              @db.VarChar(32)
+model Comment {
+  id                Int               @id @default(autoincrement())
+  postId            String            @db.VarChar(32)
   userId            Int
   parentCommentId   Int?
-  content           String              @db.Text
-  isDeleted         Boolean             @default(false)
-  createdAt         DateTime            @default(now())
+  content           String            @db.Text
+  isDeleted         Boolean           @default(false)
+  createdAt         DateTime          @default(now())
   updatedAt         DateTime
-  comment           comment?            @relation("commentTocomment", fields: [parentCommentId], references: [id], map: "Comment_parentCommentId_fkey")
-  other_comment     comment[]           @relation("commentTocomment")
-  post              post                @relation(fields: [postId], references: [id], map: "Comment_postId_fkey")
-  user              user                @relation(fields: [userId], references: [id], map: "Comment_userId_fkey")
-  commentreaction   commentreaction[]
-  notification      notification[]
-  notificationbatch notificationbatch[]
+  comment           Comment?          @relation("commentTocomment", fields: [parentCommentId], references: [id], map: "Comment_parentCommentId_fkey")
+  other_comment     Comment[]         @relation("commentTocomment")
+  post              Post              @relation(fields: [postId], references: [id], map: "Comment_postId_fkey")
+  user              User              @relation(fields: [userId], references: [id], map: "Comment_userId_fkey")
+  commentReactions  CommentReaction[]
+  notifications     Notification[]
+  notificationBatch NotificationBatch[]
 
   @@index([parentCommentId], map: "Comment_parentCommentId_fkey")
   @@index([postId], map: "Comment_postId_fkey")
   @@index([userId], map: "Comment_userId_fkey")
 }
 
-model commentreaction {
+model CommentReaction {
   id        Int                      @id @default(autoincrement())
   userId    Int
   commentId Int
   reaction  commentreaction_reaction
   createdAt DateTime                 @default(now())
-  comment   comment                  @relation(fields: [commentId], references: [id], onDelete: Cascade, map: "CommentReaction_commentId_fkey")
-  user      user                     @relation(fields: [userId], references: [id], onDelete: Cascade, map: "CommentReaction_userId_fkey")
+  comment   Comment                  @relation(fields: [commentId], references: [id], onDelete: Cascade, map: "CommentReaction_commentId_fkey")
+  user      User                     @relation(fields: [userId], references: [id], onDelete: Cascade, map: "CommentReaction_userId_fkey")
 
   @@unique([userId, commentId], map: "CommentReaction_userId_commentId_key")
   @@index([commentId], map: "CommentReaction_commentId_idx")
   @@index([commentId, reaction], map: "CommentReaction_commentId_reaction_idx")
 }
 
-model conversation {
-  id                      Int                       @id @default(autoincrement())
-  type                    String                    @default("direct")
-  name                    String?
-  createdBy               Int
-  createdAt               DateTime                  @default(now())
-  updatedAt               DateTime
-  lastMessageAt           DateTime?
-  isArchived              Boolean                   @default(false)
-  conversationparticipant conversationparticipant[]
-  message                 message[]
-  notification            notification[]
+model Conversation {
+  id           Int                       @id @default(autoincrement())
+  type         String                    @default("direct")
+  name         String?
+  createdBy    Int
+  createdAt    DateTime                  @default(now())
+  updatedAt    DateTime
+  lastMessageAt DateTime?
+  isArchived   Boolean                   @default(false)
+  participants ConversationParticipant[]
+  messages     Message[]
+  notifications Notification[]
 }
 
-model conversationparticipant {
+model ConversationParticipant {
   id             Int          @id @default(autoincrement())
   conversationId Int
   userId         Int
   joinedAt       DateTime     @default(now())
   lastReadAt     DateTime?
   role           String       @default("member")
-  conversation   conversation @relation(fields: [conversationId], references: [id], map: "ConversationParticipant_conversationId_fkey")
-  user           user         @relation(fields: [userId], references: [id], map: "ConversationParticipant_userId_fkey")
+  conversation   Conversation @relation(fields: [conversationId], references: [id], map: "ConversationParticipant_conversationId_fkey")
+  user           User         @relation(fields: [userId], references: [id], map: "ConversationParticipant_userId_fkey")
 
   @@unique([conversationId, userId], map: "ConversationParticipant_conversationId_userId_key")
   @@index([userId], map: "ConversationParticipant_userId_fkey")
 }
 
-model follow {
-  id                            Int            @id @default(autoincrement())
-  followerId                    Int
-  followingId                   Int
-  status                        String         @default("accepted")
-  createdAt                     DateTime       @default(now())
-  user_follow_followerIdTouser  user           @relation("follow_followerIdTouser", fields: [followerId], references: [id], map: "Follow_followerId_fkey")
-  user_follow_followingIdTouser user           @relation("follow_followingIdTouser", fields: [followingId], references: [id], map: "Follow_followingId_fkey")
-  notification                  notification[]
+model Follow {
+  id          Int            @id @default(autoincrement())
+  followerId  Int
+  followingId Int
+  status      String         @default("accepted")
+  createdAt   DateTime       @default(now())
+  follower    User           @relation("follow_followerIdTouser", fields: [followerId], references: [id], map: "Follow_followerId_fkey")
+  following   User           @relation("follow_followingIdTouser", fields: [followingId], references: [id], map: "Follow_followingId_fkey")
+  notifications Notification[]
 
   @@unique([followerId, followingId], map: "Follow_followerId_followingId_key")
   @@index([followingId], map: "Follow_followingId_fkey")
 }
 
-model hashtag {
-  id          Int           @id @default(autoincrement())
-  name        String        @unique(map: "Hashtag_name_key") @db.VarChar(100)
-  createdAt   DateTime      @default(now())
-  usageCount  Int           @default(0)
-  isActive    Boolean       @default(true)
-  posthashtag posthashtag[]
+model Hashtag {
+  id           Int           @id @default(autoincrement())
+  name         String        @unique(map: "Hashtag_name_key") @db.VarChar(100)
+  createdAt    DateTime      @default(now())
+  usageCount   Int           @default(0)
+  isActive     Boolean       @default(true)
+  postHashtags PostHashtag[]
 
   @@index([name], map: "Hashtag_name_idx")
   @@index([usageCount], map: "Hashtag_usageCount_idx")
 }
 
-model like {
+model Like {
   id        Int      @id @default(autoincrement())
   userId    Int
   postId    String   @db.VarChar(32)
   createdAt DateTime @default(now())
-  post      post     @relation(fields: [postId], references: [id], map: "Like_postId_fkey")
-  user      user     @relation(fields: [userId], references: [id], map: "Like_userId_fkey")
+  post      Post     @relation(fields: [postId], references: [id], map: "Like_postId_fkey")
+  user      User     @relation(fields: [userId], references: [id], map: "Like_userId_fkey")
 
   @@unique([userId, postId], map: "Like_userId_postId_key")
   @@index([postId], map: "Like_postId_fkey")
 }
 
-model message {
-  id                 Int                 @id @default(autoincrement())
+model Message {
+  id                 Int           @id @default(autoincrement())
   conversationId     Int
   senderId           Int
   content            String
   messageType        message_messageType @default(TEXT)
   mediaUrl           String?
   repliedToMessageId Int?
-  deliveryStatus     String              @default("delivered")
-  createdAt          DateTime            @default(now())
+  deliveryStatus     String        @default("delivered")
+  createdAt          DateTime      @default(now())
   updatedAt          DateTime
-  isDeleted          Boolean             @default(false)
-  conversation       conversation        @relation(fields: [conversationId], references: [id], map: "Message_conversationId_fkey")
-  message            message?            @relation("messageTomessage", fields: [repliedToMessageId], references: [id], map: "Message_repliedToMessageId_fkey")
-  other_message      message[]           @relation("messageTomessage")
-  user               user                @relation(fields: [senderId], references: [id], map: "Message_senderId_fkey")
-  notification       notification[]
+  isDeleted          Boolean       @default(false)
+  conversation       Conversation  @relation(fields: [conversationId], references: [id], map: "Message_conversationId_fkey")
+  message            Message?      @relation("messageTomessage", fields: [repliedToMessageId], references: [id], map: "Message_repliedToMessageId_fkey")
+  other_message      Message[]     @relation("messageTomessage")
+  user               User          @relation(fields: [senderId], references: [id], map: "Message_senderId_fkey")
+  notifications      Notification[]
 
   @@index([conversationId], map: "Message_conversationId_fkey")
   @@index([repliedToMessageId], map: "Message_repliedToMessageId_fkey")
   @@index([senderId], map: "Message_senderId_fkey")
 }
 
-model notification {
+model Notification {
   id                                  Int                 @id @default(autoincrement())
   type                                notification_type
   status                              notification_status @default(UNREAD)
@@ -153,15 +153,15 @@ model notification {
   expiresAt                           DateTime?
   isDeleted                           Boolean             @default(false)
   userId                              Int?
-  comment                             comment?            @relation(fields: [commentId], references: [id], onDelete: Cascade, map: "Notification_commentId_fkey")
-  conversation                        conversation?       @relation(fields: [conversationId], references: [id], onDelete: Cascade, map: "Notification_conversationId_fkey")
-  follow                              follow?             @relation(fields: [followId], references: [id], onDelete: Cascade, map: "Notification_followId_fkey")
-  message                             message?            @relation(fields: [messageId], references: [id], onDelete: Cascade, map: "Notification_messageId_fkey")
-  post                                post?               @relation(fields: [postId], references: [id], onDelete: Cascade, map: "Notification_postId_fkey")
-  user_notification_recipientIdTouser user                @relation("notification_recipientIdTouser", fields: [recipientId], references: [id], onDelete: Cascade, map: "Notification_recipientId_fkey")
-  user_notification_senderIdTouser    user?               @relation("notification_senderIdTouser", fields: [senderId], references: [id], map: "Notification_senderId_fkey")
-  story                               story?              @relation(fields: [storyId], references: [id], onDelete: Cascade, map: "Notification_storyId_fkey")
-  user_notification_userIdTouser      user?               @relation("notification_userIdTouser", fields: [userId], references: [id], map: "Notification_userId_fkey")
+  comment                             Comment?            @relation(fields: [commentId], references: [id], onDelete: Cascade, map: "Notification_commentId_fkey")
+  conversation                        Conversation?       @relation(fields: [conversationId], references: [id], onDelete: Cascade, map: "Notification_conversationId_fkey")
+  follow                              Follow?             @relation(fields: [followId], references: [id], onDelete: Cascade, map: "Notification_followId_fkey")
+  message                             Message?            @relation(fields: [messageId], references: [id], onDelete: Cascade, map: "Notification_messageId_fkey")
+  post                                Post?               @relation(fields: [postId], references: [id], onDelete: Cascade, map: "Notification_postId_fkey")
+  user_notification_recipientIdTouser User                @relation("notification_recipientIdTouser", fields: [recipientId], references: [id], onDelete: Cascade, map: "Notification_recipientId_fkey")
+  user_notification_senderIdTouser    User?               @relation("notification_senderIdTouser", fields: [senderId], references: [id], map: "Notification_senderId_fkey")
+  story                               Story?              @relation(fields: [storyId], references: [id], onDelete: Cascade, map: "Notification_storyId_fkey")
+  user_notification_userIdTouser      User?               @relation("notification_userIdTouser", fields: [userId], references: [id], map: "Notification_userId_fkey")
 
   @@index([commentId], map: "Notification_commentId_fkey")
   @@index([conversationId], map: "Notification_conversationId_fkey")
@@ -178,7 +178,7 @@ model notification {
   @@index([userId], map: "Notification_userId_fkey")
 }
 
-model notificationbatch {
+model NotificationBatch {
   id             Int                    @id @default(autoincrement())
   type           notificationbatch_type
   senderId       Int?
@@ -195,10 +195,10 @@ model notificationbatch {
   createdAt      DateTime               @default(now())
   processedAt    DateTime?
   completedAt    DateTime?
-  comment        comment?               @relation(fields: [commentId], references: [id], onDelete: Cascade, map: "NotificationBatch_commentId_fkey")
-  post           post?                  @relation(fields: [postId], references: [id], onDelete: Cascade, map: "NotificationBatch_postId_fkey")
-  user           user?                  @relation(fields: [senderId], references: [id], map: "NotificationBatch_senderId_fkey")
-  story          story?                 @relation(fields: [storyId], references: [id], onDelete: Cascade, map: "NotificationBatch_storyId_fkey")
+  comment        Comment?               @relation(fields: [commentId], references: [id], onDelete: Cascade, map: "NotificationBatch_commentId_fkey")
+  post           Post?                  @relation(fields: [postId], references: [id], onDelete: Cascade, map: "NotificationBatch_postId_fkey")
+  user           User?                  @relation(fields: [senderId], references: [id], map: "NotificationBatch_senderId_fkey")
+  story          Story?                 @relation(fields: [storyId], references: [id], onDelete: Cascade, map: "NotificationBatch_storyId_fkey")
 
   @@index([commentId], map: "NotificationBatch_commentId_fkey")
   @@index([postId], map: "NotificationBatch_postId_fkey")
@@ -208,7 +208,7 @@ model notificationbatch {
   @@index([type, createdAt], map: "NotificationBatch_type_createdAt_idx")
 }
 
-model notificationpreference {
+model NotificationPreference {
   id                Int      @id @default(autoincrement())
   userId            Int      @unique(map: "NotificationPreference_userId_key")
   emailOnLike       Boolean  @default(false)
@@ -235,10 +235,10 @@ model notificationpreference {
   timezone          String?  @default("UTC")
   createdAt         DateTime @default(now())
   updatedAt         DateTime
-  user              user     @relation(fields: [userId], references: [id], onDelete: Cascade, map: "NotificationPreference_userId_fkey")
+  user              User     @relation(fields: [userId], references: [id], onDelete: Cascade, map: "NotificationPreference_userId_fkey")
 }
 
-model post {
+model Post {
   id                String              @id @db.VarChar(32)
   userId            Int
   contentType       post_contentType
@@ -253,34 +253,34 @@ model post {
   updatedAt         DateTime
   expiresAt         DateTime?
   isDeleted         Boolean             @default(false)
-  comment           comment[]
-  like              like[]
-  notification      notification[]
-  notificationbatch notificationbatch[]
-  user              user                @relation(fields: [userId], references: [id], map: "Post_userId_fkey")
-  posthashtag       posthashtag[]
-  postimage         postimage[]
-  postreaction      postreaction[]
-  savedpost         savedpost[]
-  share             share[]
+  comments          Comment[]
+  likes             Like[]
+  notifications     Notification[]
+  notificationBatch NotificationBatch[]
+  user              User                @relation(fields: [userId], references: [id], map: "Post_userId_fkey")
+  hashtags          PostHashtag[]
+  images            PostImage[]
+  postReactions     PostReaction[]
+  savedPosts        SavedPost[]
+  shares            Share[]
 
   @@index([userId], map: "Post_userId_fkey")
 }
 
-model posthashtag {
+model PostHashtag {
   id        Int      @id @default(autoincrement())
   postId    String   @db.VarChar(32)
   hashtagId Int
   createdAt DateTime @default(now())
-  hashtag   hashtag  @relation(fields: [hashtagId], references: [id], map: "PostHashtag_hashtagId_fkey")
-  post      post     @relation(fields: [postId], references: [id], onDelete: Cascade, map: "PostHashtag_postId_fkey")
+  hashtag   Hashtag  @relation(fields: [hashtagId], references: [id], map: "PostHashtag_hashtagId_fkey")
+  post      Post     @relation(fields: [postId], references: [id], onDelete: Cascade, map: "PostHashtag_postId_fkey")
 
   @@unique([postId, hashtagId], map: "PostHashtag_postId_hashtagId_key")
   @@index([hashtagId], map: "PostHashtag_hashtagId_idx")
   @@index([postId], map: "PostHashtag_postId_idx")
 }
 
-model postimage {
+model PostImage {
   id           Int      @id @default(autoincrement())
   postId       String   @db.VarChar(32)
   imageUrl     String   @db.VarChar(500)
@@ -290,54 +290,54 @@ model postimage {
   height       Int?
   fileSize     Int?
   createdAt    DateTime @default(now())
-  post         post     @relation(fields: [postId], references: [id], onDelete: Cascade, map: "PostImage_postId_fkey")
+  post         Post     @relation(fields: [postId], references: [id], onDelete: Cascade, map: "PostImage_postId_fkey")
 
   @@index([postId, displayOrder], map: "PostImage_postId_displayOrder_idx")
   @@index([postId], map: "PostImage_postId_idx")
 }
 
-model postreaction {
+model PostReaction {
   id        Int                   @id @default(autoincrement())
   userId    Int
   postId    String                @db.VarChar(32)
   reaction  postreaction_reaction
   createdAt DateTime              @default(now())
-  post      post                  @relation(fields: [postId], references: [id], onDelete: Cascade, map: "PostReaction_postId_fkey")
-  user      user                  @relation(fields: [userId], references: [id], onDelete: Cascade, map: "PostReaction_userId_fkey")
+  post      Post                  @relation(fields: [postId], references: [id], onDelete: Cascade, map: "PostReaction_postId_fkey")
+  user      User                  @relation(fields: [userId], references: [id], onDelete: Cascade, map: "PostReaction_userId_fkey")
 
   @@unique([userId, postId], map: "PostReaction_userId_postId_key")
   @@index([postId], map: "PostReaction_postId_idx")
   @@index([postId, reaction], map: "PostReaction_postId_reaction_idx")
 }
 
-model savedpost {
+model SavedPost {
   id        Int      @id @default(autoincrement())
   userId    Int
   postId    String   @db.VarChar(32)
   createdAt DateTime @default(now())
-  post      post     @relation(fields: [postId], references: [id], map: "SavedPost_postId_fkey")
-  user      user     @relation(fields: [userId], references: [id], map: "SavedPost_userId_fkey")
+  post      Post     @relation(fields: [postId], references: [id], map: "SavedPost_postId_fkey")
+  user      User     @relation(fields: [userId], references: [id], map: "SavedPost_userId_fkey")
 
   @@unique([userId, postId], map: "SavedPost_userId_postId_key")
   @@index([postId], map: "SavedPost_postId_fkey")
   @@index([userId], map: "SavedPost_userId_idx")
 }
 
-model share {
+model Share {
   id           Int                @id @default(autoincrement())
   userId       Int
   postId       String             @db.VarChar(32)
   caption      String?
   createdAt    DateTime           @default(now())
   privacyLevel share_privacyLevel @default(PUBLIC)
-  post         post               @relation(fields: [postId], references: [id], map: "Share_postId_fkey")
-  user         user               @relation(fields: [userId], references: [id], map: "Share_userId_fkey")
+  post         Post               @relation(fields: [postId], references: [id], map: "Share_postId_fkey")
+  user         User               @relation(fields: [userId], references: [id], map: "Share_userId_fkey")
 
   @@unique([userId, postId], map: "Share_userId_postId_key")
   @@index([postId], map: "Share_postId_fkey")
 }
 
-model story {
+model Story {
   id                Int                 @id @default(autoincrement())
   userId            Int
   mediaUrl          String
@@ -348,14 +348,14 @@ model story {
   expiresAt         DateTime
   viewCount         Int                 @default(0)
   allowsReplies     Boolean             @default(true)
-  notification      notification[]
-  notificationbatch notificationbatch[]
-  user              user                @relation(fields: [userId], references: [id], map: "Story_userId_fkey")
+  notifications     Notification[]
+  notificationBatch NotificationBatch[]
+  user              User                @relation(fields: [userId], references: [id], map: "Story_userId_fkey")
 
   @@index([userId], map: "Story_userId_fkey")
 }
 
-model systemlogs {
+model SystemLogs {
   id         String           @id
   timestamp  DateTime         @default(now())
   level      systemlogs_level
@@ -368,7 +368,7 @@ model systemlogs {
   ipAddress  String?          @db.VarChar(45)
   userAgent  String?          @db.Text
   stackTrace String?          @db.Text
-  user       user?            @relation(fields: [userId], references: [id], map: "SystemLogs_userId_fkey")
+  user       User?            @relation(fields: [userId], references: [id], map: "SystemLogs_userId_fkey")
 
   @@index([level], map: "SystemLogs_level_idx")
   @@index([requestId], map: "SystemLogs_requestId_idx")
@@ -378,7 +378,7 @@ model systemlogs {
   @@index([userId], map: "SystemLogs_userId_idx")
 }
 
-model user {
+model User {
   id                                          Int                       @id @default(autoincrement())
   username                                    String                    @unique(map: "User_username_key")
   email                                       String                    @unique(map: "User_email_key")
@@ -392,29 +392,29 @@ model user {
   lastActiveAt                                DateTime?
   isActive                                    Boolean                   @default(true)
   isDeleted                                   Boolean                   @default(false)
-  comment                                     comment[]
-  commentreaction                             commentreaction[]
-  conversationparticipant                     conversationparticipant[]
-  follow_follow_followerIdTouser              follow[]                  @relation("follow_followerIdTouser")
-  follow_follow_followingIdTouser             follow[]                  @relation("follow_followingIdTouser")
-  like                                        like[]
-  message                                     message[]
-  notification_notification_recipientIdTouser notification[]            @relation("notification_recipientIdTouser")
-  notification_notification_senderIdTouser    notification[]            @relation("notification_senderIdTouser")
-  notification_notification_userIdTouser      notification[]            @relation("notification_userIdTouser")
-  notificationbatch                           notificationbatch[]
-  notificationpreference                      notificationpreference?
-  post                                        post[]
-  postreaction                                postreaction[]
-  savedpost                                   savedpost[]
-  share                                       share[]
-  story                                       story[]
-  systemlogs                                  systemlogs[]
-  userinfo                                    userinfo?
-  usersession                                 usersession[]
+  comments                                    Comment[]
+  commentReactions                            CommentReaction[]
+  conversationParticipants                    ConversationParticipant[]
+  following                                   Follow[]                  @relation("follow_followerIdTouser")
+  followers                                   Follow[]                  @relation("follow_followingIdTouser")
+  likes                                       Like[]
+  messages                                    Message[]
+  notification_notification_recipientIdTouser Notification[]            @relation("notification_recipientIdTouser")
+  notification_notification_senderIdTouser    Notification[]            @relation("notification_senderIdTouser")
+  notification_notification_userIdTouser      Notification[]            @relation("notification_userIdTouser")
+  notificationBatches                         NotificationBatch[]
+  notificationPreference                      NotificationPreference?
+  posts                                       Post[]
+  postReactions                               PostReaction[]
+  savedPosts                                  SavedPost[]
+  shares                                      Share[]
+  stories                                     Story[]
+  systemLogs                                  SystemLogs[]
+  userInfo                                    UserInfo?
+  userSessions                                UserSession[]
 }
 
-model userinfo {
+model UserInfo {
   id                Int              @id @default(autoincrement())
   userId            Int              @unique(map: "UserInfo_userId_key")
   firstName         String?
@@ -427,10 +427,10 @@ model userinfo {
   birthDate         DateTime?
   gender            userinfo_gender?
   location          String?
-  user              user             @relation(fields: [userId], references: [id], map: "UserInfo_userId_fkey")
+  user              User             @relation(fields: [userId], references: [id], map: "UserInfo_userId_fkey")
 }
 
-model usersession {
+model UserSession {
   id                   Int       @id @default(autoincrement())
   userId               Int
   deviceInfo           String?
@@ -441,7 +441,7 @@ model usersession {
   previousRefreshToken String?   @db.VarChar(255)
   rotatedAt            DateTime?
   updatedAt            DateTime?
-  user                 user      @relation(fields: [userId], references: [id], map: "UserSession_userId_fkey")
+  user                 User      @relation(fields: [userId], references: [id], map: "UserSession_userId_fkey")
 
   @@index([previousRefreshToken], map: "UserSession_previousRefreshToken_idx")
   @@index([userId], map: "UserSession_userId_fkey")

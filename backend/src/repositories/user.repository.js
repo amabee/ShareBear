@@ -265,16 +265,10 @@ export const searchUsers = async (prisma, query, limit = 20, offset = 0) => {
           displayName: true,
           profilePictureUrl: true,
           bio: true,
-          isVerified: true,
         },
       },
     },
     orderBy: [
-      {
-        userInfo: {
-          isVerified: "desc",
-        },
-      },
       {
         username: "asc",
       },
@@ -290,7 +284,7 @@ export const getSuggestedUsers = async (prisma, userIdentifier, limit = 10) => {
     where: { username: userIdentifier },
     select: {
       id: true,
-      follow_follow_followerIdTouser: {
+      following: {
         select: {
           followingId: true,
         },
@@ -303,7 +297,7 @@ export const getSuggestedUsers = async (prisma, userIdentifier, limit = 10) => {
   }
 
   const currentUserId = currentUser.id;
-  const followingIds = currentUser.follow_follow_followerIdTouser.map((f) => f.followingId);
+  const followingIds = currentUser.following.map((f) => f.followingId);
 
   // ✅ Manual random: Get total count
   const totalCount = await prisma.user.count({
